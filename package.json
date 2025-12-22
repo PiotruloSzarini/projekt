@@ -1,0 +1,24 @@
+{
+  "name": "projekt_kurs",
+  "version": "1.0.0",
+  "description": "to do: - nauczyc sie uzywac branch - zrobic logowanie przez mail (na mail wysyla sie kod) - podlaczenie do bazy danych(https://console.aiven.io/login) tymczasowo aivien - nauczyc sie dockera - prosty panel usera/admina + dodawanie usuwanie edycja rzeczy (docelowo zadań) - zrobic strukure strony z zadaniami, wyglad poźniej (funkcjonalość dla usera)",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kacpi476/projekt_kurs.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Kacpi476/projekt_kurs/issues"
+  },
+  "homepage": "https://github.com/Kacpi476/projekt_kurs#readme",
+  "dependencies": {
+    "nextjs": "^0.0.3",
+    "nodemon": "^3.1.10"
+  }
+}
