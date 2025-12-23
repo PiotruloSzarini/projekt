@@ -1,14 +1,35 @@
 import styles from './layout.module.css';
+import Link from 'next/link';
 
 export default function DashboardLayout({ children }) {
     return (
     <div className={styles.container}>
         <div className={styles.sidebar}>
-            <h3>Menu</h3>
             <ul>
-                <li>Dashboard</li>
-                <li>Kursy</li>
-                <li>Matematyka podstawowa</li>
+                <li>
+                    <Link href="/dashboard">Mój postęp</Link>
+                </li>
+                <li>
+                    <Link href="/dashboard/kursy">Kursy</Link>
+                </li>
+                <li>
+                    <Link href="/dashboard/egzaminy">Egzaminy</Link>
+                </li>
+                <li>
+                    <Link href="/dashboard/ranking">Ranking</Link>
+                </li>
+                <li>
+                    <Link href="/dashboard/daily-challange">Daily Challange</Link>
+                </li>
+                <li>
+                    <Link href="/dashboard/plan-nauki">Plan Nauki</Link>
+                </li>
+                <li>
+                    <Link href="/dashboard/baza-zadan">Baza zadań</Link>
+                </li>
+                <li>
+                    <Link href="/dashboard/slabe-punkty">Słabe punkty</Link>
+                </li>
             </ul>
         </div>
         <div className={styles.wrapper}>

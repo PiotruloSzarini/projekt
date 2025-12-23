@@ -1,8 +1,8 @@
-export default function DashboardPage() {
+export default function MyProgressPage() {
     return (
-    <div>
-        <h1>Witaj w dashboardzie</h1>
-        <p>hej hej czesc siemanko co tam sie u ciebie dzieje?</p>
-    </div>
+        <div>
+            <h1>Mój postęp</h1>
+            <p>Tu będzie Twój progress, statystyki, wykresy.</p>
+        </div>
     );
 }
