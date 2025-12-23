@@ -1,23 +1,12 @@
-@import "tailwindcss";
-
-:root {
-  --background: #ffffff;
-}
-
-@theme inline {
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground: #ededed;
-  }
+/* Minimal reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 body {
-  background: var(--background);
-  color: black;
-  font-family: Arial, Helvetica, sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
