@@ -1,0 +1,74 @@
+[
+    {
+        "courseId": 1,
+        "slug": "matematyka-podstawowa",
+        "title": "Matematyka podstawowa",
+        
+
+        "color": "#59A5FE",
+
+        "stats": {
+            "tasksCount": 420,
+            "videosCount": 68
+        },
+
+        "userState": {
+            "owned": true,
+            "progress": 35
+        }
+    },
+    {
+        "courseId": 2,
+        "slug": "matematyka-rozszerzona",
+        "title": "Matematyka rozszerzona",
+        
+
+        "color": "#FEE33D",
+
+        "stats": {
+            "tasksCount": 420,
+            "videosCount": 68
+        },
+
+        "userState": {
+            "owned": false,
+            "progress": 35
+        }
+    },
+    {
+        "courseId": 3,
+        "slug": "studia",
+        "title": "Studia",
+        
+
+        "color": "#FF853D",
+
+        "stats": {
+            "tasksCount": 420,
+            "videosCount": 68
+        },
+
+        "userState": {
+            "owned": false,
+            "progress": 35
+        }
+    },
+    {
+        "courseId": 4,
+        "slug": "egzamin-osmoklasisty",
+        "title": "Egzamin ósmoklasisty",
+        
+
+        "color": "#3EFFCB",
+
+        "stats": {
+            "tasksCount": 420,
+            "videosCount": 68
+        },
+
+        "userState": {
+            "owned": false,
+            "progress": 35
+        }
+    }
+]

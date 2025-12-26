@@ -1,0 +1,96 @@
+[
+    {
+    "taskId": 1,
+    "taskType": "single_input",
+    "chapterId": 1,
+    "topicId": 1,
+    "lessonId": 1,
+    "instruction": "Oblicz: 7 + 8",
+    "hints": [
+        "To dodawanie",
+        "Wynik jest większy niż 10"
+    ],
+    "data": {
+        "correctAnswer": 15,
+        "answerType": "number"
+    },
+    "settings": {
+        "points": 1,
+        "tolerance": 0
+    }
+    },
+    {
+    "taskId": 2,
+    "taskType": "multiple_choice",
+    "chapterId": 1,
+    "topicId": 1,
+    "lessonId": 2,
+    "instruction": "Jaki jest wynik działania 6 × 4?",
+    "hints": [
+        "To mnożenie"
+    ],
+    "data": {
+        "answers": {
+        "a": 18,
+        "b": 20,
+        "c": 24,
+        "d": 30
+        },
+        "correctAnswer": "c"
+    },
+    "settings": {
+        "points": 1
+    }
+    },
+    {
+    "taskId": 3,
+    "taskType": "matching",
+    "chapterId": 1,
+    "topicId": 2,
+    "lessonId": 1,
+    "instruction": "Dopasuj działania do ich wyników.",
+    "hints": [],
+    "data": {
+        "pairs": [
+        { "left": "2 + 5", "right": "7" },
+        { "left": "3 × 3", "right": "9" },
+        { "left": "10 − 4", "right": "6" },
+        { "left": "8 ÷ 2", "right": "4" }
+        ]
+    },
+    "settings": {
+        "points": 2
+    }
+    },
+    {
+    "taskId": 4,
+    "taskType": "step_by_step",
+    "chapterId": 2,
+    "topicId": 1,
+    "lessonId": 1,
+    "instruction": "Rozwiąż zadanie krok po kroku.",
+    "hints": [],
+    "data": {
+        "steps": [
+        {
+            "stepId": 1,
+            "instruction": "Oblicz 5 + 5",
+            "correctAnswer": 10
+        },
+        {
+            "stepId": 2,
+            "instruction": "Pomnóż wynik przez 3",
+            "correctAnswer": 30
+        },
+        {
+            "stepId": 3,
+            "instruction": "Odejmij 6",
+            "correctAnswer": 24
+        }
+        ]
+    },
+    "settings": {
+        "points": 3
+    }
+    }
+]
