@@ -4,3 +4,9 @@
     display: flex;
     flex-direction: column;
 }
+
+.courseLink {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+}
