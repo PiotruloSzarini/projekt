@@ -1,0 +1,27 @@
+[
+    { 
+        "lessonId": 1, 
+        "topicId": 1, 
+        "slug": "wprowadzenie", 
+        "order": 1, 
+        "title": "Wprowadzenie", 
+        "estimatedTime": 10, 
+        "content": [] 
+    },
+    { 
+        "lessonId": 2, 
+        "topicId": 1, 
+        "slug": "cwiczenia",
+        "order": 2, 
+        "title": "Ćwiczenia", 
+        "estimatedTime": 15, 
+        "content": [] 
+    },
+
+    { "lessonId": 3, "topicId": 2, "slug": "teoria", "order": 1, "title": "Teoria", "estimatedTime": 10, "content": [] },
+    { "lessonId": 4, "topicId": 2, "slug": "zadania", "order": 2, "title": "Zadania", "estimatedTime": 15, "content": [] },
+
+    { "lessonId": 5, "topicId": 3, "slug": "podstawy", "order": 1, "title": "Podstawy", "estimatedTime": 10, "content": [] },
+    { "lessonId": 6, "topicId": 3, "slug": "praktyka", "order": 2, "title": "Praktyka", "estimatedTime": 15, "content": [] }
+
+]

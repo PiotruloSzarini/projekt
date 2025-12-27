@@ -1,0 +1,67 @@
+[
+    {
+    "courseId": 1,
+    "slug": "matematyka-podstawowa",
+    "title": "Matematyka podstawowa",
+    "color": "#59A5FE",
+    "thumbnail": "/images/courses/matematyka.png",
+
+    "stats": {
+        "chaptersCount": 6,
+        "lessonsCount": 42,
+        "tasksCount": 420,
+        "videosCount": 68
+    },
+
+    "chapters": [1, 2, 3]
+},
+{
+    "courseId": 2,
+    "slug": "matematyka-rozszerzona",
+    "title": "Matematyka rozszerzona",
+    "color": "#FEE33D",
+    "thumbnail": "/images/courses/matematyka.png",
+
+    "stats": {
+        "chaptersCount": 6,
+        "lessonsCount": 42,
+        "tasksCount": 420,
+        "videosCount": 68
+    },
+
+    "chapters": [1, 2, 3]
+},
+{
+    "courseId": 3,
+    "slug": "studia",
+    "title": "Studia",
+    "color": "#FF853D",
+    "thumbnail": "/images/courses/matematyka.png",
+
+    "stats": {
+        "chaptersCount": 6,
+        "lessonsCount": 42,
+        "tasksCount": 420,
+        "videosCount": 68
+    },
+
+    "chapters": [1, 2, 3]
+},
+{
+    "courseId": 4,
+    "slug": "egzamin-osmoklasisty",
+    "title": "Egzamin osmoklasisty",
+    "color": "#3EFFCB",
+    "thumbnail": "/images/courses/matematyka.png",
+
+    "stats": {
+        "chaptersCount": 6,
+        "lessonsCount": 42,
+        "tasksCount": 420,
+        "videosCount": 68
+    },
+
+    "chapters": [1, 2, 3]
+}
+
+]
