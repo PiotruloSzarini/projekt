@@ -30,6 +30,9 @@ export default function DashboardLayout({ children }) {
                 <li>
                     <Link href="/dashboard/slabe-punkty">Słabe punkty</Link>
                 </li>
+                <li>
+                    <Link href="/dashboard/testy-zadan">Testy zadan</Link>
+                </li>
             </ul>
         </div>
         <div className={styles.wrapper}>
