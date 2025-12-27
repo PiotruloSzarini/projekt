@@ -1,0 +1,38 @@
+{
+    "userId": "1",
+
+    "courses": [
+        {
+            "courseId": 1,
+            "owned": true,
+            "progress": 37
+        },
+        {
+            "courseId": 2,
+            "owned": true,
+            "progress": 12
+        }
+    ],
+
+    "lessons": [
+    {
+        "lessonId": 1,
+        "status": "completed"
+    },
+    {
+        "lessonId": 2,
+        "status": "in_progress"
+    }
+    ],
+
+    "tasks": [
+    {
+        "taskId": 12,
+        "correct": false
+    },
+    {
+        "taskId": 13,
+        "correct": true
+    }
+    ]
+}
