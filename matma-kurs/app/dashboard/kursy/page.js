@@ -1,9 +1,12 @@
 import CourseCard from '../components/CourseCard/CourseCard';
 import styles from '../kursy/page.module.css'
-import courses from '@/dane/courses.json';
 import Link from 'next/link';
+import { useCourseView } from '@/app/hooks/useCourseView';
 
 export default function KursyPage() {
+    
+    const courses = useCourseView();
+
     const ownedCourses = courses.filter(c => c.userState.owned);
     const notOwnedCourses = courses.filter(c => !c.userState.owned);
 

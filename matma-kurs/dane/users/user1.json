@@ -1,0 +1,40 @@
+{
+    "userId": "1",
+
+    "courses": [
+    {
+        "courseId": 1,
+        "progress": 35
+    },
+    {
+        "courseId": 2,
+        "progress": 12
+    }
+    ],
+
+  "lessons": [
+    {
+      "lessonId": 101,
+      "courseId": 1,
+      "status": "completed"
+    },
+    {
+      "lessonId": 102,
+      "courseId": 1,
+      "status": "in_progress"
+    }
+  ],
+
+  "tasks": [
+    {
+      "taskId": 1001,
+      "lessonId": 101,
+      "correct": true
+    },
+    {
+      "taskId": 1002,
+      "lessonId": 102,
+      "correct": false
+    }
+  ]
+}
