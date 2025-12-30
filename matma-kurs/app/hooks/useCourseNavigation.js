@@ -1,6 +1,8 @@
 import chapters from '@/dane/mock_dane/chapters.json';
 import lessons from '@/dane/mock_dane/lessons.json';
 import topics from '@/dane/mock_dane/topics.json';
+import videos from '@/dane/mock_dane/videos.json';
+import texts from '@/dane/mock_dane/texts.json';
 
 export function useCourseNavigation() {
 
@@ -28,12 +30,20 @@ export function useCourseNavigation() {
         l => l.topicId === topicId && l.slug === lessonSlug
         );
 
+    const getVideoById = (videoId) =>
+        videos.find(v => v.videoId === videoId);
+
+    const getTextById = (textId) =>
+        texts.find(t => t.textId === textId);
+
     return {
         getChaptersByCourseId,
         getChapterBySlug,
         getTopicsByChapterId,
         getTopicBySlug,
         getLessonsByTopicId,
-        getLessonBySlug
+        getLessonBySlug,
+        getVideoById,
+        getTextById
     };
 }

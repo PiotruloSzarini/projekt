@@ -8,13 +8,13 @@
         "color": "#59A5FE",
 
         "stats": {
-            "tasksCount": 420,
-            "videosCount": 68
+            "tasksCount": 123,
+            "videosCount": 456
         },
 
         "userState": {
             "owned": true,
-            "progress": 35
+            "progress": 100
         }
     },
     {
@@ -26,13 +26,13 @@
         "color": "#FEE33D",
 
         "stats": {
-            "tasksCount": 420,
-            "videosCount": 68
+            "tasksCount": 42011,
+            "videosCount": 6821
         },
 
         "userState": {
             "owned": true,
-            "progress": 35
+            "progress": 100
         }
     },
     {

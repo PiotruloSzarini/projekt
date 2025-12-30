@@ -1,6 +1,7 @@
 import styles from './layout.module.css';
 import Link from 'next/link';
 
+
 export default function DashboardLayout({ children }) {
     return (
     <div className={styles.container}>
@@ -32,6 +33,9 @@ export default function DashboardLayout({ children }) {
                 </li>
                 <li>
                     <Link href="/dashboard/testy-zadan">Testy zadan</Link>
+                </li>
+                <li>
+                    <Link href="/dashboard/testing">Testy komponentnow</Link>
                 </li>
             </ul>
         </div>

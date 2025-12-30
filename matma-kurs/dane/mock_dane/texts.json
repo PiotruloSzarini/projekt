@@ -1,0 +1,62 @@
+[
+  {
+    "textId": 1,
+    "lessonId": 1,
+    "content": "Text sample 1"
+  },
+  {
+    "textId": 2,
+    "lessonId": 1,
+    "content": "Text sample 2"
+  },
+  {
+    "textId": 3,
+    "lessonId": 1,
+    "content": "Text sample 3"
+  },
+  {
+    "textId": 4,
+    "lessonId": 2,
+    "content": "Text sample 4 - lekcja 2"
+  },
+  {
+    "textId": 5,
+    "lessonId": 2,
+    "content": "Text sample 5 -lekcja 2"
+  },
+  {
+    "textId": 6,
+    "lessonId": 2,
+    "content": "Text sample 6 - lekcja 2"
+  },
+  {
+    "textId": 7,
+    "lessonId": 3,
+    "content": "Text sample 7 - lekcja 1"
+  },
+  {
+    "textId": 8,
+    "lessonId": 3,
+    "content": "Text sample 8 - lekcja 1"
+  },
+  {
+    "textId": 9,
+    "lessonId": 3,
+    "content": "Text sample 9 - lekcja 1"
+  },
+  {
+    "textId": 10,
+    "lessonId": 4,
+    "content": "Text sample 10 - lekcja 2"
+  },
+  {
+    "textId": 11,
+    "lessonId": 4,
+    "content": "Text sample 11 - lekcja 2"
+  },
+  {
+    "textId": 12,
+    "lessonId": 4,
+    "content": "Text sample 12 - lekcja 2"
+  }
+]

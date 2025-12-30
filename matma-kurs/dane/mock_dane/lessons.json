@@ -1,27 +1,126 @@
 [
-    { 
-        "lessonId": 1, 
-        "topicId": 1, 
-        "slug": "wprowadzenie", 
-        "order": 1, 
-        "title": "Wprowadzenie", 
-        "estimatedTime": 10, 
-        "content": [] 
+  {
+    "lessonId": 1,
+    "courseId": 1,
+    "chapterId": 1,
+    "topicId": 1,
+
+    "slug": "wspolczynnik-liczbowy",
+    "order": 1,
+    "title": "leckcja 1",
+
+    "theory": [
+    {
+        "order": 1,
+        "videoId": 1,
+        "textId": 1,
+        "taskGroupId": 1
     },
-    { 
-        "lessonId": 2, 
-        "topicId": 1, 
-        "slug": "cwiczenia",
-        "order": 2, 
-        "title": "Ćwiczenia", 
-        "estimatedTime": 15, 
-        "content": [] 
+    {
+        "order": 2,
+        "videoId": 2,
+        "textId": null,
+        "taskGroupId": 2
     },
+    {
+        "order": 3,
+        "videoId": 3,
+        "textId": 3,
+        "taskGroupId": 3
+    }
+    ]
+  },
+  {
+    "lessonId": 2,
+    "courseId": 1,
+    "chapterId": 1,
+    "topicId": 2,
 
-    { "lessonId": 3, "topicId": 2, "slug": "teoria", "order": 1, "title": "Teoria", "estimatedTime": 10, "content": [] },
-    { "lessonId": 4, "topicId": 2, "slug": "zadania", "order": 2, "title": "Zadania", "estimatedTime": 15, "content": [] },
+    "slug": "liczby-calkowite",
+    "order": 1,
+    "title": "lekcja 2",
+    "theory": [
+    {
+        "order": 1,
+        "videoId": 4,
+        "textId": 4,
+        "taskGroupId": 4
+    },
+    {
+        "order": 2,
+        "videoId": 5,
+        "textId": 5,
+        "taskGroupId": 5
+    },
+    {
+        "order": 3,
+        "videoId": 6,
+        "textId": 6,
+        "taskGroupId": 6
+    }
+    ]
+  },
 
-    { "lessonId": 5, "topicId": 3, "slug": "podstawy", "order": 1, "title": "Podstawy", "estimatedTime": 10, "content": [] },
-    { "lessonId": 6, "topicId": 3, "slug": "praktyka", "order": 2, "title": "Praktyka", "estimatedTime": 15, "content": [] }
 
+  {
+    "lessonId": 3,
+    "courseId": 1,
+    "chapterId": 2,
+    "topicId": 3,
+
+    "slug": "test-lekcja-rodzial-2-1",
+    "order": 1,
+    "title": "leckcja 1",
+
+    "theory": [
+    {
+        "order": 1,
+        "videoId": 7,
+        "textId": 7,
+        "taskGroupId": 7
+    },
+    {
+        "order": 2,
+        "videoId": 8,
+        "textId": 8,
+        "taskGroupId": 8
+    },
+    {
+        "order": 3,
+        "videoId": 9,
+        "textId": 9,
+        "taskGroupId": 9
+    }
+    ]
+  },
+  {
+    "lessonId": 4,
+    "courseId": 1,
+    "chapterId": 2,
+    "topicId": 4,
+
+    "slug": "test-lekcja-rodzial-2-2",
+    "order": 1,
+    "title": "lekcja 2",
+    "theory": [
+    {
+        "order": 1,
+        "videoId": 10,
+        "textId": 10,
+        "taskGroupId": 10
+    },
+    {
+        "order": 2,
+        "videoId": 11,
+        "textId": 11,
+        "taskGroupId": 11
+    },
+    {
+        "order": 3,
+        "videoId": 12,
+        "textId": 12,
+        "taskGroupId": 12
+    }
+    ]
+  }
 ]
