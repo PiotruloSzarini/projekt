@@ -1,27 +1,31 @@
-import styles from './CourseCard.module.css';
 import ProgressBar from '../ProgressBar/ProgressBar';
+import styles from './ChapterCard.module.css';
 import Link from 'next/link';
 
-export default function CourseCard({
+export default function ChapterCard({
+    count,
     title,
     backgroundColor,
     tasksCount,
     videosCount,
     progress,
-    owned
 }) {
+    const cardStyle = progress === 100
+        ? { backgroundColor }
+        : {};
+
     return (
-        <div className={styles.card}>
-            <div className={styles.card_background}
-            style={{ backgroundColor }}>
-                <p>+-*/</p>
+        <div className={styles.chapter_card} style={cardStyle}>
+            <div className={styles.chapter_order_div}>
+                <p className={styles.chapter_order}>Rozdział: {count}</p>
             </div>
-            <div className={styles.card_title}>
-                <p className={styles.title}>
+            <div className={styles.chapter_title_div}>
+                <p className={styles.chapter_title}>
                 {title}
                 </p>
             </div>
-            <div className={styles.card_task_video}>
+
+            <div className={styles.chapter_task_video}>
                 <div className={styles.tasksCount_div}>
                     <p>{tasksCount}</p>
                 </div>
@@ -29,7 +33,7 @@ export default function CourseCard({
                     <p>{videosCount}</p>
                 </div>
             </div>
-            <div className={styles.card_progress}>
+            <div className={styles.chapter_progress}>
                 <ProgressBar progress={progress} />
                 <p>Ukonczone: {progress}%</p>
             </div>

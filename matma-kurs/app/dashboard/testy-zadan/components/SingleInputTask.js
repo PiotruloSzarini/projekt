@@ -1,22 +1,20 @@
 "use client";
+import { useState, useEffect } from "react";
 
-import { useState } from "react";
-
-const singleInputTask = {
-  id: "text-1",
-  type: "text",
-  content: "Ile to jest 2 + 3?",
-  correctAnswer: "5",
-  hint: "Dodaj 2 do 3",
-};
-
-export default function SingleInputTask() {
+export default function SingleInputTask({ task }) {
   const [answer, setAnswer] = useState("");
   const [feedback, setFeedback] = useState("");
   const [showHint, setShowHint] = useState(false);
 
+  // Reset stanu przy zmianie zadania
+  useEffect(() => {
+    setAnswer("");
+    setFeedback("");
+    setShowHint(false);
+  }, [task]);
+
   const handleCheck = () => {
-    if (answer.trim() === singleInputTask.correctAnswer) {
+    if (answer.trim().toLowerCase() === task.data.correctAnswer.toLowerCase()) {
       setFeedback("✅ Poprawnie!");
     } else {
       setFeedback("❌ Błędna odpowiedź, spróbuj jeszcze raz.");
@@ -30,14 +28,14 @@ export default function SingleInputTask() {
   };
 
   return (
-    <div style={{ maxWidth: 600, margin: "50px auto" }}>
-      <h1>{singleInputTask.content}</h1>
+    <div style={{ maxWidth: 600, margin: "20px auto" }}>
+      <h2>{task.instruction}</h2>
       <input
         type="text"
         value={answer}
         onChange={(e) => setAnswer(e.target.value)}
         placeholder="Wpisz odpowiedź"
-        style={{ padding: "6px", width: "100%", marginBottom: "10px" }}
+        style={{ padding: "8px", width: "100%", marginBottom: "10px", border: "1px solid #ccc" }}
       />
       <div style={{ marginBottom: "10px" }}>
         <button onClick={handleCheck} style={{ padding: "8px 16px", marginRight: "10px" }}>
@@ -52,7 +50,9 @@ export default function SingleInputTask() {
       </div>
 
       {showHint && (
-        <p style={{ fontStyle: "italic", color: "#555" }}>Podpowiedź: {singleInputTask.hint}</p>
+        <p style={{ fontStyle: "italic", color: "#555" }}>
+          Podpowiedź: {task.hints?.[0] || "Brak podpowiedzi"}
+        </p>
       )}
 
       {feedback && <p style={{ fontWeight: "bold" }}>{feedback}</p>}
