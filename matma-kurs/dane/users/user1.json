@@ -1,40 +1,51 @@
 {
-    "userId": "1",
+  "userId": 1,
+  "name": "Jan Kowalski",
 
-    "courses": [
+  "courses": [
     {
-        "courseId": 1,
-        "progress": 100
+      "courseId": 1,
+      "owned": true
     },
     {
-        "courseId": 2,
-        "progress": 12
-    }
-    ],
-
-  "lessons": [
-    {
-      "lessonId": 101,
-      "courseId": 1,
-      "status": "completed"
-    },
-    {
-      "lessonId": 102,
-      "courseId": 1,
-      "status": "in_progress"
+      "courseId": 2,
+      "owned": true
     }
   ],
 
-  "tasks": [
+  "solvedTasks": [
     {
-      "taskId": 1001,
-      "lessonId": 101,
-      "correct": true
+      "taskId": 1,
+      "solved": true,
+      "attempts": 2
     },
     {
-      "taskId": 1002,
-      "lessonId": 102,
-      "correct": false
+      "taskId": 2,
+      "solved": true,
+      "attempts": 1
+    },
+    {
+      "taskId": 3,
+      "solved": true,
+      "attempts": 3
+    }
+  ],
+
+  "watchedVideos": [
+    {
+      "videoId": 1
+    },
+    {
+      "videoId": 2
+    },
+    {
+      "videoId": 3
+    },
+    {
+      "videoId": 4
+    },
+    {
+      "videoId": 5
     }
   ]
 }

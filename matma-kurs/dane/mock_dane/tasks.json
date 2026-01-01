@@ -113,5 +113,34 @@
     "settings": {
         "points": 3
     }
+    },
+    {
+    "taskId": 6,
+    "taskGroupId": 7,
+    "taskType": "step_by_step",
+    "instruction": "Rozwiąż zadanie krok po kroku. testgrsgbwrbjaerba",
+    "hints": [],
+    "data": {
+        "steps": [
+        {
+            "stepId": 1,
+            "instruction": "Oblicz 5 + 5",
+            "correctAnswer": 10
+        },
+        {
+            "stepId": 2,
+            "instruction": "Pomnóż wynik przez 3",
+            "correctAnswer": 30
+        },
+        {
+            "stepId": 3,
+            "instruction": "Odejmij 6",
+            "correctAnswer": 24
+        }
+        ]
+    },
+    "settings": {
+        "points": 3
+    }
     }
 ]
