@@ -1,74 +1,83 @@
-import Link from "next/link";
-import lessonsData from "@/dane/mock_dane/lessons.json";
-import { useCourseView } from "@/app/hooks/useCourseView";
-import { useCourseNavigation } from "@/app/hooks/useCourseNavigation";
+'use client';
 
-export default async function LessonPage({ params }) {
-  const { courseSlug, chapterSlug, topicSlug, lessonSlug } = await params;
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import { useCourseNavigation } from '@/app/hooks/useCourseNavigation';
+import { get } from 'node:http';
 
-  const courses = useCourseView();
+export default function TopicLessonsPage() {
+  const { courseSlug, chapterSlug, topicSlug } = useParams();
+
   const {
+    getCourseBySlug,
     getChapterBySlug,
     getTopicBySlug,
-    getLessonBySlug,
-    getVideoById,
-    getTextById
+    getLessonsByTopicId,
+    getVideosByLessonId,
+    getTaskGroupsByLessonId
   } = useCourseNavigation();
 
-  // 1. kurs
-  const course = courses.find(c => c.slug === courseSlug);
+  // 1. Kurs
+  const course = getCourseBySlug(courseSlug);
   if (!course) return <p>Nie znaleziono kursu</p>;
 
-   // 2. rozdział
-  const chapter = getChapterBySlug(course.courseId, chapterSlug);
+  // 2. Rozdział
+  const chapter = getChapterBySlug(course.course_id, chapterSlug);
   if (!chapter) return <p>Nie znaleziono rozdziału</p>;
 
-  // 3. temat
-  const topic = getTopicBySlug(chapter.chapterId, topicSlug);
+  // 3. Temat
+  const topic = getTopicBySlug(chapter.chapter_id, topicSlug);
   if (!topic) return <p>Nie znaleziono tematu</p>;
 
-  // 4. lekcje w temacie
-  const lessons = lessonsData
-    .filter(l => topic.lessons.includes(l.lessonId))
-    .sort((a, b) => a.order - b.order);
-
+  // 4. Lekcje w temacie
+  const lessons = getLessonsByTopicId(topic.topic_id);
   if (!lessons.length) return <p>Brak lekcji w tym temacie</p>;
 
   return (
     <div>
-      <h2>{topic.title}</h2>
+      <h1>Kurs: {course.title}</h1>
+      <h2>Rozdział: {chapter.title}</h2>
+      <h3>Temat: {topic.title}</h3>
 
-      {lessons.map(lesson => (
-        <div key={lesson.lessonId} style={{ marginBottom: "32px" }}>
-          <h3>{lesson.title}</h3>
+      {lessons.map((lesson, index) => {
+        const videos = getVideosByLessonId(lesson.lesson_id);
+        const taskGroup = getTaskGroupsByLessonId(lesson.lesson_id);
 
-          {lesson.theory
-            .sort((a, b) => a.order - b.order)
-            .map((block, i) => (
-              <div key={i} style={{ marginBottom: "24px" }}>
-                {block.videoId && (
-                  <div>
-                    <p>film: {getVideoById(block.videoId)?.title}</p>
+        return (
+          <div key={lesson.lesson_id} style={{ marginBottom: '32px' }}>
+            <h4>
+              {index + 1}. {lesson.title}
+            </h4>
+
+            {/* Materiały wideo */}
+            {videos.length ? (
+              videos
+                .sort((a, b) => a.sort_order - b.sort_order)
+                .map((video) => (
+                  <div key={video.video_id} style={{ marginBottom: '16px' }}>
+                    <p>
+                      🎬 {video.title} ({video.duration_seconds}s)
+                    </p>
+                    {video.text && <p>📄 {video.text}</p>}
                   </div>
-                )}
+                ))
+            ) : (
+              <p>Brak materiałów wideo w tej lekcji</p>
+            )}
 
-                {block.textId && (
-                  <div>
-                    <p>text: {getTextById(block.textId)?.content}</p>
-                  </div>
-                )}
-
-                {block.taskGroupId && (
-                  <Link href={`./${lesson.slug}/zadania/${block.taskGroupId}`}>
-                    <div>
-                      Przejdź do zadań
-                    </div>
-                  </Link>
-                )}
-              </div>
-            ))}
-        </div>
-      ))}
+            {/* Link do zadań */}
+            {taskGroup.length && (
+              <Link
+                href={`/dashboard/kursy/${course.slug}/${chapter.slug}/${topic.slug}/zadania/${taskGroup[0].task_group_id}`}
+              >
+                <div style={{ marginTop: '8px', color: 'blue' }}>
+                  Przejdź do zadań: {taskGroup[0].title}
+                </div>
+              </Link>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

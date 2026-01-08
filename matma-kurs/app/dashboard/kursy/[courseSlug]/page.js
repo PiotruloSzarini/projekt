@@ -1,44 +1,49 @@
-import { useProgressCalculator } from "@/app/hooks/useProgressCalculator";
-import { useCourseNavigation } from "@/app/hooks/useCourseNavigation";
+'use client';
+
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import ChapterCard from "../../components/ChapterCard/ChapterCard";
+import { useCourseNavigation } from "@/app/hooks/useCourseNavigation";
+import { useProgressCalculator } from "@/app/hooks_old/useProgressCalculator";
 
-export default async function CoursePage({ params }) {
-    const { courseSlug } = await params;
+export default function CoursePage() {
+  const { courseSlug } = useParams(); // ← JEDYNA POPRAWNA FORMA
 
-    const { coursesStats, calculateChapterStats } = useProgressCalculator();
-    const { getChaptersByCourseId } = useCourseNavigation();
+  const { loading, getCourseBySlug, getChaptersByCourseId } = useCourseNavigation();
+  const { calculateChapterStats } = useProgressCalculator();
 
-    const course = coursesStats.find(c => c.slug === courseSlug);
-    if (!course) return <p>Nie znaleziono kursu</p>;
+  if (loading) return <p>Ładowanie danych kursu...</p>;
 
-    const chapters = getChaptersByCourseId(course.courseId);
+  const course = getCourseBySlug(courseSlug);
+  if (!course) return <p>Nie znaleziono kursu</p>;
 
-    return (
-        <div>
-            <h1>{course.title}</h1>
+  const chapters = getChaptersByCourseId(course.course_id);
 
-            {chapters.map((chapter, index) => {
-                const chapterStats = calculateChapterStats(chapter);
+  return (
+    <div>
+      <h1>{course.title}</h1>
 
-            return (
-                <div key={chapter.chapterId} style={{ marginBottom: '16px' }}>
-                    <Link
-                        href={`/dashboard/kursy/${course.slug}/${chapter.slug}`}
-                        style={{ textDecoration: 'none' }}
-                    >
-                        <ChapterCard
-                            title={chapter.title}
-                            backgroundColor={course.color}
-                            tasksCount={chapterStats.taskCount}
-                            videosCount={chapterStats.videoCount}
-                            progress={chapterStats.progress}
-                            count={index + 1}
-                        />
-                    </Link>
-                    </div>
-                );
-            })}
-        </div>
-    );    
-}   
+      {chapters.map((chapter, index) => {
+        const chapterStats = calculateChapterStats(chapter);
+
+        return (
+          <div key={chapter.chapter_id} style={{ marginBottom: "16px" }}>
+            <Link
+              href={`/dashboard/kursy/${course.slug}/${chapter.slug}`}
+              style={{ textDecoration: "none" }}
+            >
+              <ChapterCard
+                title={chapter.title}
+                backgroundColor={course.color}
+                tasksCount={chapterStats.taskCount}
+                videosCount={chapterStats.videoCount}
+                progress={chapterStats.progress}
+                count={index + 1}
+              />
+            </Link>
+          </div>
+        );
+      })}
+    </div>
+  );
+}

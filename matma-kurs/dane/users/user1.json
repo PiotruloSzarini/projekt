@@ -28,6 +28,16 @@
       "taskId": 3,
       "solved": true,
       "attempts": 3
+    },
+    {
+      "taskId": 4,
+      "solved": true,
+      "attempts": 1
+    },
+    {
+      "taskId": 5,
+      "solved": true,
+      "attempts": 3
     }
   ],
 

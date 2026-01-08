@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/Kacpi476/projekt_kurs#readme",
   "dependencies": {
+    "dotenv": "^17.2.3",
     "nextjs": "^0.0.3",
     "nodemon": "^3.1.10"
   }
