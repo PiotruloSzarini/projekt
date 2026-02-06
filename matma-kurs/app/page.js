@@ -11,6 +11,13 @@ export default function HomePage() {
           Przejdź do dashboardu
         </button>
       </Link>
+
+      <p>admin</p>
+      <Link href="/admin">
+        <button className={styles.button}>
+          Przejdź do admin panel
+        </button>
+      </Link>
     </main>
   );
 }
