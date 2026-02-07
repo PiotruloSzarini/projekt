@@ -112,7 +112,6 @@ export default function AdminCourseEdit() {
     const updateItemRequest = async (itemData) => {
         // Upewniamy się, że parentId jest poprawny
         const pId = (itemData.type === 'chapter') ? null : (itemData.parentId || null);
-        
         await fetch('/api/admin/update-content', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -147,7 +146,7 @@ export default function AdminCourseEdit() {
         if (!data.name) return alert("Wpisz nazwę!");
         const endpoint = isCreating ? '/api/admin/create-content' : '/api/admin/update-content';
         const pId = (data.type === 'chapter') ? null : (data.parentId || null);
-
+        console.log("Zapis do DB:", { courseId, type: data.type, id: data.id, name: data.name, parentId: pId, sort: data.sort });
         try {
             const res = await fetch(endpoint, {
                 method: 'POST',
@@ -188,6 +187,50 @@ export default function AdminCourseEdit() {
         setEditData({ name: '', type: 'chapter', parentId: null, sort: nextSort });
     };
 
+    const handleDelete = async () => {
+        // Blokada: nie usuwamy czegoś, co nie ma ID (np. w trakcie tworzenia)
+        if (!editData.id) return;
+
+        if (!confirm("Czy na pewno chcesz usunąć ten element? Pamiętaj, że musisz najpierw ręcznie usunąć lub przenieść wszystkie podelementy (lekcje, tematy itp.).")) return;
+
+        try {
+            console.log("Próba usunięcia:", { type: editData.type, id: editData.id });
+
+            const res = await fetch('/api/admin/delete-content', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    type: editData.type, 
+                    id: editData.id 
+                })
+            });
+
+            // Sprawdzamy, czy odpowiedź to JSON
+            const contentType = res.headers.get("content-type");
+            if (!contentType || !contentType.includes("application/json")) {
+                const text = await res.text();
+                console.error("Serwer nie zwrócił JSONa:", text);
+                alert("Błąd krytyczny serwera. Sprawdź terminal!");
+                return;
+            }
+
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                alert("Usunięto pomyślnie.");
+                await fetchStructure(); // Odśwież listę po lewej
+                setSelected(null);      // Zamknij formularz edycji
+                setIsCreating(false);
+            } else {
+                // Tutaj złapiemy Twój błąd 409 (brak pustego elementu)
+                alert("BŁĄD: " + (data.error || "Nie udało się usunąć elementu."));
+            }
+        } catch (err) {
+            console.error("Błąd sieciowy:", err);
+            alert("Błąd połączenia z serwerem.");
+        }
+    };
+
     const prepareAddChild = () => {
         if (!selected) return;
         const typeMap = { 'chapter': 'topic', 'topic': 'lesson', 'lesson': 'task_group' };
@@ -221,6 +264,7 @@ export default function AdminCourseEdit() {
         });
         return list;
     };
+
 
     if (loading) return <div>Ładowanie...</div>;
 
@@ -299,6 +343,10 @@ export default function AdminCourseEdit() {
                                 </button>
                             )}
                             
+                            <button onClick={handleDelete} style={{ ...secondaryBtn, backgroundColor: '#ff4d4f', borderColor: '#ff4d4f' }}>
+                                USUŃ ELEMENT
+                            </button>
+
                             <button onClick={() => { setIsCreating(false); setSelected(null); }} style={cancelBtn}>
                                 Anuluj
                             </button>
