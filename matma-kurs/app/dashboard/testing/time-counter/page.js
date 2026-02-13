@@ -4,7 +4,6 @@ export default function time_counter() {
     return (
         <div>
             <TimeCounter int="134" />
-            
         </div>
     );
 }
