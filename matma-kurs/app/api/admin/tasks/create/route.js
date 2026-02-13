@@ -6,29 +6,43 @@ export async function POST(request) {
     try {
         const body = await request.json();
         
-        // Destrukturyzacja wszystkiego co wysyłamy z frontu
         const { 
-            task_group_id, 
+            task_group_id, // może być null/undefined
             task_type_id, 
             question, 
             difficulty, 
             points,
-            details,      // Dane specyficzne dla typu (odpowiedzi, pary itp.)
-            hints,        // Tablica: [{ content: '...', sort_order: 0 }]
-            explanation   // Obiekt: { steps: [{ content: '...', sort_order: 0 }] }
+            details,      
+            hints,        
+            explanation   
         } = body;
 
         await connection.beginTransaction();
 
+        let finalGroupId = null;
+        if (task_group_id) {
+            const [groupCheck] = await connection.execute(
+                "SELECT task_group_id FROM task_groups WHERE task_group_id = ?",
+                [task_group_id]
+            );
+            if (groupCheck.length > 0) {
+                finalGroupId = task_group_id;
+            } else {
+                console.warn(`Próba dodania do nieistniejącej grupy ${task_group_id}. Ustawiam NULL.`);
+                finalGroupId = null;
+            }
+        }
+
         // 1. INSERT DO GŁÓWNEJ TABELI: tasks
+        // Używamy "task_group_id || null", aby upewnić się, że puste wartości trafią jako NULL do bazy
         const [taskResult] = await connection.execute(
             `INSERT INTO tasks (task_group_id, task_type_id, question, difficulty, points) 
             VALUES (?, ?, ?, ?, ?)`,
-            [task_group_id, task_type_id, question, difficulty || 1, points || 0]
+            [finalGroupId, parseInt(task_type_id), question, difficulty || 1, points || 0]
         );
         const taskId = taskResult.insertId;
 
-        // 2. OBSŁUGA TYPÓW ZADAŃ (zależnie od task_type_id)
+        // 2. OBSŁUGA TYPÓW ZADAŃ (Tutaj kod zostaje bez zmian, bo bazuje na taskId)
         
         // --- TYP 1: MULTIPLE CHOICE ---
         if (parseInt(task_type_id) === 1) {
@@ -91,10 +105,10 @@ export async function POST(request) {
             }
         }
 
-        // 3. INSERT PODPOWIEDZI: task_hints
+        // 3. PODPOWIEDZI
         if (hints && Array.isArray(hints)) {
             for (const hint of hints) {
-                if (hint.content.trim() !== "") {
+                if (hint.content && hint.content.trim() !== "") {
                     await connection.execute(
                         `INSERT INTO task_hints (task_id, content, sort_order) VALUES (?, ?, ?)`,
                         [taskId, hint.content, hint.sort_order]
@@ -103,7 +117,7 @@ export async function POST(request) {
             }
         }
 
-        // 4. INSERT WYJAŚNIENIA: task_explanation + task_explanation_steps
+        // 4. WYJAŚNIENIA
         if (explanation && explanation.steps && explanation.steps.length > 0) {
             const [explResult] = await connection.execute(
                 `INSERT INTO task_explanation (task_id) VALUES (?)`,
@@ -112,7 +126,7 @@ export async function POST(request) {
             const explanationId = explResult.insertId;
 
             for (const step of explanation.steps) {
-                if (step.content.trim() !== "") {
+                if (step.content && step.content.trim() !== "") {
                     await connection.execute(
                         `INSERT INTO task_explanation_steps (explanation_id, content, sort_order) 
                         VALUES (?, ?, ?)`,
@@ -122,17 +136,15 @@ export async function POST(request) {
             }
         }
 
-        // Jeśli wszystko przeszło - COMMIT
         await connection.commit();
         
         return NextResponse.json({ 
             success: true, 
-            message: "Zadanie utworzone pomyślnie", 
+            message: task_group_id ? "Dodano zadanie do lekcji" : "Dodano zadanie do bazy ogólnej", 
             taskId: taskId 
         }, { status: 201 });
 
     } catch (error) {
-        // W razie jakiegokolwiek błędu - COFAMY wszystko
         await connection.rollback();
         console.error("CREATE TASK ERROR:", error);
         return NextResponse.json({ error: error.message }, { status: 500 });

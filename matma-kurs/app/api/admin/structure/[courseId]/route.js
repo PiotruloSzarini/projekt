@@ -6,16 +6,15 @@ export async function GET(request, { params }) {
     const id = parseInt(courseId);
 
     try {
+        // Upraszczamy JOIN - nie potrzebujemy już wyciągać task_groups do drzewa
         const [rows] = await pool.query(`
             SELECT 
                 c.chapter_id, c.title AS chapter_title, c.sort_order AS chapter_sort,
                 t.topic_id, t.title AS topic_title, t.sort_order AS topic_sort,
-                l.lesson_id, l.title AS lesson_title, l.sort_order AS lesson_sort,
-                tg.task_group_id, tg.title AS group_title 
+                l.lesson_id, l.title AS lesson_title, l.sort_order AS lesson_sort
             FROM chapters c 
             LEFT JOIN topics t ON c.chapter_id = t.chapter_id 
             LEFT JOIN lessons l ON t.topic_id = l.topic_id 
-            LEFT JOIN task_groups tg ON l.lesson_id = tg.lesson_id 
             WHERE c.course_id = ? 
             ORDER BY c.sort_order, t.sort_order, l.sort_order
         `, [id]);
@@ -27,7 +26,7 @@ export async function GET(request, { params }) {
         const chapters = [];
 
         rows.forEach(row => {
-            // ROZDZIAŁY
+            // 1. ROZDZIAŁY
             let chapter = chapters.find(c => c.id === row.chapter_id);
             if (!chapter && row.chapter_id) {
                 chapter = {
@@ -40,7 +39,7 @@ export async function GET(request, { params }) {
                 chapters.push(chapter);
             }
 
-            // TEMATY
+            // 2. TEMATY
             if (row.topic_id && chapter) {
                 let topic = chapter.children.find(t => t.id === row.topic_id);
                 if (!topic) {
@@ -55,7 +54,7 @@ export async function GET(request, { params }) {
                     chapter.children.push(topic);
                 }
 
-                // LEKCJE
+                // 3. LEKCJE
                 if (row.lesson_id && topic) {
                     let lesson = topic.children.find(l => l.id === row.lesson_id);
                     if (!lesson) {
@@ -65,21 +64,9 @@ export async function GET(request, { params }) {
                             type: "lesson",
                             sort: row.lesson_sort || 0,
                             parentId: row.topic_id,
-                            children: []
+                            children: [] // Puste children, bo video i task_groups obsługujemy wewnątrz lekcji
                         };
                         topic.children.push(lesson);
-                    }
-
-                    // GRUPY ZADAŃ
-                    if (row.task_group_id && lesson) {
-                        if (!lesson.children.find(g => g.id === row.task_group_id)) {
-                            lesson.children.push({
-                                id: row.task_group_id,
-                                name: row.group_title || "Zestaw zadań",
-                                type: "task_group",
-                                parentId: row.lesson_id
-                            });
-                        }
                     }
                 }
             }
@@ -88,7 +75,7 @@ export async function GET(request, { params }) {
         return NextResponse.json(chapters);
 
     } catch (error) {
-        console.error("BŁĄD W API:", error);
+        console.error("BŁĄD W API STRUCTURE:", error);
         return NextResponse.json({ error: 'Failed to fetch structure', detail: error.message }, { status: 500 });
     }
 }
