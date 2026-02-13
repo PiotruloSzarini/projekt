@@ -1,7 +1,6 @@
 .lesson_card {
     width: 100%;
     max-width: 650px; /*  KURWA TO JEST DO ZMIANY JAK BEDZIE KURWA DIV JEBANY W [CHAPTERSLUG]*/
-    height: 100%;
     background-color: white;
     border: 1px solid black;
     border-radius: 24px;
