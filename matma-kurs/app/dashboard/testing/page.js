@@ -16,8 +16,16 @@ export default function testing() {
                 temat info
             </Link>
             <br></br>
+            <Link href="/dashboard/testing/course-components">
+                course components
+            </Link>
+            <br></br>
             <Link href="/dashboard/testing/lesson-components">
                 lesson components
+            </Link>
+            <br></br>
+            <Link href="/dashboard/testing/task-components">
+                task components
             </Link>
         </div>
     );

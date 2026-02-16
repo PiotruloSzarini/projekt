@@ -4,7 +4,6 @@
     align-items: center;
     justify-content: flex-start;
     width: 670px;
-    height: 850px;
     background-color: #FEFFFF;
     border-radius: 24px;
     gap: 16px;
@@ -13,22 +12,29 @@
 .topicInfo_div_main_top {
     display: flex;
     flex-direction: row;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     padding: 16px;
     width: 100%;
     border-radius: 24px 24px 0 0;
     min-height: 185px;
     color: white;
+    height: 190px;
 }
 
 .topicInfo_div_info {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    justify-content: space-between;
+    justify-content: flex-start;
     height: 100%;
     width: 40%;
+}
+
+.topicInfo_div_info_chapter {
+    font-size: 16px;
+    font-weight: 500;
+    color: #FEFFFF80;
 }
 
 .topicInfo_div_info_text{
@@ -42,11 +48,12 @@
 .topicInfo_div_info_text h1{
     font-size: 40px;
     font-weight: 700;
+    line-height: 120%;
+    color: #FEFFFF;
 }
-.topicInfo_div_info_text p{
-    font-size: 16px;
-    font-weight: 500;
-    color: #FEFFFF80;
+
+.topicInfo_div_info_continue{
+    margin-top: auto;
 }
 
 .topicInfo_div_info_continue_link {
@@ -62,8 +69,47 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: center;
     width: 100%;
     height: 100%;
     gap: 16px;
+    padding-bottom: 16px;
+}
+
+
+.topicInfo_div_progress {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    height: 100%;
+    width: 50%;
+}
+
+.customCircle {
+    width: 128px;
+    height: 128px;
+}
+
+.topicInfo_div_progress :global(circle-progress::part(base)) {
+    width: 128px;
+    height: 128px;
+    overflow: visible;
+}
+
+.topicInfo_div_progress :global(circle-progress::part(value)) {
+    stroke: #FEFFFF;
+}
+
+.topicInfo_div_progress :global(circle-progress::part(text)) {
+    font-size: 25px !important;
+    font-weight: bold;
+    font-family: var(--font-instrument-sans);
+    fill: #FEFFFF;
+    font-weight: bold;
+}
+
+.topicInfo_div_progress :global(circle-progress::part(circle)) {
+    stroke: #FEFFFF;
+    opacity: 25%;
 }
