@@ -1,3 +1,12 @@
+.rozdzialInfo_div_container{
+    max-width: 670px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 16px;
+}
+
 .rozdzialInfo_div_main {
     display: flex;
     flex-direction: row;
@@ -10,13 +19,22 @@
     color: white;
 }
 
+.topicInfo_div_main_top{
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
 .rozdzialInfo_div_info {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     justify-content: space-between;
     height: 100%;
-    width: 40%;
+    width: 50%;
 }
 
 .rozdzialInfo_div_info_text {
@@ -45,3 +63,55 @@
     text-transform: uppercase;
 }
 
+.rozdzialInfo_div_progress {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    height: 100%;
+    width: 50%;
+}
+
+.customCircle {
+    width: 128px;
+    height: 128px;
+}
+
+.rozdzialInfo_div_progress :global(circle-progress::part(base)) {
+    width: 128px;
+    height: 128px;
+    overflow: visible;
+}
+
+.rozdzialInfo_div_progress :global(circle-progress::part(value)) {
+    stroke: #FEFFFF;
+}
+
+.rozdzialInfo_div_progress :global(circle-progress::part(text)) {
+    font-size: 25px !important;
+    font-weight: bold;
+    font-family: var(--font-instrument-sans);
+    fill: #FEFFFF;
+    font-weight: bold;
+}
+
+.rozdzialInfo_div_progress :global(circle-progress::part(circle)) {
+    stroke: #FEFFFF;
+    opacity: 25%;
+}
+
+
+.topicInfo_div_main_bottom{
+    width: 100%;
+}
+
+
+
+.rozdzialInfo_div_chapters {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 16px;
+}
