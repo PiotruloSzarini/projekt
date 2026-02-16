@@ -17,6 +17,8 @@ export default function ChapterCard({
 
     const fontColorStyle = progress === 100 ? { color: "#FEFFFF80" } : {};
 
+    const borderColorStyle = progress === 100 ? { borderRight: "1px solid #FEFFFF80" } : {};
+
     let progressBarColor;
     if (progress === 100) {
         progressBarColor  = "#FEFFFF40";
@@ -46,7 +48,7 @@ export default function ChapterCard({
                 </div>
 
                 <div className={styles.chapter_task_video}>
-                    <div className={styles.videosCount_div}>
+                    <div className={styles.videosCount_div} style={borderColorStyle}>
                         <Image src={imgSrcVideos} alt="video icon" width={12} height={9} />
                         <p style={fontColorStyle}>{videosCount}</p>
                     </div>
