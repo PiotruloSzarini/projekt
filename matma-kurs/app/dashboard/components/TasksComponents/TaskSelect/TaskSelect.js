@@ -1,5 +1,4 @@
-import { text } from 'node:stream/consumers';
-import styles from './TaskSelect.module.css';
+    import styles from './TaskSelect.module.css';
 import Link from 'next/link';
 
 export default function TaskSelect({
@@ -15,9 +14,11 @@ export default function TaskSelect({
         activeStyle.border = `1px solid ${backgroundColor}`;
     }
     return (
-        <div className={styles.taskSelect_main_div} style={activeStyle}>
+        <div>
             <Link href={link} className={styles.taskSelect_link} style={{ textDecoration: 'none' }}>
-                <p className={styles.taskSelect_p}>{int}</p>
+                <div className={styles.taskSelect_main_div} style={activeStyle}>
+                    <p className={styles.taskSelect_p}>{int}</p>
+                </div>
             </Link>
         </div>
     );
