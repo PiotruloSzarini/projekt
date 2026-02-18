@@ -1,9 +1,9 @@
-import ProgressBar from '../ProgressBar/ProgressBar';
-import styles from './LessonCard.module.css';
+import ProgressBar from '../../ProgressBar/ProgressBar';
+import styles from './TopicCard.module.css';
 import Link from 'next/link';
 import Image from 'next/image';
 
-export default function LessonCard({
+export default function TopicCard({
     title,
     backgroundColor,
     progress,

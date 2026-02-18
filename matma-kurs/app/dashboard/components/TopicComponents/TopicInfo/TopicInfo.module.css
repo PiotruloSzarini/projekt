@@ -27,7 +27,7 @@
     align-items: flex-start;
     justify-content: flex-start;
     height: 100%;
-    width: 40%;
+    width: 70%;
 }
 
 .topicInfo_div_info_chapter {
@@ -82,7 +82,7 @@
     align-items: center;
     justify-content: flex-end;
     height: 100%;
-    width: 50%;
+    width: 30%;
 }
 
 .customCircle {

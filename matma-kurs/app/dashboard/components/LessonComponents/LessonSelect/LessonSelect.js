@@ -1,10 +1,10 @@
 import styles from './LessonSelect.module.css';
 import Link from 'next/link';
 
-export default function LessonSelect({ count, active, backgroundColor, fontColor, link }) {
+export default function LessonSelect({ count, active, backgroundColor, link }) {
     
     const cardStyle = active === true
-        ? { backgroundColor, color: fontColor }
+        ? { backgroundColor, color: "#FEFFFF" }
         : {};
 
     return (
@@ -13,6 +13,5 @@ export default function LessonSelect({ count, active, backgroundColor, fontColor
                 <p style={cardStyle}>Lekcja {count}</p>
             </Link>
         </div>
-        
     );
 }

@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import LessonCard from "@/app/dashboard/components/LessonCard/LessonCard";
+import TopicCard from "@/app/dashboard/components/TopicComponents/TopicCard/TopicCard";
+import TopicInfo from "@/app/dashboard/components/TopicComponents/TopicInfo/TopicInfo";
 import { useCourseNavigation } from "@/app/hooks/useCourseNavigation";
 
 export default function TopicPage() {
@@ -26,20 +27,26 @@ export default function TopicPage() {
   const topics = getTopicsByChapterId(chapter.chapter_id);
   if (!topics) return <p>Nie znaleziono tematu</p>;
 
+  const chapterOrder = chapter.sort_order;
+
   return (
     <div>
-      <h1>Kurs: {course.title}</h1>
-      <h2>Rozdział: {chapter.title}</h2>
-
-      {topics.map((topic, index) => {
+      <TopicInfo
+        chapterName={chapter.title}
+        progress={50} // placeholder progress
+        link={`/dashboard/kursy/${course.slug}/${chapter.slug}/${topics[0].slug}`} // link do pierwszego tematu
+        backgroundColor={course.color}
+        count={chapterOrder} // numer rozdziału
+      >
+        {topics.map((topic, index) => {
         return (
           <Link
             key={topic.topic_id}
             href={`/dashboard/kursy/${course.slug}/${chapter.slug}/${topic.slug}`}
-            style={{ textDecoration: "none" }}
+            style={{ textDecoration: "none", width: "100%" }}
           >
-            <div style={{ marginBottom: "16px" }}>
-              <LessonCard
+            <div>
+              <TopicCard
                 title={topic.title}
                 backgroundColor={course.color}
                 progress={50} // placeholder progress
@@ -49,6 +56,7 @@ export default function TopicPage() {
           </Link>
         );
       })}
+      </TopicInfo>
     </div>
   );
 }

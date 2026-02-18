@@ -1,4 +1,4 @@
-import ProgressBar from '../ProgressBar/ProgressBar';
+import ProgressBar from '../../ProgressBar/ProgressBar';
 import styles from './ChapterCard.module.css';
 import Image from 'next/image';
 import Link from 'next/link';
