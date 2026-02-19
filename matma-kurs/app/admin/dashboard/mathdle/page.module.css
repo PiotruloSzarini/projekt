@@ -1,0 +1,205 @@
+.admin_wrapper {
+    display: flex;
+    gap: 40px;
+    padding: 20px;
+    align-items: flex-start;
+}
+
+.calendar_section {
+    width: 380px;
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+/* NAGŁÓWEK KALENDARZA */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding: 0 5px;
+    position: relative;
+}
+
+.nav_button {
+    background: #f8f9fa;
+    border: 1px solid #eee;
+    color: #555;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.nav_button:hover {
+    background: #007bff;
+    color: white;
+    border-color: #007bff;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
+}
+
+.month_selector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    color: #032327;
+    padding: 8px 16px;
+    border-radius: 12px;
+    transition: background 0.2s;
+    position: relative;
+    background: #f0f7ff; /* Lekkie tło dla selektora */
+}
+
+.month_selector:hover {
+    background: #e1efff;
+}
+
+.month_dropdown {
+    position: absolute;
+    top: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    background: white;
+    border: 1px solid #ddd;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    z-index: 100;
+    border-radius: 12px;
+    padding: 10px;
+    width: 220px;
+}
+
+.month_item {
+    padding: 10px;
+    font-size: 13px;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 8px;
+}
+
+.month_item:hover { 
+    background: #007bff; 
+    color: white; 
+}
+
+.rotate {
+    transform: rotate(180deg);
+    transition: transform 0.3s ease;
+}
+
+/* SIATKA DNI */
+.calendar_grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+}
+
+.weekday_label {
+    text-align: center;
+    font-size: 12px;
+    color: #adb5bd;
+    font-weight: 700;
+    padding-bottom: 10px;
+}
+
+.day_tile {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #f9f9f9;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    color: #444;
+    transition: 0.2s;
+    position: relative;
+}
+
+.day_tile:hover { 
+    background: #eef6ff; 
+    color: #007bff; 
+}
+
+.selected {
+    background: #007bff !important;
+    color: white !important;
+    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
+}
+
+.disabled { 
+    color: #ccc; 
+    background: none; 
+    cursor: default;
+}
+
+.dot_indicator {
+    width: 4px;
+    height: 4px;
+    background: #007bff;
+    border-radius: 50%;
+    margin-top: 2px;
+}
+
+/* PANEL EDYCJI */
+.edit_panel {
+    flex: 1;
+    max-width: 400px;
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+.panel_title {
+    margin-bottom: 20px;
+    color: #032327;
+}
+
+.task_setup {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.slot {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.task_select {
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    background: #fff;
+    font-size: 14px;
+}
+
+.save_button {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background 0.2s;
+}
+
+.save_button:hover {
+    background: #218838;
+}
