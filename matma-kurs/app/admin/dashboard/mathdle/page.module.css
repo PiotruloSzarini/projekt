@@ -1,115 +1,63 @@
 .admin_wrapper {
-    display: flex;
-    gap: 40px;
+    display: grid;
+    /* Dwie równe kolumny, ale z limitem szerokości, żeby nie uciekały */
+    grid-template-columns: repeat(2, minmax(0, 600px));
+    /* Wiersze dopasowują się do treści (brak wielkiej przerwy) */
+    grid-template-rows: auto auto; 
+    grid-template-areas: 
+        "calendar edit"
+        "preview empty";
+    gap: 20px;
     padding: 20px;
-    align-items: flex-start;
+    background: #f5f5f5;
+    min-height: 100vh;
+    box-sizing: border-box;
+    /* Wyrównanie do lewej i góry */
+    justify-content: start;
+    align-content: start;
 }
 
+/* KAFELEK 1: KALENDARZ */
 .calendar_section {
-    width: 380px;
+    grid-area: calendar;
     background: white;
     padding: 20px;
     border-radius: 15px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    width: 100%;
+    box-sizing: border-box;
 }
 
-/* NAGŁÓWEK KALENDARZA */
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 25px;
-    padding: 0 5px;
-    position: relative;
-}
-
-.nav_button {
-    background: #f8f9fa;
-    border: 1px solid #eee;
-    color: #555;
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.nav_button:hover {
-    background: #007bff;
-    color: white;
-    border-color: #007bff;
-    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
-}
-
-.month_selector {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 18px;
-    font-weight: 700;
-    cursor: pointer;
-    color: #032327;
-    padding: 8px 16px;
-    border-radius: 12px;
-    transition: background 0.2s;
-    position: relative;
-    background: #f0f7ff; /* Lekkie tło dla selektora */
-}
-
-.month_selector:hover {
-    background: #e1efff;
-}
-
-.month_dropdown {
-    position: absolute;
-    top: 50px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
+/* KAFELEK 2: PLAN DNIA */
+.edit_panel {
+    grid-area: edit;
     background: white;
-    border: 1px solid #ddd;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-    z-index: 100;
-    border-radius: 12px;
-    padding: 10px;
-    width: 220px;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    width: 100%;
+    box-sizing: border-box;
+    height: fit-content; /* Zapobiega rozciąganiu w pionie */
 }
 
-.month_item {
-    padding: 10px;
-    font-size: 13px;
-    text-align: center;
-    cursor: pointer;
-    border-radius: 8px;
+/* KAFELEK 3: PODGLĄD */
+.preview_panel {
+    grid-area: preview;
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 0; /* Usuwamy zbędne marginesy */
 }
 
-.month_item:hover { 
-    background: #007bff; 
-    color: white; 
-}
-
-.rotate {
-    transform: rotate(180deg);
-    transition: transform 0.3s ease;
-}
-
-/* SIATKA DNI */
+/* SIATKA KALENDARZA */
 .calendar_grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 8px;
-}
-
-.weekday_label {
-    text-align: center;
-    font-size: 12px;
-    color: #adb5bd;
-    font-weight: 700;
-    padding-bottom: 10px;
+    width: 100%;
 }
 
 .day_tile {
@@ -118,88 +66,162 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: #f9f9f9;
-    border-radius: 8px;
+    background: #ffffff; /* Czyste białe tło dla dni z obecnego miesiąca */
+    border-radius: 10px;
     cursor: pointer;
     font-size: 15px;
     font-weight: 600;
-    color: #444;
-    transition: 0.2s;
-    position: relative;
-}
-
-.day_tile:hover { 
-    background: #eef6ff; 
-    color: #007bff; 
+    transition: all 0.2s ease;
+    border: 1px solid #f0f0f0; /* Delikatna ramka */
 }
 
 .selected {
     background: #007bff !important;
     color: white !important;
-    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
+    border-color: #0056b3 !important;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+    z-index: 10; /* Żeby cień był nad innymi kafelkami */
 }
-
+.day_tile:hover:not(.disabled):not(.selected) {
+    background: #eef6ff;
+    border-color: #007bff;
+    color: #007bff;
+}
+.day_tile:hover:not(.selected) {
+    background: #eef6ff;
+    border-color: #007bff;
+}
+/* DNI Z INNYCH MIESIĘCY */
 .disabled { 
-    color: #ccc; 
-    background: none; 
+    color: #ccc !important; /* Jasnoszary kolor tekstu */
+    background: rgba(240, 240, 240, 0.4) !important; /* Bardzo jasne, półprzezroczyste tło */
     cursor: default;
+    pointer-events: none; /* Opcjonalnie: blokuje klikanie w dni spoza miesiąca */
+    border: none !important;
 }
-
-.dot_indicator {
-    width: 4px;
-    height: 4px;
-    background: #007bff;
-    border-radius: 50%;
-    margin-top: 2px;
+/* Upewnij się, że kropki w tych dniach też są ledwo widoczne */
+.disabled .dot {
+    opacity: 0.2;
 }
-
-/* PANEL EDYCJI */
-.edit_panel {
-    flex: 1;
-    max-width: 400px;
-    background: white;
-    padding: 25px;
-    border-radius: 15px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-}
-
-.panel_title {
-    margin-bottom: 20px;
-    color: #032327;
-}
-
-.task_setup {
+/* Nagłówek i reszta elementów */
+.header {
     display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.slot {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
 }
 
 .task_select {
-    padding: 12px;
-    border-radius: 10px;
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
     border: 1px solid #ddd;
-    background: #fff;
-    font-size: 14px;
+    margin: 5px 0 10px 0;
+    box-sizing: border-box;
+}
+
+.preview_question {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 10px;
+    border-left: 4px solid #0070f3;
+    font-size: 15px;
+}
+
+.dot_container {
+    display: flex;
+    gap: 3px;
+    margin-top: 4px;
+}
+
+.dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+}
+/* Przyciski */
+
+.nav_button {
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    color: #333;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.nav_button:hover {
+    background: #007bff;
+    color: white;
+    border-color: #007bff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
+}
+
+.nav_button:active {
+    transform: translateY(0);
 }
 
 .save_button {
     background: #28a745;
     color: white;
     border: none;
-    padding: 15px;
-    border-radius: 10px;
-    font-weight: bold;
+    padding: 16px 20px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 15px;
     cursor: pointer;
-    margin-top: 10px;
-    transition: background 0.2s;
+    width: 100%;
+    margin-top: 15px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
 }
 
-.save_button:hover {
+.save_button:hover:not(:disabled) {
     background: #218838;
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.save_button:disabled {
+    background: #a5d6a7;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+.preview_meta {
+    display: flex;
+    justify-content: space-between; /* To wypchnie punkty na prawą stronę */
+    align-items: center;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #eee; 
+    color: #444;
+    font-size: 14px;
+}
+
+
+/* Kreska rozdzielająca (Separator) */
+.preview_meta_item:not(:last-child)::after {
+    content: "";
+    width: 1px;
+    height: 14px;
+    background: #ccc;
+    margin-left: 15px;
+}
+
+.preview_id {
+    font-weight: 700;
+    color: #007bff;
+    background: #eef6ff;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
 }
