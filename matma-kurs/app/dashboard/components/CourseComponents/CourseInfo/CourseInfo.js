@@ -9,8 +9,8 @@ export default function CourseInfo({
 }) {
     const childrenArray = Children.toArray(children);
 
-    const ownedCourses = childrenArray.filter(child => child.props.owned === true);
-    const otherCourses = childrenArray.filter(child => child.props.owned !== true);
+    const ownedCourses = childrenArray.filter(child => child.props['data-owned'] === true);
+    const otherCourses = childrenArray.filter(child => child.props['data-owned'] !== true);
 
     return (
         <div className={styles.course_info_container}>

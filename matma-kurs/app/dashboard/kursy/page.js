@@ -23,7 +23,7 @@ export default function KursyPage() {
                     key={course.course_id}
                     href={`/dashboard/kursy/${course.slug}`}
                     style={{ textDecoration: 'none' }}
-                    owned={true}
+                    data-owned={true}
                 >
                     <CourseCard
                         title={course.title}
@@ -43,6 +43,7 @@ export default function KursyPage() {
                     videosCount={123} 
                     progress={0}
                     owned={false}
+                    data-owned={false}
                 />
                 )
             ))}

@@ -2,6 +2,13 @@
 import { useState, useEffect } from 'react';
 import { useCourseNavigation } from '@/app/hooks/useCourseNavigation';
 
+import MultipleChoice from '../TaskTypePages/TaskTypeMultipleChoice/TaskTypeMultipleChoice';
+import SingleInput from '../TaskTypePages/TaskTypeSingleInput/TaskTypeSingleInput';
+import Matching from '../TaskTypePages/TaskTypeMatching/TaskTypeMatching';
+import StepByStep from '../TaskTypePages/TaskTypeStepByStep/TaskTypeStepByStep';
+
+import style from './TaskView.module.css';
+
 export default function TaskView({ taskGroupId, courseColor }) {
   const { getTasksByTaskGroupId, loading } = useCourseNavigation();
   const tasks = getTasksByTaskGroupId(Number(taskGroupId));
@@ -11,7 +18,11 @@ export default function TaskView({ taskGroupId, courseColor }) {
   const [stepIdx, setStepIdx] = useState(0);   
   const [msg, setMsg] = useState("");          
 
-  const task = tasks[activeIndex];
+  const task = tasks?.[activeIndex];
+
+  const updateAnswer = (val) => {
+    setAnswers({ ...answers, [task.task_id]: val });
+  };
 
   useEffect(() => { 
     setStepIdx(0); 
@@ -24,109 +35,104 @@ export default function TaskView({ taskGroupId, courseColor }) {
 
   const check = () => {
     const userAns = answers[task.task_id];
-    let correct = false;
+    let isCorrect = false;
+
+    // check czy cos wpisal
+    if (userAns === undefined || userAns === null || userAns === "") {
+      setMsg("Najpierw coś wpisz, mordo.");
+      return;
+    }
 
     switch (task.task_type_id) {
       case 1: // Multiple Choice
-        const selected = task.answers?.find(a => a.answer_id == userAns);
-        correct = selected?.is_correct == 1;
+        const selectedOption = task.answers?.find(a => a.answer_id === userAns);
+        isCorrect = selectedOption?.is_correct === 1;
         break;
+
       case 2: // Single Input
-        correct = userAns?.trim().toLowerCase() === task.details?.correct_value.toLowerCase();
+        isCorrect = userAns.trim().toLowerCase() === task.details?.correct_value?.toLowerCase();
         break;
+
       case 3: // Matching
-        correct = task.pairs?.every(p => userAns?.[p.pair_item_id]?.trim().toLowerCase() === p.right_text.toLowerCase());
+        isCorrect = task.pairs?.every(p => 
+          userAns[p.pair_item_id]?.trim().toLowerCase() === p.right_text.toLowerCase()
+        );
         break;
+
       case 4: // Step by Step
         const currentStep = task.steps[stepIdx];
-        if (userAns?.[currentStep.step_id]?.trim().toLowerCase() === currentStep.step_answer.toLowerCase()) {
+        const stepUserAns = userAns[currentStep.step_id];
+
+        if (stepUserAns?.trim().toLowerCase() === currentStep.step_answer.toLowerCase()) {
           if (stepIdx < task.steps.length - 1) {
-            setStepIdx(stepIdx + 1);
-            return setMsg("Dobrze grypsujesz!");
+            setStepIdx(prev => prev + 1);
+            setMsg("Dobrze grypsujesz! Następny krok...");
+            return;
           }
-          correct = true;
+          isCorrect = true;
+        } else {
+          isCorrect = false;
         }
         break;
     }
-    setMsg(correct ? "Klasa jesteś gitem" : "Rozjebales sie na komendzie");
+
+    setMsg(isCorrect ? "Klasa jesteś gitem!" : "Rozjebałeś się na komendzie.");
+  };
+
+  const renderTaskType = () => {
+    const commonProps = {
+      task,
+      answer: answers[task.task_id],
+      setAnswer: updateAnswer,
+      courseColor
+    };
+
+    switch (task.task_type_id) {
+      case 1: return <MultipleChoice {...commonProps} />;
+      case 2: return <SingleInput {...commonProps} />;
+      case 3: return <Matching {...commonProps} />;
+      case 4: return <StepByStep {...commonProps} stepIdx={stepIdx} />;
+      default: return <p>Nieznany typ zadania</p>;
+    }
   };
 
   return (
-    <div>
-      {/* Nawigacja numerami */}
-      <nav>
+    <div className={style.task_container}>
+      <nav className={style.navigation}>
         {tasks.map((_, i) => (
           <button 
             key={i} 
+            className={activeIndex === i ? style.nav_btn_active : style.nav_btn}
+            style={activeIndex === i ? { backgroundColor: courseColor } : {}}
             onClick={() => setActiveIndex(i)}
-            data-active={activeIndex === i}
           >
             {i + 1}
           </button>
         ))}
       </nav>
 
-      <hr />
-      
-      <h2>{task.question}</h2>
+      <div className={style.content_card}>
+        <h2 className={style.question}>{task.question}</h2>
+        
+        <div className={style.task_body}>
+          {renderTaskType()}
+        </div>
 
-      <section>
-        {/* 1 MULTIPLE CHOICE */}
-        {task.task_type_id === 1 && task.answers?.map(a => (
-          <div key={a.answer_id}>
-            <input 
-              type="radio" 
-              name={`task-${task.task_id}`} 
-              checked={answers[task.task_id] === a.answer_id}
-              onChange={() => setAnswers({...answers, [task.task_id]: a.answer_id})} 
-            />
-            <label>{a.answer_text}</label>
-          </div>
-        ))}
-
-        {/* 2 SINGLE INPUT */}
-        {task.task_type_id === 2 && (
-          <input 
-            type="text" 
-            value={answers[task.task_id] || ""}
-            onChange={(e) => setAnswers({...answers, [task.task_id]: e.target.value})} 
-          />
-        )}
-
-        {/* 3 MATCHING */}
-        {task.task_type_id === 3 && task.pairs?.map(p => (
-          <div key={p.pair_item_id}>
-            <span>{p.left_text} = </span>
-            <input 
-              type="text" 
-              onChange={(e) => {
-                const current = answers[task.task_id] || {};
-                setAnswers({...answers, [task.task_id]: {...current, [p.pair_item_id]: e.target.value}});
-              }} 
-            />
-          </div>
-        ))}
-
-        {/* 4 STEP BY STEP */}
-        {task.task_type_id === 4 && (
-          <div>
-            <p>Krok {stepIdx + 1}: {task.steps[stepIdx]?.step_instruction}</p>
-            <input 
-              type="text" 
-              value={answers[task.task_id]?.[task.steps[stepIdx]?.step_id] || ""}
-              onChange={(e) => {
-                const current = answers[task.task_id] || {};
-                setAnswers({...answers, [task.task_id]: {...current, [task.steps[stepIdx].step_id]: e.target.value}});
-              }} 
-            />
-          </div>
-        )}
-      </section>
-
-      <footer>
-        <button onClick={check}>Sprawdź odpowiedź</button>
-        {msg && <p>{msg}</p>}
-      </footer>
+        <footer className={style.footer}>
+          <button 
+            className={style.check_btn} 
+            style={{ backgroundColor: courseColor }}
+            onClick={check}
+          >
+            Sprawdź odpowiedź
+          </button>
+          {msg && (
+            <p className={style.message} style={{ color: msg.includes("Klasa") || msg.includes("Dobrze") ? 'green' : 'red' }}>
+              {msg}
+            </p>
+          )}
+        </footer>
+      </div>
     </div>
   );
 }
