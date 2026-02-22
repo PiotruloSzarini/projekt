@@ -65,7 +65,7 @@ export default function DashboardLayout({ children }) {
                         width={24}
                         height={24}
                     />
-                    <Link href="/dashboard/daily-challange" className={styles.sidebar_link_link}>Daily Challange</Link>
+                    <Link href="/dashboard/mathdle" className={styles.sidebar_link_link}>mathdle</Link>
                 </div>
 
                 <div className={styles.sidebar_link}>

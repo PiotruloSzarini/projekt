@@ -128,16 +128,53 @@
     font-size: 15px;
 }
 
+/* Kontener na kropki pod numerem dnia */
 .dot_container {
     display: flex;
+    justify-content: center;
     gap: 3px;
     margin-top: 4px;
+    height: 8px;
+    align-items: center;
 }
 
+/* Podstawowy styl kropki */
 .dot {
-    width: 5px;
-    height: 5px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+/* Kropka dla zwykłego zadania (Zielona/Pomarańczowa) */
+.dot_regular {
+    /* Kolor jest sterowany przez style inline z JS, ale tu dajemy bazę */
+}
+
+/* Kropka dla Special Event (Fioletowa) */
+.dot_special {
+    background-color: #9b59b6 !important; /* Fioletowy */
+    box-shadow: 0 0 5px #9b59b6;
+    width: 7px;
+    height: 7px;
+}
+
+/* Styl dla checkboxa Special Event w panelu */
+.special_event_control {
+    margin: 15px 0;
+    padding: 10px;
+    background: #fdf2ff;
+    border: 1px dashed #9b59b6;
+    border-radius: 8px;
+}
+
+.checkbox_label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    color: #6a1b9a;
 }
 /* Przyciski */
 
@@ -224,4 +261,28 @@
     padding: 2px 8px;
     border-radius: 4px;
     font-size: 12px;
+}
+.hints_preview, .explanation_preview {
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+}
+
+.hint_item, .step_item {
+    font-size: 0.9rem;
+    color: #555;
+    margin-bottom: 5px;
+    padding: 5px;
+    background: #f9f9f9;
+    border-radius: 4px;
+}
+
+.correct_li {
+    color: #2e7d32;
+    font-weight: bold;
+}
+
+.options_preview ul {
+    list-style: none;
+    padding-left: 0;
 }

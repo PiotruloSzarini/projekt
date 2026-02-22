@@ -5,22 +5,25 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
     try {
+        // Pobieramy datę w formacie YYYY-MM-DD (Czas Polski)
         const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Warsaw' });
         
+        console.log("=== API DEBUG: Szukam zadań dla daty:", today);
+
         const [rows] = await db.query(`
             SELECT 
                 t.task_id, 
                 t.question, 
                 t.points,
-                tt.code as task_type_code,
                 a.difficulty,
                 a.special_event
             FROM daily_assignments a
             JOIN tasks t ON a.task_id = t.task_id
-            JOIN task_types tt ON t.task_type_id = tt.task_type_id
             WHERE DATE(a.assignment_date) = ?
             ORDER BY a.difficulty ASC
         `, [today]);
+
+        console.log("=== API DEBUG: Znaleziono wierszy:", rows.length);
 
         return NextResponse.json(rows);
     } catch (error) {
