@@ -286,3 +286,46 @@
     list-style: none;
     padding-left: 0;
 }
+
+/* --- RESPONSYWNOŚĆ --- */
+
+/* Dla laptopów i mniejszych ekranów (poniżej 1200px) */
+@media (max-width: 1200px) {
+    .admin_wrapper {
+        /* Przełączamy na jedną kolumnę */
+        grid-template-columns: 1fr; 
+        grid-template-areas: 
+            "calendar"
+            "edit"
+            "preview";
+        justify-content: center;
+        max-width: 800px; /* Centrujemy panel na środku */
+        margin: 0 auto;
+    }
+
+    /* Pozwalamy kafelkom rosnąć do pełnej szerokości kontenera */
+    .calendar_section, .edit_panel, .preview_panel {
+        max-width: 100%;
+    }
+}
+
+/* Opcjonalnie: poprawki dla bardzo małych ekranów (telefony) */
+@media (max-width: 600px) {
+    .admin_wrapper {
+        padding: 10px;
+        gap: 15px;
+    }
+
+    .calendar_grid {
+        gap: 4px; /* Mniejsze przerwy między dniami */
+    }
+
+    .day_tile {
+        font-size: 13px; /* Mniejsza czcionka numeru dnia */
+    }
+
+    .dot {
+        width: 4px;
+        height: 4px;
+    }
+}

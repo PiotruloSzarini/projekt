@@ -141,3 +141,29 @@
     50% { transform: scale(1.05); }
     100% { transform: scale(1); }
 }
+.feedback_success {
+    color: #2e7d32;
+    background: #e8f5e9;
+    padding: 12px;
+    border-radius: 8px;
+    margin: 15px 0;
+    font-weight: 600;
+    text-align: center;
+    border: 1px solid #c8e6c9;
+}
+
+.feedback_error {
+    color: #c62828;
+    background: #ffebee;
+    padding: 12px;
+    border-radius: 8px;
+    margin: 15px 0;
+    text-align: center;
+    border: 1px solid #ffcdd2;
+}
+
+.answer_input:disabled {
+    background-color: #f0f0f0;
+    border-color: #ccc;
+    color: #888;
+}

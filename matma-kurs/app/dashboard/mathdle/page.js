@@ -7,11 +7,15 @@ export default function MathdleUserPage() {
     const [selectedTask, setSelectedTask] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    // --- NOWE STANY DLA ODPOWIEDZI ---
+    const [userAnswer, setUserAnswer] = useState('');
+    const [feedback, setFeedback] = useState(null); // Przechowuje wynik sprawdzania
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
     useEffect(() => {
-        fetch('/api/mathdle/today')
+        fetch('/api/admin/mathdle/today')
             .then(res => res.json())
             .then(data => {
-                // API zwraca tablicę zadań na dziś
                 setTasks(Array.isArray(data) ? data : []);
                 setLoading(false);
             })
@@ -21,25 +25,56 @@ export default function MathdleUserPage() {
             });
     }, []);
 
+    // --- FUNKCJA WYSYŁANIA ODPOWIEDZI ---
+    const handleSubmit = async () => {
+        if (!userAnswer.trim()) return;
+        
+        setIsSubmitting(true);
+        setFeedback(null);
+
+        try {
+            const response = await fetch('/api/admin/mathdle/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: 1, // Tymczasowo na sztywno 1, dopóki nie masz sesji
+                    taskId: selectedTask.task_id,
+                    difficulty: selectedTask.difficulty,
+                    userAnswer: userAnswer
+                })
+            });
+
+            const result = await response.json();
+            setFeedback(result);
+        } catch (error) {
+            setFeedback({ isCorrect: false, message: "Błąd serwera. Spróbuj później." });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    // Resetuj formularz przy zamykaniu modala
+    const closeModal = () => {
+        setSelectedTask(null);
+        setFeedback(null);
+        setUserAnswer('');
+    };
+
     if (loading) return <div className={styles.loader}>Wczytywanie wyzwań...</div>;
     
     if (tasks.length === 0) {
         return (
             <div className={styles.empty_state}>
                 <h2>📭 Brak zadań na dziś</h2>
-                <p>Administrator nie zaplanował jeszcze wyzwań. Wróć później!</p>
+                <p>Wróć jutro po nowe wyzwania!</p>
             </div>
         );
     }
 
-    const isSpecial = tasks[0]?.special_event;
-
     return (
-        <div className={`${styles.container} ${isSpecial ? styles.special_theme : ''}`}>
+        <div className={styles.container}>
             <header className={styles.header}>
                 <h1 className={styles.title}>Mathdle Daily</h1>
-                <p className={styles.date}>{new Date().toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                {isSpecial && <div className={styles.special_badge}>🌟 WYDARZENIE SPECJALNE: 2x PKT</div>}
             </header>
 
             <div className={styles.card_grid}>
@@ -60,23 +95,46 @@ export default function MathdleUserPage() {
                 ))}
             </div>
 
-            {/* MODAL ZADANIA */}
             {selectedTask && (
-                <div className={styles.modal_overlay} onClick={() => setSelectedTask(null)}>
+                <div className={styles.modal_overlay} onClick={closeModal}>
                     <div className={styles.modal_content} onClick={e => e.stopPropagation()}>
-                        <button className={styles.close_btn} onClick={() => setSelectedTask(null)}>&times;</button>
+                        <button className={styles.close_btn} onClick={closeModal}>&times;</button>
                         
                         <div className={styles.modal_header}>
-                            <span>Zadanie ID: #{selectedTask.task_id}</span>
-                            <span className={styles.modal_points}>{selectedTask.points} PKT</span>
+                            <span>Zadanie #{selectedTask.task_id}</span>
                         </div>
 
                         <div className={styles.modal_body}>
                             <p className={styles.question_text}>{selectedTask.question}</p>
                             
-                            {/* Prosty input na start - potem go rozbudujemy */}
-                            <input type="text" className={styles.answer_input} placeholder="Wpisz wynik..." />
-                            <button className={styles.check_btn}>Sprawdź odpowiedź</button>
+                            <input 
+                                type="text" 
+                                className={styles.answer_input} 
+                                placeholder="Wpisz wynik..." 
+                                value={userAnswer}
+                                onChange={(e) => setUserAnswer(e.target.value)}
+                                disabled={isSubmitting || feedback?.isCorrect}
+                            />
+
+                            {feedback && (
+                                <div className={feedback.isCorrect ? styles.feedback_success : styles.feedback_error}>
+                                    {feedback.message}
+                                </div>
+                            )}
+
+                            {!feedback?.isCorrect ? (
+                                <button 
+                                    className={styles.check_btn} 
+                                    onClick={handleSubmit}
+                                    disabled={isSubmitting || !userAnswer.trim()}
+                                >
+                                    {isSubmitting ? "Sprawdzanie..." : "Sprawdź odpowiedź"}
+                                </button>
+                            ) : (
+                                <button className={styles.check_btn} style={{backgroundColor: '#444'}} onClick={closeModal}>
+                                    Zamknij zadanie
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>
