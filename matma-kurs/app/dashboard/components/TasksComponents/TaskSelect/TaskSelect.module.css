@@ -1,0 +1,26 @@
+.taskSelect_main_div {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 8px 16px;
+    background-color: white;
+    color: #03232740;
+    border: 1px solid #03232740;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+}
+.taskSelect_link{
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+}
+.taskSelect_p{
+    font-size: 16px;
+    font-weight: 500;
+    margin: 0;
+}

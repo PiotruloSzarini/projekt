@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import ChapterCard from "../../components/ChapterCard/ChapterCard";
+import ChapterCard from "../../components/ChapterComponents/ChapterCard/ChapterCard";
+import ChapterInfo from "../../components/ChapterComponents/ChapterInfo/ChapterInfo";
 import { useCourseNavigation } from "@/app/hooks/useCourseNavigation";
 import { useProgressCalculator } from "@/app/hooks_old/useProgressCalculator";
 
@@ -21,16 +22,20 @@ export default function CoursePage() {
 
   return (
     <div>
-      <h1>{course.title}</h1>
-
-      {chapters.map((chapter, index) => {
+      <ChapterInfo
+        courseName={course.title}
+        progress={course.progress}
+        link={`/dashboard/kursy/${course.slug}/rozdzial-1`}
+        backgroundColor={course.color}
+      >
+        {chapters.map((chapter, index) => {
         const chapterStats = calculateChapterStats(chapter);
 
         return (
-          <div key={chapter.chapter_id} style={{ marginBottom: "16px" }}>
             <Link
               href={`/dashboard/kursy/${course.slug}/${chapter.slug}`}
-              style={{ textDecoration: "none" }}
+              style={{ textDecoration: "none", width: "100%" }}
+              key={chapter.chapter_id}
             >
               <ChapterCard
                 title={chapter.title}
@@ -41,9 +46,11 @@ export default function CoursePage() {
                 count={index + 1}
               />
             </Link>
-          </div>
-        );
-      })}
+          );
+        })}
+      </ChapterInfo>
+
+      
     </div>
   );
 }

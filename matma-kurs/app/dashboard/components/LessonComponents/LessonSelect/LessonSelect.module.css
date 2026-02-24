@@ -1,0 +1,18 @@
+.lesson_select_container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100px;
+    padding: 8px 16px;
+    border-radius: 24px;
+    background-color: #FEFFFF;
+}
+.lesson_select_container p {
+    font-size: 16px;
+    font-weight: 500;
+    color: #03232740;
+}
+
+.lesson_select_link {
+    text-decoration: none;
+}
