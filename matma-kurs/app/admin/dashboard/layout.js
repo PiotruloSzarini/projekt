@@ -36,6 +36,16 @@ export default function AdminLayout({ children }) {
                     />
                     <Link href="/admin/dashboard/tasks" className={styles.sidebar_link_link}>admin baza zadan</Link>
                 </div>
+            
+                <div className={styles.sidebar_link}>
+                    <Image
+                        src="/assets/img/Kursy_logo.svg"
+                        alt="test"
+                        width={24}
+                        height={24}
+                    />
+                    <Link href="/admin/dashboard/mathdle" className={styles.sidebar_link_link}>admin mathdle</Link>
+                </div>
             </div>
         </div>
         <div className={styles.wrapper}>
