@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useCourseNavigation } from '@/app/hooks/useCourseNavigation';
 
 import MultipleChoice from '../TaskTypePages/TaskTypeMultipleChoice/TaskTypeMultipleChoice';
@@ -8,6 +8,7 @@ import Matching from '../TaskTypePages/TaskTypeMatching/TaskTypeMatching';
 import StepByStep from '../TaskTypePages/TaskTypeStepByStep/TaskTypeStepByStep';
 
 import style from './TaskView.module.css';
+import TaskSelect from '../TaskSelect/TaskSelect'
 
 export default function TaskView({ taskGroupId, courseColor }) {
   const { getTasksByTaskGroupId, loading } = useCourseNavigation();
@@ -24,10 +25,11 @@ export default function TaskView({ taskGroupId, courseColor }) {
     setAnswers({ ...answers, [task.task_id]: val });
   };
 
-  useEffect(() => { 
-    setStepIdx(0); 
-    setMsg(""); 
-  }, [activeIndex, taskGroupId]);
+  const handleTaskChange = (index) => {
+    setActiveIndex(index);
+    setStepIdx(0);
+    setMsg("");
+  };
 
   if (loading) return <p>Ładowanie zadań...</p>;
   if (!tasks || tasks.length === 0) return <p>Brak zadań w tej grupie.</p>;
@@ -98,18 +100,17 @@ export default function TaskView({ taskGroupId, courseColor }) {
 
   return (
     <div className={style.task_container}>
-      <nav className={style.navigation}>
+      <div className={style.task_navigation}>
         {tasks.map((_, i) => (
-          <button 
-            key={i} 
-            className={activeIndex === i ? style.nav_btn_active : style.nav_btn}
-            style={activeIndex === i ? { backgroundColor: courseColor } : {}}
-            onClick={() => setActiveIndex(i)}
-          >
-            {i + 1}
-          </button>
+          <TaskSelect
+            key={i}
+            int={i + 1}
+            backgroundColor={courseColor}
+            active={activeIndex === i}
+            onClick={() => handleTaskChange(i)} 
+          />
         ))}
-      </nav>
+      </div>
 
       <div className={style.content_card}>
         <h2 className={style.question}>{task.question}</h2>

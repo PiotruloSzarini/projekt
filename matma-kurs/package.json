@@ -10,8 +10,9 @@
   },
   "dependencies": {
     "js-circle-progress": "^1.0.0",
+    "mysql": "^2.18.1",
     "mysql2": "^3.16.0",
-    "next": "^16.1.0",
+    "next": "^16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3"
   },
@@ -24,5 +25,8 @@
     "eslint-config-next": "16.1.0",
     "tailwindcss": "^4",
     "typescript": "5.9.3"
+  },
+  "overrides": {
+    "minimatch": "^10.2.1"
   }
 }
