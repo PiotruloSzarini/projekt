@@ -1,11 +1,10 @@
-    import styles from './TaskSelect.module.css';
-import Link from 'next/link';
+import styles from './TaskSelect.module.css';
 
 export default function TaskSelect({
     int,
     backgroundColor,
-    link,
-    active
+    active,
+    onClick
 }) {
     let activeStyle = {};
     if (active) {
@@ -14,12 +13,10 @@ export default function TaskSelect({
         activeStyle.border = `1px solid ${backgroundColor}`;
     }
     return (
-        <div>
-            <Link href={link} className={styles.taskSelect_link} style={{ textDecoration: 'none' }}>
+        <div onClick={onClick} style={{ cursor: 'pointer' }}> {/* Dodaj onClick tutaj */}
                 <div className={styles.taskSelect_main_div} style={activeStyle}>
                     <p className={styles.taskSelect_p}>{int}</p>
                 </div>
-            </Link>
         </div>
     );
 }

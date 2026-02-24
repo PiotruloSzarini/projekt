@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect } from 'react';
-import styles from './RozdzialInfo.module.css';
+import styles from './ChapterInfo.module.css';
 import Link from 'next/link';
 
 
-export default function RozdzialInfo({
+export default function ChapterInfo({
     courseName,
     progress,
     link,

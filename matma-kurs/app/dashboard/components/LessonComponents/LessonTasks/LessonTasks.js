@@ -24,8 +24,8 @@ export default function LessonTask({ title, active, backgroundColor, fontColor, 
 
     return (
         <div className={styles.lessonTask_main_div}>
+            <Link className={styles.lessonTask_link} href={link} style={{ textDecoration: 'none' }}>
             <div style={cardStyle} className={styles.lessonTask_container}>
-                <Link className={styles.lessonTask_link} href={link} style={{ textDecoration: 'none' }}>
                     <div className={styles.lessonTask_inner}>
                         <div className={styles.lessonTask_title}>
                             <p style={{ color: cardStyle.color }}>{title}</p>
@@ -34,8 +34,8 @@ export default function LessonTask({ title, active, backgroundColor, fontColor, 
                             <Image src={imgSrc} alt="video icon" width={16} height={16} />
                         </div>
                     </div>
-                </Link>
             </div>
+            </Link>
             <div className={styles.lessonTask_children}>
                 {children}
             </div>

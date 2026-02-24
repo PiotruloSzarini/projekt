@@ -1,5 +1,5 @@
 import styles from './CourseCard.module.css';
-import ProgressBar from '../ProgressBar/ProgressBar';
+import ProgressBar from '../../ProgressBar/ProgressBar';
 import Link from 'next/link';
 import Image from 'next/image';
 
