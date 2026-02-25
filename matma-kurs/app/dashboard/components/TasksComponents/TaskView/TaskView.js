@@ -1,6 +1,5 @@
 'use client';
-import { useState } from 'react';
-import { useCourseNavigation } from '@/app/hooks/useCourseNavigation';
+import { useState, useEffect } from 'react';
 
 import MultipleChoice from '../TaskTypePages/TaskTypeMultipleChoice/TaskTypeMultipleChoice';
 import SingleInput from '../TaskTypePages/TaskTypeSingleInput/TaskTypeSingleInput';
@@ -8,16 +7,23 @@ import Matching from '../TaskTypePages/TaskTypeMatching/TaskTypeMatching';
 import StepByStep from '../TaskTypePages/TaskTypeStepByStep/TaskTypeStepByStep';
 
 import style from './TaskView.module.css';
-import TaskSelect from '../TaskSelect/TaskSelect'
+import TaskSelect from '../TaskSelect/TaskSelect';
 
-export default function TaskView({ taskGroupId, courseColor }) {
-  const { getTasksByTaskGroupId, loading } = useCourseNavigation();
-  const tasks = getTasksByTaskGroupId(Number(taskGroupId));
-
+export default function TaskView({ tasks, courseColor }) {
+  // UWAGA: Usunęliśmy useCourseNavigation. Dane przychodzą gotowe w propsie 'tasks'
+  
   const [activeIndex, setActiveIndex] = useState(0);
   const [answers, setAnswers] = useState({}); 
   const [stepIdx, setStepIdx] = useState(0);   
   const [msg, setMsg] = useState("");          
+
+  // Resetujemy stan, gdy zmieni się grupa zadań (np. przejście do innej lekcji)
+  useEffect(() => {
+    setActiveIndex(0);
+    setStepIdx(0);
+    setMsg("");
+    setAnswers({});
+  }, [tasks]);
 
   const task = tasks?.[activeIndex];
 
@@ -31,23 +37,26 @@ export default function TaskView({ taskGroupId, courseColor }) {
     setMsg("");
   };
 
-  if (loading) return <p>Ładowanie zadań...</p>;
-  if (!tasks || tasks.length === 0) return <p>Brak zadań w tej grupie.</p>;
+  if (!tasks || tasks.length === 0) return <p className={style.empty}>Brak zadań w tej grupie.</p>;
   if (!task) return null;
 
   const check = () => {
     const userAns = answers[task.task_id];
     let isCorrect = false;
 
-    // check czy cos wpisal
     if (userAns === undefined || userAns === null || userAns === "") {
       setMsg("Najpierw coś wpisz, mordo.");
       return;
     }
 
+    // Wykorzystujemy kody typów z Twojego Super-Route (np. 'MULTIPLE_CHOICE') 
+    // lub ID, jeśli wolisz zostać przy case 1, 2, 3...
+    // Zakładam, że w Twoim obiekcie 'task' masz task_type_id
     switch (task.task_type_id) {
       case 1: // Multiple Choice
-        const selectedOption = task.answers?.find(a => a.answer_id === userAns);
+        // Dane są teraz w task.details.answers dzięki naszemu SQL
+        const mcAnswers = task.details?.answers || [];
+        const selectedOption = mcAnswers.find(a => a.task_multiple_id === userAns || a.answer_id === userAns);
         isCorrect = selectedOption?.is_correct === 1;
         break;
 
@@ -56,17 +65,19 @@ export default function TaskView({ taskGroupId, courseColor }) {
         break;
 
       case 3: // Matching
-        isCorrect = task.pairs?.every(p => 
-          userAns[p.pair_item_id]?.trim().toLowerCase() === p.right_text.toLowerCase()
+        const pairs = task.details?.items || [];
+        isCorrect = pairs.every(p => 
+          userAns[p.task_pair_id]?.trim().toLowerCase() === p.right_text.toLowerCase()
         );
         break;
 
       case 4: // Step by Step
-        const currentStep = task.steps[stepIdx];
+        const steps = task.details?.steps || [];
+        const currentStep = steps[stepIdx];
         const stepUserAns = userAns[currentStep.step_id];
 
         if (stepUserAns?.trim().toLowerCase() === currentStep.step_answer.toLowerCase()) {
-          if (stepIdx < task.steps.length - 1) {
+          if (stepIdx < steps.length - 1) {
             setStepIdx(prev => prev + 1);
             setMsg("Dobrze grypsujesz! Następny krok...");
             return;
@@ -83,7 +94,7 @@ export default function TaskView({ taskGroupId, courseColor }) {
 
   const renderTaskType = () => {
     const commonProps = {
-      task,
+      task, // tu są teraz dane z detalami (details.answers, details.steps itd.)
       answer: answers[task.task_id],
       setAnswer: updateAnswer,
       courseColor

@@ -7,9 +7,11 @@ export async function POST(request) {
         const body = await request.json();
         
         const { 
-            task_group_id, // może być null/undefined
+            task_group_id, 
             task_type_id, 
             question, 
+            math_img,
+            math_content,
             difficulty, 
             points,
             details,      
@@ -36,9 +38,9 @@ export async function POST(request) {
         // 1. INSERT DO GŁÓWNEJ TABELI: tasks
         // Używamy "task_group_id || null", aby upewnić się, że puste wartości trafią jako NULL do bazy
         const [taskResult] = await connection.execute(
-            `INSERT INTO tasks (task_group_id, task_type_id, question, difficulty, points) 
-            VALUES (?, ?, ?, ?, ?)`,
-            [finalGroupId, parseInt(task_type_id), question, difficulty || 1, points || 0]
+            `INSERT INTO tasks (task_group_id, task_type_id, question, math_img, math_content, difficulty, points) 
+            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [finalGroupId, parseInt(task_type_id), question, math_img || null, math_content || null, difficulty || 1, points || 0]
         );
         const taskId = taskResult.insertId;
 
@@ -72,17 +74,14 @@ export async function POST(request) {
 
         // --- TYP 3: MATCHING PAIRS ---
         else if (parseInt(task_type_id) === 3) {
-            const [pairResult] = await connection.execute(
-                `INSERT INTO task_matching_pairs (task_id) VALUES (?)`,
-                [taskId]
-            );
+            const [pairResult] = await connection.execute(`INSERT INTO task_matching_pairs (task_id) VALUES (?)`, [taskId]);
             const pairId = pairResult.insertId;
 
             for (const item of details.pairs) {
                 await connection.execute(
-                    `INSERT INTO task_matching_pairs_items (task_pair_id, left_text, right_text, sort_order) 
-                    VALUES (?, ?, ?, ?)`,
-                    [pairId, item.left_text, item.right_text, item.sort_order]
+                    `INSERT INTO task_matching_pairs_items (task_pair_id, left_text, left_photo_url, right_text, right_photo_url, sort_order) 
+                    VALUES (?, ?, ?, ?, ?, ?)`,
+                    [pairId, item.left_text || null, item.left_photo_url || null, item.right_text || null, item.right_photo_url || null, item.sort_order]
                 );
             }
         }

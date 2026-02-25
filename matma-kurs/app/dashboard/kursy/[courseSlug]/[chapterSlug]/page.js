@@ -4,58 +4,47 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import TopicCard from "@/app/dashboard/components/TopicComponents/TopicCard/TopicCard";
 import TopicInfo from "@/app/dashboard/components/TopicComponents/TopicInfo/TopicInfo";
-import { useCourseNavigation } from "@/app/hooks/useCourseNavigation";
+import { useCourseData } from "@/app/context/CourseContext"; // Importujemy Context
 
 export default function TopicPage() {
-  const { courseSlug, chapterSlug, topicSlug } = useParams();
+  const { courseSlug, chapterSlug } = useParams();
+  
+  const { fullCourseData, loading } = useCourseData();
 
-  const {
-    getCourseBySlug,
-    getChapterBySlug,
-    getTopicsByChapterId
-  } = useCourseNavigation();
+  if (loading || !fullCourseData) return <p>Ładowanie struktury kursu...</p>;
 
-  // Pobieramy kurs
-  const course = getCourseBySlug(courseSlug);
-  if (!course) return <p>Nie znaleziono kursu</p>;
+  const course = fullCourseData.course;
+  const chapter = fullCourseData.structure.find(c => c.slug === chapterSlug);
 
-  // Pobieramy rozdział
-  const chapter = getChapterBySlug(course.course_id, chapterSlug);
-  if (!chapter) return <p>Nie znaleziono rozdziału</p>;
+  if (!chapter) return <p>Nie znaleziono rozdziału w tym kursie</p>;
 
-  // Pobieramy temat
-  const topics = getTopicsByChapterId(chapter.chapter_id);
-  if (!topics) return <p>Nie znaleziono tematu</p>;
-
-  const chapterOrder = chapter.sort_order;
+  const topics = chapter.topics;
 
   return (
     <div>
       <TopicInfo
         chapterName={chapter.title}
-        progress={50} // placeholder progress
-        link={`/dashboard/kursy/${course.slug}/${chapter.slug}/${topics[0].slug}`} // link do pierwszego tematu
+        progress={chapter.progress || 0}
+        link={`/dashboard/kursy/${courseSlug}/${chapterSlug}/${topics[0]?.slug || ''}`}
         backgroundColor={course.color}
-        count={chapterOrder} // numer rozdziału
+        count={chapter.sort_order}
       >
-        {topics.map((topic, index) => {
-        return (
+        {topics.map((topic, index) => (
           <Link
             key={topic.topic_id}
-            href={`/dashboard/kursy/${course.slug}/${chapter.slug}/${topic.slug}`}
+            href={`/dashboard/kursy/${courseSlug}/${chapterSlug}/${topic.slug}`}
             style={{ textDecoration: "none", width: "100%" }}
           >
             <div>
               <TopicCard
                 title={topic.title}
                 backgroundColor={course.color}
-                progress={50} // placeholder progress
+                progress={topic.progress || 0} 
                 count={index + 1}
               />
             </div>
           </Link>
-        );
-      })}
+        ))}
       </TopicInfo>
     </div>
   );

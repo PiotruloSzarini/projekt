@@ -1,10 +1,12 @@
 import styles from './layout.module.css';
 import Link from 'next/link';
 import Image from 'next/image';
+import { CourseProvider } from '@/app/context/CourseContext';
 
 
 export default function DashboardLayout({ children }) {
     return (
+    <CourseProvider>
     <div className={styles.container}>
         <div className={styles.sidebar}>
             <div className={styles.logo}>
@@ -127,6 +129,6 @@ export default function DashboardLayout({ children }) {
             </div>
         </div>
     </div>
-    
+    </CourseProvider>
     );
 }

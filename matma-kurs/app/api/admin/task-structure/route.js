@@ -28,6 +28,7 @@ export async function GET() {
             pool.query(`SELECT * FROM task_multiple_choice_answers WHERE task_multiple_id IN (SELECT task_multiple_id FROM task_multiple_choice WHERE task_id IN (?)) ORDER BY sort_order`, [taskIds]),
             pool.query(`SELECT * FROM task_single_input WHERE task_id IN (?)`, [taskIds]),
             pool.query(`SELECT * FROM task_matching_pairs WHERE task_id IN (?)`, [taskIds]),
+            // mpItems pobierze teraz left_photo_url i right_photo_url automatycznie przez SELECT *
             pool.query(`SELECT * FROM task_matching_pairs_items WHERE task_pair_id IN (SELECT task_pair_id FROM task_matching_pairs WHERE task_id IN (?)) ORDER BY sort_order`, [taskIds]),
             pool.query(`SELECT * FROM task_step_by_step WHERE task_id IN (?)`, [taskIds]),
             pool.query(`SELECT * FROM task_step_by_step_steps WHERE task_step_by_step_id IN (SELECT task_step_by_step_id FROM task_step_by_step WHERE task_id IN (?)) ORDER BY sort_order`, [taskIds]),
