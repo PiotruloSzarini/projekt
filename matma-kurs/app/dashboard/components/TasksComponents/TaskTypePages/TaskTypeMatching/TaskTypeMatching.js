@@ -1,30 +1,28 @@
+import styles from './TaskTypeMatching.module.css';
 
 export default function TaskTypeMatching({ task, answer, setAnswer, courseColor }) {
-  const handleInputChange = (pairId, value) => {
+  const items = task.details?.items || [];
+
+  const handleInputChange = (itemId, value) => {
     const currentAnswers = answer || {};
     setAnswer({
       ...currentAnswers,
-      [pairId]: value
+      [itemId]: value
     });
   };
 
   return (
-    <div>
-      {task.pairs?.map((p) => (
-        <div key={p.pair_item_id} style={{ display: 'flex', alignItems: 'center', marginBottom: '12px', gap: '10px' }}>
-          <span style={{ fontWeight: 'bold', minWidth: '100px' }}>{p.left_text}</span>
-          <span style={{ color: courseColor }}>➔</span>
+    <div className={styles.container}>
+      {items.map((item) => (
+        <div key={item.task_pair_id} className={styles.pairRow}>
+          <span className={styles.leftText}>{item.left_text}</span>
+          <span className={styles.arrow} style={{ color: courseColor }}>➔</span>
           <input 
             type="text" 
+            className={styles.inputField}
             placeholder="..."
-            value={answer?.[p.pair_item_id] || ""}
-            onChange={(e) => handleInputChange(p.pair_item_id, e.target.value)}
-            style={{
-              border: `1px solid #ccc`,
-              padding: '8px',
-              borderRadius: '6px',
-              flex: 1
-            }}
+            value={answer?.[item.task_pair_id] || ""}
+            onChange={(e) => handleInputChange(item.task_pair_id, e.target.value)}
           />
         </div>
       ))}

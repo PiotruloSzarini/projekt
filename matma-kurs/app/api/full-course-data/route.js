@@ -37,53 +37,60 @@ export async function GET(request) {
 
 
         const fullTasks = tasks.map(task => {
-            const type = taskTypes.find(t => t.task_type_id === task.task_type_id)?.task_type_code;
-            
             let details = {};
-            if (type === 'MULTIPLE_CHOICE') {
-                const mc = mcQuestions.find(q => q.task_id === task.task_id);
-                details = {
-                    answers: mcAnswers.filter(a => a.task_multiple_id === mc?.task_multiple_id)
-                };
-            } else if (type === 'SINGLE_INPUT') {
-                details = siData.find(si => si.task_id === task.task_id) || {};
-            } else if (type === 'MATCHING') {
-                const mp = matchingPairs.find(p => p.task_id === task.task_id);
-                details = {
-                    items: matchingItems.filter(i => i.task_pair_id === mp?.task_pair_id)
-                };
-            } else if (type === 'STEP_BY_STEP') {
-                const sbs = sbsData.find(s => s.task_id === task.task_id);
-                details = {
-                    steps: sbsSteps.filter(st => st.task_step_by_step_id === sbs?.task_step_by_step_id)
-                };
+            switch (task.task_type_id) {
+                case 1: // MULTIPLE_CHOICE
+                    const mc = mcQuestions.find(q => q.task_id === task.task_id);
+                    if (mc) {
+                        details = {
+                            answers: mcAnswers.filter(a => a.task_multiple_id === mc.task_multiple_id)
+                        };
+                    }
+                    break;
+                case 2: // SINGLE_INPUT
+                    details = siData.find(si => si.task_id === task.task_id) || {};
+                    break;
+                case 3: // MATCHING
+                    const mp = matchingPairs.find(p => p.task_id === task.task_id);
+                    if (mp) {
+                        details = {
+                            items: matchingItems.filter(i => i.task_pair_id === mp.task_pair_id)
+                        };
+                    }
+                    break;
+                case 4: // STEP_BY_STEP
+                    const sbs = sbsData.find(s => s.task_id === task.task_id);
+                    if (sbs) {
+                        details = {
+                            steps: sbsSteps.filter(st => st.task_step_by_step_id === sbs.task_step_by_step_id)
+                        };
+                    }
+                    break;
             }
-
-            return { ...task, type, details };
+            return { ...task, details }; 
         });
 
         const structure = chapters.map(chapter => ({
-    ...chapter,
-    topics: topics
-        .filter(topic => topic.chapter_id === chapter.chapter_id)
-        .map(topic => ({
-            ...topic,
-            lessons: lessons
-                .filter(lesson => lesson.topic_id === topic.topic_id)
-                .map(lesson => {
-                    const groupForLesson = taskGroups.find(tg => tg.lesson_id === lesson.lesson_id);
-                    
-                    return {
-                        ...lesson,
-                        video: videos.find(v => v.lesson_id === lesson.lesson_id),
-                        tasks: groupForLesson 
-                            ? fullTasks.filter(t => t.task_group_id === groupForLesson.task_group_id)
-                            : [],
-                        task_group_id: groupForLesson?.task_group_id || null
-                    };
-                })
-        }))
-    }));
+            ...chapter,
+            topics: topics
+                .filter(topic => topic.chapter_id === chapter.chapter_id)
+                .map(topic => ({
+                    ...topic,
+                    lessons: lessons
+                        .filter(lesson => lesson.topic_id === topic.topic_id)
+                        .map(lesson => {
+                            const groupForLesson = taskGroups.find(tg => tg.lesson_id === lesson.lesson_id);
+                            return {
+                                ...lesson,
+                                video: videos.find(v => v.lesson_id === lesson.lesson_id),
+                                tasks: groupForLesson 
+                                    ? fullTasks.filter(t => t.task_group_id === groupForLesson.task_group_id)
+                                    : [],
+                                task_group_id: groupForLesson?.task_group_id || null
+                            };
+                        })
+                }))
+        }));
 
         return NextResponse.json({
             course: courses[0],

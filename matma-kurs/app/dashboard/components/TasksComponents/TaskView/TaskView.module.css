@@ -14,3 +14,13 @@
     justify-content: flex-start;
     gap: 16px;
 }
+
+.math_image_wrapper {
+    width: 32px;
+    height: 32px;
+}
+.math_image{
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}

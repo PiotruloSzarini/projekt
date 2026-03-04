@@ -10,14 +10,12 @@ import style from './TaskView.module.css';
 import TaskSelect from '../TaskSelect/TaskSelect';
 
 export default function TaskView({ tasks, courseColor }) {
-  // UWAGA: Usunęliśmy useCourseNavigation. Dane przychodzą gotowe w propsie 'tasks'
   
   const [activeIndex, setActiveIndex] = useState(0);
   const [answers, setAnswers] = useState({}); 
   const [stepIdx, setStepIdx] = useState(0);   
   const [msg, setMsg] = useState("");          
 
-  // Resetujemy stan, gdy zmieni się grupa zadań (np. przejście do innej lekcji)
   useEffect(() => {
     setActiveIndex(0);
     setStepIdx(0);
@@ -54,10 +52,10 @@ export default function TaskView({ tasks, courseColor }) {
     // Zakładam, że w Twoim obiekcie 'task' masz task_type_id
     switch (task.task_type_id) {
       case 1: // Multiple Choice
-        // Dane są teraz w task.details.answers dzięki naszemu SQL
-        const mcAnswers = task.details?.answers || [];
-        const selectedOption = mcAnswers.find(a => a.task_multiple_id === userAns || a.answer_id === userAns);
-        isCorrect = selectedOption?.is_correct === 1;
+        const mcOptions = task.details?.answers || [];
+        // Szukamy zaznaczonej odpowiedzi w tablicy z details
+        const selected = mcOptions.find(a => a.answer_id === userAns);
+        isCorrect = selected?.is_correct === 1;
         break;
 
       case 2: // Single Input
@@ -108,43 +106,50 @@ export default function TaskView({ tasks, courseColor }) {
       default: return <p>Nieznany typ zadania</p>;
     }
   };
-
+  console.log("AKTUALNY TYP:", task.task_type_id);
+  console.log("DETALE ZADANIA:", task.details);
   return (
-    <div className={style.task_container}>
-      <div className={style.task_navigation}>
-        {tasks.map((_, i) => (
-          <TaskSelect
-            key={i}
-            int={i + 1}
-            backgroundColor={courseColor}
-            active={activeIndex === i}
-            onClick={() => handleTaskChange(i)} 
-          />
-        ))}
-      </div>
+  <div className={style.task_container}>
+    <div className={style.task_navigation}>
+      {tasks.map((_, i) => (
+        <TaskSelect
+          key={i}
+          int={i + 1}
+          backgroundColor={courseColor}
+          active={activeIndex === i}
+          onClick={() => handleTaskChange(i)} 
+        />
+      ))}
+    </div>
 
-      <div className={style.content_card}>
-        <h2 className={style.question}>{task.question}</h2>
+    <div className={style.content_card}>
+      {/* GŁÓWNE PYTANIE */}
+      <h2 className={style.question}>{task.question}</h2>
+
+      {/* DODATKOWA TREŚĆ MATEMATYCZNA */}
+      <div className={style.math_container}>
+        {task.math_content && (
+          <div className={style.math_text}>
+            {/* Tutaj docelowo wrzucisz np. <BlockMath math={task.math_content} /> */}
+            <p>{task.math_content}</p> 
+          </div>
+        )}
         
-        <div className={style.task_body}>
-          {renderTaskType()}
-        </div>
-
-        <footer className={style.footer}>
-          <button 
-            className={style.check_btn} 
-            style={{ backgroundColor: courseColor }}
-            onClick={check}
-          >
-            Sprawdź odpowiedź
-          </button>
-          {msg && (
-            <p className={style.message} style={{ color: msg.includes("Klasa") || msg.includes("Dobrze") ? 'green' : 'red' }}>
-              {msg}
-            </p>
-          )}
-        </footer>
+        {task.math_img && (
+          <div className={style.math_image_wrapper}>
+            <img 
+              src={task.math_img} 
+              alt="Ilustracja do zadania" 
+              className={style.math_image} 
+            />
+          </div>
+        )}
+      </div>
+      
+      <div className={style.task_body}>
+        {renderTaskType()}
       </div>
     </div>
-  );
+  </div>
+);
 }
