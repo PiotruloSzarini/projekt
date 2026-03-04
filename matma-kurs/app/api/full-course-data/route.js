@@ -16,7 +16,8 @@ export async function GET(request) {
             [mcQuestions], [mcAnswers],
             [siData],
             [matchingPairs], [matchingItems],
-            [sbsData], [sbsSteps]
+            [sbsData], [sbsSteps],
+            [explanations], [explanationSteps], [hints] 
         ] = await Promise.all([
             pool.execute('SELECT * FROM courses WHERE course_id = ?', [courseId]),
             pool.execute('SELECT * FROM chapters WHERE course_id = ? ORDER BY chapter_id ASC', [courseId]),
@@ -32,41 +33,55 @@ export async function GET(request) {
             pool.execute('SELECT * FROM task_matching_pairs'),
             pool.execute('SELECT * FROM task_matching_pairs_items ORDER BY sort_order ASC'),
             pool.execute('SELECT * FROM task_step_by_step'),
-            pool.execute('SELECT * FROM task_step_by_step_steps ORDER BY sort_order ASC')
+            pool.execute('SELECT * FROM task_step_by_step_steps ORDER BY sort_order ASC'),
+            pool.execute('SELECT * FROM task_explanation'),
+            pool.execute('SELECT * FROM task_explanation_steps ORDER BY sort_order ASC'),
+            pool.execute('SELECT * FROM task_hints ORDER BY sort_order ASC')
         ]);
 
 
         const fullTasks = tasks.map(task => {
             let details = {};
+            
             switch (task.task_type_id) {
                 case 1: // MULTIPLE_CHOICE
                     const mc = mcQuestions.find(q => q.task_id === task.task_id);
                     if (mc) {
-                        details = {
-                            answers: mcAnswers.filter(a => a.task_multiple_id === mc.task_multiple_id)
-                        };
+                        details.answers = mcAnswers.filter(a => a.task_multiple_id === mc.task_multiple_id);
                     }
                     break;
                 case 2: // SINGLE_INPUT
-                    details = siData.find(si => si.task_id === task.task_id) || {};
+                    const si = siData.find(si => si.task_id === task.task_id);
+                    if (si) {
+                        details.correct_value = si.correct_value;
+                    }
                     break;
                 case 3: // MATCHING
                     const mp = matchingPairs.find(p => p.task_id === task.task_id);
                     if (mp) {
-                        details = {
-                            items: matchingItems.filter(i => i.task_pair_id === mp.task_pair_id)
-                        };
+                        details.items = matchingItems.filter(i => i.task_pair_id === mp.task_pair_id);
                     }
                     break;
                 case 4: // STEP_BY_STEP
                     const sbs = sbsData.find(s => s.task_id === task.task_id);
                     if (sbs) {
-                        details = {
-                            steps: sbsSteps.filter(st => st.task_step_by_step_id === sbs.task_step_by_step_id)
-                        };
+                        details.steps = sbsSteps.filter(st => st.task_step_by_step_id === sbs.task_step_by_step_id);
                     }
                     break;
             }
+
+            const explanationHeader = explanations.find(e => e.task_id === task.task_id);
+            if (explanationHeader) {
+                details.explanation = {
+                    ...explanationHeader,
+                    steps: explanationSteps.filter(es => es.explanation_id === explanationHeader.explanation_id)
+                };
+            } else {
+                details.explanation = null;
+            }
+
+            details.hints = hints.filter(h => h.task_id === task.task_id);
+
             return { ...task, details }; 
         });
 
