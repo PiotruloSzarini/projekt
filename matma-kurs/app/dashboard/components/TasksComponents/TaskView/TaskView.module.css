@@ -24,3 +24,23 @@
     height: 100%;
     object-fit: contain;
 }
+
+.content_card {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding-top: 16px;
+    gap: 16px;
+}
+
+.math_container {
+    width: 100%;
+    min-height: 400px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
