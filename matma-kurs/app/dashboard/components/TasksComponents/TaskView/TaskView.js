@@ -135,48 +135,16 @@ export default function TaskView({ tasks, courseColor }) {
             </div>
           )}
         </div>
-        
-        <div className={style.task_body}>
-          {renderTaskType()}
-        </div>
-
-        {/* STOPKA Z PRZYCISKAMI I WIADOMOŚCIĄ */}
-        <footer className={style.footer}>
-          <div className={style.action_buttons}>
-            <button 
-              className={style.check_btn} 
-              style={{ backgroundColor: courseColor }}
-              onClick={check}
-            >
-              Sprawdź odpowiedź
-            </button>
-
-            {task.details?.hints?.length > 0 && (
+        <div className={style.hint_container}>
+          {task.details?.hints?.length > 0 && (
               <button 
                 className={style.hint_btn}
                 onClick={() => setShowHints(!showHints)}
               >
-                {showHints ? "Ukryj podpowiedzi" : "Podpowiedź"}
+                {showHints ? "Ukryj podpowiedzi" : "Pokaż podpowiedź"}
               </button>
             )}
-
-            {task.details?.explanation && (
-              <button 
-                className={style.explanation_btn}
-                onClick={() => setShowExplanation(!showExplanation)}
-              >
-                {showExplanation ? "Ukryj rozwiązanie" : "Pokaż rozwiązanie"}
-              </button>
-            )}
-          </div>
-
-          {msg && (
-            <p className={style.message} style={{ color: msg.includes("Klasa") || msg.includes("Dobrze") ? 'green' : 'red' }}>
-              {msg}
-            </p>
-          )}
-
-          {/* SEKCJA PODPOWIEDZI */}
+            {/* SEKCJA PODPOWIEDZI */}
           {showHints && task.details?.hints && (
             <div className={style.hints_section}>
               {task.details.hints.map(hint => (
@@ -185,7 +153,41 @@ export default function TaskView({ tasks, courseColor }) {
                 </div>
               ))}
             </div>
+            )}
+        </div>
+        
+        
+        <div className={style.task_body}>
+          {renderTaskType()}
+        </div>
+
+        <div className={style.anwser_check}>
+          <button 
+              className={style.check_btn} 
+              style={{ backgroundColor: courseColor }}
+              onClick={check}
+            >
+              Sprawdź odpowiedź
+            </button>
+            {msg && (
+            <p className={style.message} style={{ color: msg.includes("Klasa") || msg.includes("Dobrze") ? 'green' : 'red' }}>
+              {msg}
+            </p>
           )}
+        </div>
+
+        {/* STOPKA Z PRZYCISKAMI I WIADOMOŚCIĄ */}
+          <div className={style.explanation_toggle}>
+
+
+            {task.details?.explanation && (
+              <button 
+                className={style.explanation_btn}
+                style={{ backgroundColor: courseColor }}
+                onClick={() => setShowExplanation(!showExplanation)}
+              >
+              </button>
+            )}
 
           {/* SEKCJA WYJAŚNIENIA */}
           {showExplanation && task.details?.explanation && (
@@ -197,8 +199,9 @@ export default function TaskView({ tasks, courseColor }) {
                 </div>
               ))}
             </div>
+          
           )}
-        </footer>
+          </div>
       </div>
     </div>
   );

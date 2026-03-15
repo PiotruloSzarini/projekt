@@ -1,0 +1,22 @@
+.button_div {
+    width: 100%;
+}
+
+.singleinput_button {
+    width: 100%;
+    padding: 16px 24px;
+    border-radius: 24px;
+    border: 1px solid #03232740;
+    text-align: center;
+    color: #032327;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.singleinput_button::placeholder {
+    color: #03232740;
+}
+
+.singleinput_button:focus::placeholder {
+    color: transparent;
+}

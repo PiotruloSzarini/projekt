@@ -1,11 +1,10 @@
 import styles from './TaskTypeMultipleChoice.module.css';
 
 export default function TaskTypeMultipleChoice({ task, answer, setAnswer, courseColor }) {
-  // Wyciągamy odpowiedzi z details (tak jak przychodzą z Twojego nowego API)
   const options = task.details?.answers || [];
 
   return (
-    <div className={styles.container}>
+    <div className={styles.multiple_choice_container}>
       {options.map((a) => (
         <label 
           key={a.answer_id} 
@@ -14,7 +13,6 @@ export default function TaskTypeMultipleChoice({ task, answer, setAnswer, course
         >
           <input 
             type="radio" 
-            // Ważne: używamy unikalnej nazwy dla grupy radio
             name={`task-group-${task.task_id}`} 
             checked={answer === a.answer_id}
             onChange={() => setAnswer(a.answer_id)}
