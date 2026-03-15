@@ -125,16 +125,21 @@ export default function TaskView({ tasks, courseColor }) {
       <div className={style.content_card}>
         <h2 className={style.question}>{task.question}</h2>
 
-        <div className={style.math_container}>
-          {task.math_content && (
-            <div className={style.math_text}><p>{task.math_content}</p></div>
-          )}
-          {task.math_img && (
-            <div className={style.math_image_wrapper}>
-              <img src={task.math_img} alt="Zadanie" className={style.math_image} />
-            </div>
-          )}
-        </div>
+        {(task.math_content || task.math_img) && (
+          <div className={style.math_container}>
+            {task.math_content && (
+              <div className={style.math_text}>
+                <p>{task.math_content}</p>
+              </div>
+            )}
+            {task.math_img && (
+              <div className={style.math_image_wrapper}>
+                <img src={task.math_img} alt="Zadanie" className={style.math_image} />
+              </div>
+            )}
+          </div>
+        )}
+        {task.details?.hints?.length > 0 && (
         <div className={style.hint_container}>
           {task.details?.hints?.length > 0 && (
               <button 
@@ -149,13 +154,13 @@ export default function TaskView({ tasks, courseColor }) {
             <div className={style.hints_section}>
               {task.details.hints.map(hint => (
                 <div key={hint.hint_id} className={style.hint_item}>
-                  💡 {hint.content}
+                  {hint.content}
                 </div>
               ))}
             </div>
             )}
         </div>
-        
+        )}
         
         <div className={style.task_body}>
           {renderTaskType()}

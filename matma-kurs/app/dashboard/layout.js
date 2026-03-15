@@ -121,8 +121,7 @@ export default function DashboardLayout({ children }) {
                 />
                 <div className={styles.userIcon}>ikonka</div>
             </header>
-            <div className={styles.body}>
-                
+            <div className={styles.body} style={{ height: '100%' }}>
                 <main className={styles.content}>
                     {children}
                 </main>

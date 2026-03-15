@@ -1,108 +1,160 @@
 import { useState, useEffect } from 'react';
 import styles from './TaskTypeMatching.module.css';
 
-export default function TaskTypeMatching({ task, answer, setAnswer, courseColor }) {
+export default function TaskTypeMatching({ task, answer = {}, setAnswer, courseColor }) {
   const items = task.details?.items || [];
-  
-  // Stan dla wymieszanych elementów prawej strony
   const [shuffledRights, setShuffledRights] = useState([]);
 
   useEffect(() => {
-    // Przy montowaniu zadania mieszamy prawą stronę
     const rights = items.map(item => ({
       id: item.pair_item_id,
       text: item.right_text,
       photo: item.right_photo_url
     })).sort(() => Math.random() - 0.5);
-    
     setShuffledRights(rights);
   }, [task.task_id]);
 
-  const onDragStart = (e, item) => {
-    e.dataTransfer.setData("pair_item_id", item.id);
+  // UPROSZCZONY onDragStart - przekazujemy same ID
+  const onDragStart = (e, draggedItemId, sourceFieldId) => {
+    e.dataTransfer.setData("draggedItemId", draggedItemId);
+    e.dataTransfer.setData("sourceFieldId", sourceFieldId); // To z automatu staje się stringiem w dataTransfer
   };
 
-  const onDrop = (e, targetPairItemId) => {
-    const draggedId = e.dataTransfer.getData("pair_item_id");
+  const handleDrop = (e, targetFieldId = null) => {
+    e.preventDefault();
     
-    // Zapisujemy w stanie 'answer' (w TaskView): { targetId: draggedId }
-    // Oznacza to, że do lewego elementu 'targetId' przypisaliśmy prawy element 'draggedId'
-    const newAnswers = { ...(answer || {}) };
-    newAnswers[targetPairItemId] = Number(draggedId);
-    setAnswer(newAnswers);
+    // Pobieramy dane jako czyste wartości
+    const draggedItemId = Number(e.dataTransfer.getData("draggedItemId"));
+    const sourceFieldIdRaw = e.dataTransfer.getData("sourceFieldId");
+    
+    // Odzyskujemy typ sourceFieldId (jeśli to nie "pool", to musi być liczba, by zgadzała się z kluczami)
+    const sourceFieldId = sourceFieldIdRaw === "pool" ? "pool" : Number(sourceFieldIdRaw);
+
+    let nextState = { ...answer };
+
+    // --- PRZYPADEK 1: Upuszczenie do puli (targetFieldId to null) ---
+    if (targetFieldId === null) {
+      if (sourceFieldId !== "pool") {
+        delete nextState[sourceFieldId];
+      }
+      setAnswer(nextState);
+      return;
+    }
+
+    // --- PRZYPADEK 2: Upuszczenie do POLA ---
+    const existingItemIdInTarget = nextState[targetFieldId];
+
+    // Zabezpieczenie: Jeśli upuszczamy w tym samym miejscu, nie robimy nic
+    if (sourceFieldId === targetFieldId) return;
+
+    // A. Jeśli przeciągamy z PULI
+    if (sourceFieldId === "pool") {
+      // Jeśli w polu docelowym coś było, zostanie po prostu nadpisane, 
+      // a tym samym usunięte ze stanu answer i wróci do puli.
+      nextState[targetFieldId] = draggedItemId;
+    } 
+    // B. Jeśli przeciągamy z INNEGO POLA
+    else {
+      if (existingItemIdInTarget !== undefined) {
+        // ZAMIANA (SWAP): W polu docelowym coś jest
+        // Pole źródłowe otrzymuje to, co było w polu docelowym
+        nextState[sourceFieldId] = existingItemIdInTarget;
+      } else {
+        // PRZENIESIENIE (MOVE): Pole docelowe jest puste
+        // Czyścimy pole źródłowe
+        delete nextState[sourceFieldId];
+      }
+      // W obu przypadkach pole docelowe otrzymuje przeciągany element
+      nextState[targetFieldId] = draggedItemId;
+    }
+
+    // Dodatkowe zabezpieczenie czyszczące ewentualne duplikaty na innych polach
+    Object.keys(nextState).forEach(key => {
+      if (nextState[key] === draggedItemId && Number(key) !== targetFieldId) {
+        delete nextState[key];
+      }
+    });
+
+    setAnswer(nextState);
   };
 
-  const allowDrop = (e) => e.preventDefault();
+  // Funkcja pomocnicza do szukania pełnego obiektu na podstawie ID
+  const getFullItemObj = (id) => {
+    return items.find(i => i.pair_item_id === id) || shuffledRights.find(i => i.id === id);
+  };
 
   return (
     <div className={styles.container}>
+      {(task.math_content || task.math_img) && (
+        <div className={styles.math_container}>
+          {task.math_content && <div className={styles.math_text}><p>{task.math_content}</p></div>}
+          {task.math_img && <div className={styles.math_image_wrapper}><img src={task.math_img} alt="Zadanie" /></div>}
+        </div>
+      )}
+
       <div className={styles.matchingGrid}>
-        
-        {/* LEWA KOLUMNA (STAŁA) */}
-        <div className={styles.column}>
-          {items.map((item) => (
-            <div 
-              key={item.pair_item_id} 
-              className={styles.dropZone}
-              onDragOver={allowDrop}
-              onDrop={(e) => onDrop(e, item.pair_item_id)}
-              style={{ borderColor: answer?.[item.pair_item_id] ? courseColor : '#ccc' }}
-            >
-              <div className={styles.leftSide}>
-                {item.left_photo_url ? (
-                  <img src={item.left_photo_url} alt="Zadanie" />
-                ) : (
-                  <span>{item.left_text}</span>
-                )}
-              </div>
-              
-              <div className={styles.droppedContent}>
-                {answer?.[item.pair_item_id] ? (
-                  // Szukamy co zostało tu wrzucone
-                  <div className={styles.droppedItem}>
-                    {items.find(i => i.pair_item_id === answer[item.pair_item_id])?.right_text}
-                    <button 
-                      onClick={() => {
-                        const next = {...answer};
-                        delete next[item.pair_item_id];
-                        setAnswer(next);
-                      }}
-                      className={styles.removeBtn}
-                    >✕</button>
-                  </div>
-                ) : (
-                  <span className={styles.placeholder}>Upuść tutaj</span>
-                )}
-              </div>
+        {items.map((item) => (
+          <div key={item.pair_item_id} className={styles.matchBox}>
+            <div className={styles.leftSide}>
+              {item.left_photo_url ? <img src={item.left_photo_url} alt="Zadanie" /> : <span>{item.left_text}</span>}
             </div>
-          ))}
-        </div>
-
-        {/* PRAWA KOLUMNA (ELEMENTY DO PRZECIĄGANIA) */}
-        <div className={styles.pool}>
-          <h3>Elementy do dopasowania:</h3>
-          <div className={styles.poolItems}>
-            {shuffledRights
-              .filter(right => !Object.values(answer || {}).includes(right.id))
-              .map((right) => (
-                <div
-                  key={right.id}
+            
+            <div 
+              className={styles.dropZone}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => handleDrop(e, item.pair_item_id)}
+              style={{ borderColor: answer[item.pair_item_id] ? courseColor : '#ccc' }}
+            >
+              {answer[item.pair_item_id] ? (
+                <div 
+                  className={styles.droppedItem}
                   draggable
-                  onDragStart={(e) => onDragStart(e, right)}
-                  className={styles.draggableItem}
-                  style={{ backgroundColor: courseColor }}
+                  // Tutaj przekazujemy ID elementu oraz ID POLA, w którym aktualnie się znajduje
+                  onDragStart={(e) => onDragStart(e, answer[item.pair_item_id], item.pair_item_id)}
                 >
-                  {right.photo ? (
-                    <img src={right.photo} alt="Opcja" />
-                  ) : (
-                    <span>{right.text}</span>
-                  )}
+                  {itemObjDisplay(getFullItemObj(answer[item.pair_item_id]))}
                 </div>
-              ))}
+              ) : (
+                <span className={styles.placeholder}>przeciągnij tutaj</span>
+              )}
+            </div>
           </div>
-        </div>
+        ))}
+      </div>
 
+      <div className={styles.pool} onDragOver={(e) => e.preventDefault()} onDrop={(e) => handleDrop(e, null)}>
+        <div className={styles.poolItems}>
+          {shuffledRights.map((right) => {
+            const isDropped = Object.values(answer).includes(right.id);
+            return (
+              <div key={right.id} className={styles.itemWrapper}>
+                {isDropped ? (
+                  <div className={styles.draggableItem_outline} />
+                ) : (
+                  <div
+                    draggable
+                    // Tutaj przekazujemy ID elementu oraz słowo "pool"
+                    onDragStart={(e) => onDragStart(e, right.id, "pool")}
+                    className={styles.draggableItem}
+                    style={{ border: `1px solid ${courseColor || '#ccc'}` }}
+                  >
+                    {itemObjDisplay(right)}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
+  );
+}
+
+function itemObjDisplay(obj) {
+  if (!obj) return null;
+  return obj.photo || obj.right_photo_url ? (
+    <img src={obj.photo || obj.right_photo_url} alt="Element" className={styles.smallImg} />
+  ) : (
+    <span>{obj.text || obj.right_text}</span>
   );
 }

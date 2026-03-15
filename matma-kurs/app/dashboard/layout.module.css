@@ -85,9 +85,12 @@ body {
     cursor: pointer;
 }
 
+
+
 .content {
     width: 100%;
-    height: calc(100vh - 100px);
+    height: 100%;
     background-color: #F0F0F0;
     overflow: auto;
+    scrollbar-width: none;
 }
