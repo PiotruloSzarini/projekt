@@ -85,12 +85,6 @@ export default function TaskTypeMatching({ task, answer = {}, setAnswer, courseC
 
   return (
     <div className={styles.container}>
-      {(task.math_content || task.math_img) && (
-        <div className={styles.math_container}>
-          {task.math_content && <div className={styles.math_text}><p>{task.math_content}</p></div>}
-          {task.math_img && <div className={styles.math_image_wrapper}><img src={task.math_img} alt="Zadanie" /></div>}
-        </div>
-      )}
 
       <div className={styles.matchingGrid}>
         {items.map((item) => (
@@ -133,7 +127,6 @@ export default function TaskTypeMatching({ task, answer = {}, setAnswer, courseC
                 ) : (
                   <div
                     draggable
-                    // Tutaj przekazujemy ID elementu oraz słowo "pool"
                     onDragStart={(e) => onDragStart(e, right.id, "pool")}
                     className={styles.draggableItem}
                     style={{ border: `1px solid ${courseColor || '#ccc'}` }}

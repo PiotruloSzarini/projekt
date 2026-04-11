@@ -15,8 +15,8 @@ export default function TaskView({ tasks, courseColor }) {
   const [stepIdx, setStepIdx] = useState(0);
   const [msg, setMsg] = useState("");
   
-  // Nowe stany dla UI
-  const [showHints, setShowHints] = useState(false);
+  // Zmieniono showHints na licznik odkrytych podpowiedzi
+  const [visibleHintsCount, setVisibleHintsCount] = useState(0);
   const [showExplanation, setShowExplanation] = useState(false);
 
   useEffect(() => {
@@ -24,7 +24,7 @@ export default function TaskView({ tasks, courseColor }) {
     setStepIdx(0);
     setMsg("");
     setAnswers({});
-    setShowHints(false);
+    setVisibleHintsCount(0); // Reset licznika
     setShowExplanation(false);
   }, [tasks]);
 
@@ -38,7 +38,7 @@ export default function TaskView({ tasks, courseColor }) {
     setActiveIndex(index);
     setStepIdx(0);
     setMsg("");
-    setShowHints(false);
+    setVisibleHintsCount(0); // Reset licznika
     setShowExplanation(false);
   };
 
@@ -88,7 +88,6 @@ export default function TaskView({ tasks, courseColor }) {
     }
 
     setMsg(isCorrect ? "Klasa jesteś gitem!" : "Rozjebałeś się na komendzie.");
-    // po kliknieciu sprawdz mozna dodac przycisk ktory pokazuje rozwiazanie 
   };
 
   const renderTaskType = () => {
@@ -139,27 +138,38 @@ export default function TaskView({ tasks, courseColor }) {
             )}
           </div>
         )}
+
+        {/* LOGIKA HINTÓW */}
         {task.details?.hints?.length > 0 && (
-        <div className={style.hint_container}>
-          {task.details?.hints?.length > 0 && (
-              <button 
-                className={style.hint_btn}
-                onClick={() => setShowHints(!showHints)}
-              >
-                {showHints ? "Ukryj podpowiedzi" : "Pokaż podpowiedź"}
-              </button>
+          <div className={`${style.hint_container} ${visibleHintsCount > 0 ? style.active : ''}`}>
+            <button 
+              className={style.hint_btn}
+              onClick={() => {
+                const totalHints = task.details.hints.length;
+                if (visibleHintsCount < totalHints) {
+                  setVisibleHintsCount(prev => prev + 1);
+                }
+              }}
+            >
+              <img src="/assets/img/lightbulb.svg" alt="Podpowiedź" className={style.hint_icon} />
+
+              {visibleHintsCount < task.details.hints.length && (
+                <span className={style.hint_btn_text}>
+                  {visibleHintsCount === 0 ? "Pokaż podpowiedź" : "Pokaż kolejną podpowiedź"}
+                </span>
+              )}
+            </button>
+            
+            {visibleHintsCount > 0 && (
+              <div className={style.hints_section}>
+                {task.details.hints.slice(0, visibleHintsCount).map(hint => (
+                  <div key={hint.hint_id} className={style.hint_item}>
+                    {hint.content}
+                  </div>
+                ))}
+              </div>
             )}
-            {/* SEKCJA PODPOWIEDZI */}
-          {showHints && task.details?.hints && (
-            <div className={style.hints_section}>
-              {task.details.hints.map(hint => (
-                <div key={hint.hint_id} className={style.hint_item}>
-                  {hint.content}
-                </div>
-              ))}
-            </div>
-            )}
-        </div>
+          </div>
         )}
         
         <div className={style.task_body}>
@@ -181,32 +191,29 @@ export default function TaskView({ tasks, courseColor }) {
           )}
         </div>
 
-        {/* STOPKA Z PRZYCISKAMI I WIADOMOŚCIĄ */}
-          <div className={style.explanation_toggle}>
-
-
-            {task.details?.explanation && (
-              <button 
-                className={style.explanation_btn}
-                style={{ backgroundColor: courseColor }}
-                onClick={() => setShowExplanation(!showExplanation)}
-              >
-              </button>
-            )}
-
-          {/* SEKCJA WYJAŚNIENIA */}
-          {showExplanation && task.details?.explanation && (
-            <div className={style.explanation_section}>
+        <div className={style.explanation_wrapper}>
+          <div 
+            className={`${style.explanation_toggle} ${showExplanation ? style.active : ''}`}
+            style={{ backgroundColor: courseColor }}
+          >
+            <div className={style.explanation_content}>
               <h3>Rozwiązanie krok po kroku:</h3>
-              {task.details.explanation.steps?.map((step, index) => (
-                <div key={step.explanation_step_id} className={style.explanation_step}>
+              {task.details.explanation?.steps?.map((step, index) => (
+                <div key={step.explanation_step_id}>
                   <strong>Krok {index + 1}:</strong> {step.content}
                 </div>
               ))}
             </div>
-          
-          )}
           </div>
+
+          <button 
+            className={style.explanation_btn}
+            style={{ backgroundColor: courseColor }}
+            onClick={() => setShowExplanation(!showExplanation)}
+          >
+            {showExplanation ? "X" : <img src="/assets/img/explanation_book.svg" alt="?" />}
+          </button>
+        </div>
       </div>
     </div>
   );

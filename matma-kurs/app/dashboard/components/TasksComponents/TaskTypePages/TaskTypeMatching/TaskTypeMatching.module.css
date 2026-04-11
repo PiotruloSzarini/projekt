@@ -26,8 +26,11 @@
 }
 
 .leftSide img {
-    max-height: 80px;
-    width: auto;
+    aspect-ratio: 1/1;
+    height: 100px;
+    width: 100px;
+    object-fit: contain;
+    border: 1px solid red;
 }
 
 .dropZone {
@@ -69,13 +72,9 @@
     gap: 15px;
 }
 
-.draggableItem_outline{
-    width: 100%;
-    border: 1px solid black;
-}
 
 .draggableItem {
-    padding: 15px;
+    padding: 16px;
     border-radius: 25px;
     background-color: white;
     text-align: center;
@@ -96,4 +95,12 @@
 
 .draggableItem:active {
     cursor: grabbing;
+}
+
+.smallImg {
+    aspect-ratio: 1/1;
+    height: 100px;
+    width: 100px;
+    object-fit: contain;
+    border: 1px solid red;
 }

@@ -57,7 +57,14 @@
     font-size: 16px;
     display: flex;
     flex-direction: row;
+    gap: 10px;
 }
+.hint_container.active {
+    color: #DB9615;
+    border: 1px solid #DB9615;
+    width: 100%;
+}
+
 .hint_btn {
     background-color: transparent;
     color: #03232740;
@@ -98,15 +105,55 @@
 
 
 /* explanation */
+.explanation_wrapper {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 100;
+}
+
 .explanation_toggle {
     position: absolute;
     top: 0;
     right: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+    overflow: hidden;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+                height 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+                border-radius 0.4s ease;
+}
+
+.explanation_toggle.active {
+    width: 300px;
+    height: 250px;
+    border-radius: 12px;
 }
 
 .explanation_btn {
-    border: none;
-    border-radius: 24px;
-    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
     width: 40px;
+    height: 40px;
+    border-radius: 20px;
+    border: none;
+    cursor: pointer;
+    color: white;
+    z-index: 101;
+    transition: all 0.3s ease;
+}
+
+.explanation_content {
+    width: 300px;
+    padding: 20px;
+    opacity: 0;
+    transition: opacity 0.2s ease 0s;
+}
+
+.explanation_toggle.active .explanation_content {
+    opacity: 1;
+    transition: opacity 0.3s ease 0.2s;
 }
