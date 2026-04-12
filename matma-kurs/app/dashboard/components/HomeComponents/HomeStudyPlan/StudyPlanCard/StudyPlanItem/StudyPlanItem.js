@@ -10,8 +10,9 @@ export default function StudyPlanItem({ task, onToggle }) {
                         <Image 
                             src="/assets/img/home/studyplan/study-check-tick.svg"
                             alt="checked" 
-                            width={16} 
-                            height={16} 
+                            width={24} 
+                            height={24} 
+                            loading="eager"
                         />
                     )}
                 </div>

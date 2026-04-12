@@ -15,7 +15,7 @@ export default function HomeEntryCard( { name, continueLink } ) {
                 </div>
             </div>
             <div className={styles.card_image}>
-                <Image src="/assets/img/home/home-entry-card-image.svg" alt="Home Entry Card Image" width={175} height={128} />
+                <Image src="/assets/img/home/home-entry-card-image.svg" alt="Home Entry Card Image" width={175} height={128} loading="eager"/>
             </div>
         </div>
     );

@@ -1,19 +1,21 @@
 .card {
-    width: fit-content;
+    width: 670px;
     background-color: #FEFFFF;
-    border-radius: 32px;
-    padding: 24px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    border-radius: 24px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
 }
 
 .card_title {
     font-size: 24px;
-    font-weight: 800;
+    font-weight: 700;
     color: #032327;
-    margin-bottom: 24px;
 }
 
 .items_list {
     display: flex;
     flex-direction: column;
+    gap: 16px;
 }

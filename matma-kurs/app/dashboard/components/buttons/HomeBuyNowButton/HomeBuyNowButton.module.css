@@ -1,3 +1,7 @@
+.button_wrapper {
+    text-decoration: none;
+}
+
 .buynow_button {
     width: fit-content;
     display: flex;
@@ -10,4 +14,12 @@
     font-weight: 500;
     border-radius: 16px;
     cursor: pointer;
+}
+
+.buynow_button p {
+    color: #032327;
+    font-size: 16px;
+    font-weight: 500;
+    border-radius: 16px;
+    text-decoration: none;
 }

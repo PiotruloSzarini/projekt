@@ -1,0 +1,46 @@
+.card {
+    width: 350px;
+    background-color: #FEFFFF;
+    border-radius: 24px;
+    padding: 16px;
+}
+
+.stats_list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.stat_row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #03232740;
+}
+
+.stat_left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.icon_wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+}
+
+.stat_label {
+    font-size: 16px;
+    font-weight: 700;
+    color: #032327;
+}
+
+.stat_value {
+    font-size: 16px;
+    font-weight: 500;
+    color: #032327;
+}

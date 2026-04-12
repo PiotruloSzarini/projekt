@@ -16,7 +16,7 @@
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 2px solid #FEFFFF80;
+    border-bottom: 1.5px solid #FEFFFF80;
     padding-bottom: 4px;
 }
 
@@ -61,7 +61,7 @@
 }
 
 .tasksCount_div{
-    border-right: 2px solid #FEFFFF80;
+    border-right: 1.5px solid #FEFFFF80;
     padding: 4px 0px;
     padding-right: 24px;
     display: flex;
