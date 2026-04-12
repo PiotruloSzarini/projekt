@@ -1,0 +1,13 @@
+.buynow_button {
+    width: fit-content;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    background-color: #FEFFFF;
+    color: #032327;
+    font-size: 16px;
+    font-weight: 500;
+    border-radius: 16px;
+    cursor: pointer;
+}

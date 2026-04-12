@@ -1,8 +1,28 @@
+"use client";
+import { useState } from 'react';
+
 import HomeCourseCard from "../../components/HomeComponents/HomeCourseCard/HomeCourseCard";
 import HomeEntryCard from "../../components/HomeComponents/HomeEntryCard/HomeEntryCard";
+import HomeBuyNowButton from "../../components/buttons/HomeBuyNowButton/HomeBuyNowButton";
+import StudyPlanCard from "../../components/HomeComponents/HomeStudyPlan/StudyPlanCard/StudyPlanCard";
 
 
 export default function home_components() {
+    const [tasks, setTasks] = useState([
+        { id: 1, title: 'Skończyć rozdział', category: 'Matematyka Podstawowa', deadline: 'dziś', isCompleted: true },
+        { id: 2, title: 'Rozwiązać daily challenge', category: null, deadline: 'dziś', isCompleted: false },
+        { id: 3, title: 'Podejść do próbnej matury', category: null, deadline: 'do 28 grudnia', isCompleted: false },
+    ]);
+
+    const handleTaskToggle = (taskId) => {
+        setTasks(prevTasks => 
+            prevTasks.map(task => 
+                task.id === taskId ? { ...task, isCompleted: !task.isCompleted } : task
+            )
+        );
+        console.log('Toggled task with id:', taskId);
+    };
+
     return (
         <div style={{ display: 'flex',flexDirection: 'column', gap: '16px'}}>
             <HomeCourseCard 
@@ -31,7 +51,12 @@ export default function home_components() {
             />
             <HomeEntryCard name="Kacper" continueLink="/dashboard" />
 
-            
+            <HomeBuyNowButton />
+
+            <StudyPlanCard
+                tasks={tasks}
+                onTaskToggle={handleTaskToggle}
+            />
         </div>
     );
 }
