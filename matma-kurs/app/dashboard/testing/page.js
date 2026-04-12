@@ -31,6 +31,10 @@ export default function testing() {
             <Link href="/dashboard/testing/menu-components">
                 menu components
             </Link>
+            <br></br>
+            <Link href="/dashboard/testing/home-components">
+                home components
+            </Link>
         </div>
     );
 }

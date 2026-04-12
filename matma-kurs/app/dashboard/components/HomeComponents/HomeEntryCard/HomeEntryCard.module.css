@@ -1,0 +1,58 @@
+.card {
+    width: 670px;
+    background-color: #032327;
+    border-radius: 24px;
+    padding: 16px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.card_info {
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
+}
+
+.card_greeting {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-wrap: nowrap;
+}
+
+.card_greeting h1{
+    font-size: 40px;
+    font-weight: 700;
+    color: #FEFFFF;
+}
+.card_greeting p{
+    font-size: 16px;
+    font-weight: 500;
+    color: #FEFFFF80;
+}
+.card_continue {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+}
+
+.card_continue a{
+    font-size: 16px;
+    font-weight: 500;
+    color: #FEFFFF;
+    text-decoration: none;
+}
+
+.card_continue img {
+    object-fit: contain;
+}
+
+.card_image {
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+}

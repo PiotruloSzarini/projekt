@@ -22,6 +22,7 @@ export default function Menu({ isCollapsed = false }) {
             <div className={`${styles.sidebar} ${isCollapsed ? styles.collapsed : ''}`}>
                 
                 <div className={styles.logo}>
+                    <Link href="/dashboard">
                     <Image
                         src="/assets/img/OMM_LOGO.svg"
                         alt="Logo"
@@ -29,6 +30,7 @@ export default function Menu({ isCollapsed = false }) {
                         height={32}
                         priority
                     /> 
+                    </Link>
                 </div>
 
                 <div className={styles.sidebar_links_div}>
@@ -60,7 +62,6 @@ export default function Menu({ isCollapsed = false }) {
 
                 {!isCollapsed && (
                     <ul className={styles.extra_links}>
-                        <li><Link href="/dashboard/testy-zadan">Testy zadań</Link></li>
                         <li><Link href="/dashboard/testing">Testy komponentów</Link></li>
                     </ul>
                 )}

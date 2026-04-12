@@ -20,8 +20,6 @@ export default function Topbar({ children }) {
         setIsDropdownOpen(false);
     };
 
-    // Sortujemy listę tak, aby wybrany przedmiot był zawsze PIERWSZY na liście w dropdownie
-    // Dzięki temu ikonka "up" zawsze będzie przy tym, co aktualnie klikasz
     const sortedSubjects = [
         selectedSubject,
         ...SUBJECTS.filter(s => s.name !== selectedSubject.name)
@@ -30,13 +28,12 @@ export default function Topbar({ children }) {
     return (
         <div className={styles.wrapper}>
             <header className={styles.topbar}>
-                {/* Główny przycisk na belce */}
                 <div 
                     className={`${styles.subject_selector} ${isDropdownOpen ? styles.hidden : ''}`} 
                     onClick={() => setIsDropdownOpen(true)}
                 >
                     <Image
-                        src={'/assets/img/topbar/down-icon.svg'} // Zamknięte -> strzałka w dół
+                        src={'/assets/img/topbar/down-icon.svg'}
                         alt="down icon"
                         width={32}
                         height={32}
@@ -76,16 +73,15 @@ export default function Topbar({ children }) {
                                     onClick={() => handleSubjectChange(subject)}
                                 >
                                     <div className={styles.item_prefix}>
-                                        {/* Zgodnie z prośbą: znaczek tylko przy PIERWSZYM elemencie (index 0) */}
                                         {index === 0 ? (
                                             <Image
-                                                src='/assets/img/topbar/up-icon.svg' // Otwarte -> strzałka w górę
+                                                src='/assets/img/topbar/up-icon.svg'
                                                 alt="up icon"
                                                 width={32}
                                                 height={32}
                                             />
                                         ) : (
-                                            <div style={{ width: 32 }} /> // Placeholder, żeby tekst był w linii
+                                            <div style={{ width: 32 }} />
                                         )}
                                     </div>
                                     <Image
