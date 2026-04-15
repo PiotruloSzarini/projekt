@@ -31,9 +31,9 @@
 
 
 .dropdown_overlay {
-    position: absolute;
-    top: 16px;
-    left: 24px;
+    position: absolute;    
+    top: 12px;
+    left: 22px;
     z-index: 100;
 }
 
@@ -44,7 +44,7 @@
     background-color: #FEFFFF;
     border-radius: 2px 16px 16px 16px;
     min-width: 240px;
-    border: 1px solid #03232740;
+    outline: 1px solid #03232740;
 }
 
 .dropdown_item {
@@ -57,6 +57,11 @@
     transition: background 0.2s;
 }
 
+.dropdown_img_prefix {
+    width: 20px;
+    display: flex;
+    justify-content: center;
+}
 
 .item_prefix {
     width: 20px;

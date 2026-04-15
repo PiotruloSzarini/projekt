@@ -32,12 +32,15 @@ export default function Topbar({ children }) {
                     className={`${styles.subject_selector} ${isDropdownOpen ? styles.hidden : ''}`} 
                     onClick={() => setIsDropdownOpen(true)}
                 >
-                    <Image
+                    <div className={styles.dropdown_img_prefix}>
+                        <Image
                         src={'/assets/img/topbar/down-icon.svg'}
                         alt="down icon"
                         width={32}
                         height={32}
-                    />
+                        />
+                    </div>
+                    
                     <Image
                         src={selectedSubject.icon}
                         alt="subject icon"

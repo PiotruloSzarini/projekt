@@ -35,6 +35,18 @@ export default function testing() {
             <Link href="/dashboard/testing/home-components">
                 home components
             </Link>
+            <br></br>
+            <Link href="/dashboard/testing/ranking-components">
+                ranking components
+            </Link>
+            <br></br>
+            <Link href="/dashboard/testing/studyplan-components">
+                studyplan components
+            </Link>
+            <br></br>
+            <Link href="/dashboard/testing/weakpoints-components">
+                weakpoints components
+            </Link>
         </div>
     );
 }
