@@ -1,0 +1,37 @@
+.timer_container {
+    width: fit-content;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 32px;
+    padding: 16px;
+    background-color:#FEFFFF;
+    border-radius: 24px;
+}
+
+.timer_text {
+    font-size: 24px;
+    font-weight: 700;
+    color: #032327;
+    line-height: 120%;
+}
+
+.timer {
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+}
+
+.counter_group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.counter_group span {
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 80%;
+    color: #032327;
+}
