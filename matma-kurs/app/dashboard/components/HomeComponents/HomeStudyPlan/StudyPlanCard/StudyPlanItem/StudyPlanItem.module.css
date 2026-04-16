@@ -1,0 +1,55 @@
+.item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 0 8px 0;
+    border-bottom: 1px solid #03232740;
+    cursor: pointer;
+}
+.item_left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+
+.checkbox {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #032327;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.checked {
+    border-color: #032327; 
+}
+
+.item_text {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.item_title {
+    font-weight: 700;
+    font-size: 16px;
+    color: #032327;
+    line-height: 120%;
+}
+
+.item_category {
+    color: #03232740;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 120%;
+}
+
+.item_deadline {
+    color: #03232740;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 120%;
+}

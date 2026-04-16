@@ -59,17 +59,35 @@ export default function AdminCourseEdit() {
         }));
     };
 
-    const getSiblings = (nodes, parentId, type) => {
+        const getSiblings = (nodes, parentId, type) => {
+        console.log(`--- DEBUG SORTOWANIA ---`);
+        console.log(`Szukany typ: ${type}, parentId rodzica: ${parentId}`);
+
+        // 1. Obsługa Rozdziałów (brak parentId)
+        if (!parentId || parentId === 'null') {
+            const chapters = nodes.filter(n => n.type === 'chapter');
+            console.log("Poziom główny (rozdziały):", chapters);
+            return chapters;
+        }
+
+        // 2. Szukanie rodzica w głąb drzewa
         for (const node of nodes) {
+            // Czy ten węzeł jest rodzicem, którego szukamy?
             if (String(node.id) === String(parentId)) {
-                const hasCorrectChildren = node.children?.some(c => c.type === type);
-                if (hasCorrectChildren) return node.children.filter(c => c.type === type);
+                // Zwracamy wszystkie dzieci tego rodzica, które mają pasujący typ
+                const siblings = node.children ? node.children.filter(c => c.type === type) : [];
+                console.log(`Znaleziono rodzeństwo dla typu ${type} u rodzica ${node.name}:`, siblings);
+                return siblings;
             }
+
+            // Jeśli nie, szukaj głębiej w jego dzieciach
             if (node.children && node.children.length > 0) {
                 const found = getSiblings(node.children, parentId, type);
                 if (found.length > 0) return found;
             }
         }
+
+        console.warn(`Nie znaleziono żadnych elementów typu ${type} dla parentId ${parentId}`);
         return [];
     };
 
@@ -127,27 +145,51 @@ export default function AdminCourseEdit() {
         } catch (err) { console.error(err); }
     };
 
+    // --- POPRAWIONA FUNKCJA HANDLESWAP ---
     const handleSwap = async (direction) => {
-        const siblings = getSiblings(tree, editData.parentId, editData.type);
+        // Rozdziały mają parentId null w bazie/stanie
+        const currentParentId = editData.parentId || null;
+        const siblings = getSiblings(tree, currentParentId, editData.type);
+        
         const myIndex = siblings.findIndex(s => s.id === editData.id);
-        if (myIndex === -1) return;
+        
+        // Check dla konsoli przed swapem
+        console.log("Index elementu:", myIndex, "Kierunek:", direction);
+
+        if (myIndex === -1) {
+            console.error("Nie znaleziono elementu w rodzeństwie!");
+            return;
+        }
 
         const neighborIndex = direction === 'up' ? myIndex - 1 : myIndex + 1;
-        if (neighborIndex < 0 || neighborIndex >= siblings.length) return;
+        if (neighborIndex < 0 || neighborIndex >= siblings.length) {
+            console.warn("Brak sąsiada w tym kierunku.");
+            return;
+        }
 
         const neighbor = siblings[neighborIndex];
         const mySort = Number(editData.sort);
         const neighborSort = Number(neighbor.sort);
 
+        console.log(`Zamiana: [${editData.name} (sort: ${mySort})] <-> [${neighbor.name} (sort: ${neighborSort})]`);
+
+        // 1. Aktualizacja sąsiada
         await fetch('/api/admin/update-content', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
-                courseId, type: editData.type, id: neighbor.id, 
-                newData: { name: neighbor.name, parentId: editData.parentId, sort: mySort } 
+                courseId, 
+                type: editData.type, 
+                id: neighbor.id, 
+                newData: { 
+                    name: neighbor.name, 
+                    parentId: currentParentId, 
+                    sort: mySort 
+                } 
             })
         });
 
+        // 2. Aktualizacja wybranego elementu (siebie)
         const updatedSelf = { ...editData, sort: neighborSort };
         await saveToDB(updatedSelf, false);
         setEditData(updatedSelf);

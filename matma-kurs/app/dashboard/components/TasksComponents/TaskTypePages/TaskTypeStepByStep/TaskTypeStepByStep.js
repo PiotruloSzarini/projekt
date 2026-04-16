@@ -1,37 +1,50 @@
-// components/TasksComponents/TaskTypePages/TaskTypeStepByStep/TaskTypeStepByStep.js
+import styles from './TaskTypeStepByStep.module.css';
 
 export default function TaskTypeStepByStep({ task, answer, setAnswer, stepIdx, courseColor }) {
-  const currentStep = task.steps?.[stepIdx];
+  const steps = task.details?.steps || [];
 
-  if (!currentStep) return null;
-
-  const handleStepChange = (value) => {
+  const handleStepChange = (stepId, value) => {
     const currentAnswers = answer || {};
     setAnswer({
       ...currentAnswers,
-      [currentStep.step_id]: value
+      [stepId]: value
     });
   };
 
   return (
-    <div style={{ padding: '15px', borderLeft: `4px solid ${courseColor}`, backgroundColor: '#f9f9f9' }}>
-      <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '5px' }}>
-        Krok {stepIdx + 1} z {task.steps.length}
-      </p>
-      <h3 style={{ marginBottom: '15px' }}>{currentStep.step_instruction}</h3>
-      
-      <input 
-        type="text" 
-        placeholder="Twoja odpowiedź dla tego kroku..."
-        value={answer?.[currentStep.step_id] || ""}
-        onChange={(e) => handleStepChange(e.target.value)}
-        style={{
-          width: '100%',
-          padding: '12px',
-          borderRadius: '8px',
-          border: `1px solid ${courseColor}`
-        }}
-      />
+    <div className={styles.container}>
+      {steps.slice(0, stepIdx + 1).map((step, index) => {
+        const isCompleted = index < stepIdx;
+
+        return (
+          <div 
+            key={step.step_id} 
+            className={`${styles.stepBox} ${isCompleted ? styles.completed : styles.activeStep}`}
+            style={{ borderLeft: isCompleted ? `4px solid #e0e0e0` : `4px solid ${courseColor}` }}
+          >
+            <h2 className={styles.stepTitle}>Krok {index + 1}.</h2>
+            <p className={styles.instruction}>{step.step_instruction}</p>
+            
+            <div className={styles.inputWrapper}>
+              <input 
+                type="text" 
+                className={styles.inputField}
+                value={answer?.[step.step_id] || ""}
+                onChange={(e) => handleStepChange(step.step_id, e.target.value)}
+                disabled={isCompleted}
+                style={{ borderColor: isCompleted ? '#eee' : courseColor }}
+                placeholder="Twoja odpowiedź..."
+              />
+            </div>
+          </div>
+        );
+      })}
+
+      {steps.slice(stepIdx + 1).map((step, index) => (
+        <div key={`future-${index}`} className={styles.futureStep}>
+          Krok {stepIdx + index + 2}.
+        </div>
+      ))}
     </div>
   );
 }

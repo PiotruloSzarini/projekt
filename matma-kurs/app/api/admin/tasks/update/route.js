@@ -7,13 +7,15 @@ export async function PUT(request) {
         const body = await request.json();
         const { 
             task_id, 
-            task_type_id, // Potrzebne, żeby wiedzieć, które tabele procesować
-            question, 
+            task_type_id, 
+            question,
+            math_img,      
+            math_content,
             difficulty, 
             points,
-            details,      // Answers, pairs, itp.
-            hints,        // Tablica hintów
-            explanation   // Obiekt z tablicą steps
+            details,     
+            hints,        
+            explanation   
         } = body;
 
         if (!task_id) return NextResponse.json({ error: "Brak ID zadania" }, { status: 400 });
@@ -22,8 +24,8 @@ export async function PUT(request) {
 
         // 1. UPDATE GŁÓWNEGO ZADANIA
         await connection.execute(
-            `UPDATE tasks SET question = ?, difficulty = ?, points = ? WHERE task_id = ?`,
-            [question, difficulty, points, task_id]
+            `UPDATE tasks SET question = ?, math_img = ?, math_content = ?, difficulty = ?, points = ? WHERE task_id = ?`,
+            [question, math_img || null, math_content || null, difficulty, points, task_id]
         );
 
         // 2. SZCZEGÓŁY TYPU (Logika Sync dla list)
@@ -84,13 +86,16 @@ export async function PUT(request) {
             for (const p of details.pairs) {
                 if (p.pair_item_id) {
                     await connection.execute(
-                        `UPDATE task_matching_pairs_items SET left_text = ?, right_text = ?, sort_order = ? WHERE pair_item_id = ?`,
-                        [p.left_text, p.right_text, p.sort_order, p.pair_item_id]
+                        `UPDATE task_matching_pairs_items 
+                        SET left_text = ?, left_photo_url = ?, right_text = ?, right_photo_url = ?, sort_order = ? 
+                        WHERE pair_item_id = ?`,
+                        [p.left_text || null, p.left_photo_url || null, p.right_text || null, p.right_photo_url || null, p.sort_order, p.pair_item_id]
                     );
                 } else {
                     await connection.execute(
-                        `INSERT INTO task_matching_pairs_items (task_pair_id, left_text, right_text, sort_order) VALUES (?, ?, ?, ?)`,
-                        [pairId, p.left_text, p.right_text, p.sort_order]
+                        `INSERT INTO task_matching_pairs_items (task_pair_id, left_text, left_photo_url, right_text, right_photo_url, sort_order) 
+                        VALUES (?, ?, ?, ?, ?, ?)`,
+                        [pairId, p.left_text || null, p.left_photo_url || null, p.right_text || null, p.right_photo_url || null, p.sort_order]
                     );
                 }
             }

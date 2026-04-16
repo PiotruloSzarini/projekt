@@ -10,4 +10,5 @@
     height: 100%;
     background-color: #032327;
     transition: width 0.3s ease;
+    border-radius: 999px;
 }

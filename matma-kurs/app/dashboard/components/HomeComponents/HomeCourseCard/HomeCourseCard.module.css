@@ -1,0 +1,91 @@
+.card {
+    width: 670px;
+    background-color: white;
+    border-radius: 24px;
+    padding: 9px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 4px;
+}
+
+.card_header {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1.5px solid #FEFFFF80;
+    padding-bottom: 4px;
+}
+
+.card_title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.title {
+    color: #FEFFFF;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+
+.card_owned p{
+    color: #FEFFFF80;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+
+.card_task_video {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: left;
+    gap: 24px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #FEFFFF80;
+    padding: 4px 0px;
+}
+.videosCount_div {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.tasksCount_div{
+    border-right: 1.5px solid #FEFFFF80;
+    padding: 4px 0px;
+    padding-right: 24px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.card_progress {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: left;
+    justify-content: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #FEFFFF80;
+}
+
+
+.locked {
+    opacity: 0.5;
+    cursor: not-allowed;
+    user-select: none;
+}

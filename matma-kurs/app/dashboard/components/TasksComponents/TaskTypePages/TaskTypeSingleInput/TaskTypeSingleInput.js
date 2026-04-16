@@ -1,20 +1,24 @@
+import { useState } from 'react';
+import styles from './TaskTypeSingleInput.module.css';
 
 export default function TaskTypeSingleInput({ answer, setAnswer, courseColor }) {
+    const [isFocused, setIsFocused] = useState(false);
+
     return (
-    <div>
+        <div className={styles.button_div}>
             <input 
-            type="text" 
-            placeholder="Wpisz odpowiedź..."
-            value={answer || ""}
-            onChange={(e) => setAnswer(e.target.value)} 
-            style={{
-            border: `2px solid ${courseColor}`,
-            padding: '10px',
-            borderRadius: '8px',
-            width: '100%',
-            outline: 'none'
-            }}
-        />
-    </div>
+                type="text" 
+                placeholder="Tutaj wpisz swoją odpowiedź"
+                value={answer || ""}
+                onChange={(e) => setAnswer(e.target.value)} 
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
+                className={styles.singleinput_button}
+                style={{ 
+                    outlineColor: isFocused ? courseColor : 'transparent',
+                    outlineStyle: 'solid' 
+                }}
+            />
+        </div>
     );
 }

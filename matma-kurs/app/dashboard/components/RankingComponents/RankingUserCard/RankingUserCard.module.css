@@ -1,0 +1,95 @@
+.user_card {
+    width: 280px;
+    background-color: #FEFFFF;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    padding: 16px;
+    border-radius: 24px;
+    position: relative;
+}
+
+.first_place {
+    width: 425px; 
+    border:1.5px solid #F3BB0C
+}
+.medal_wrapper {
+    position: absolute;
+    top: -8px;
+    right: 0px;
+    z-index: 10;
+}
+.medal_wrapper img {
+    width: 82px;
+    height: 82px;
+}
+
+.user_info {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    overflow: hidden;
+}
+
+.user_details {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 8px;
+    padding: 0px 16px;
+    overflow: hidden;
+    flex: 1;
+}
+
+.user_details h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #032327;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.user_details p {
+    font-size: 12px;
+    font-weight: 500;
+    color: #03232740;
+}
+
+.user_stats {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 0px 16px;
+    padding: 16px;
+    border-top: 1px solid #032327;
+}
+
+.user_stats_row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.user_stats_row h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #032327;
+}
+
+.user_stats_row p {
+    font-size: 12px;
+    font-weight: 500;
+    color: #03232740;
+    text-align: center;
+}

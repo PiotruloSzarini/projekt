@@ -1,0 +1,54 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.stepBox {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 16px;
+    padding: 20px;
+    transition: all 0.4s ease;
+}
+
+
+.stepTitle {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.instruction {
+    color: #555;
+    margin-bottom: 15px;
+}
+
+.inputField {
+    width: 100%;
+    padding: 12px 20px;
+    border: 1px solid #ddd;
+    border-radius: 24px;
+    outline: none;
+}
+
+.confirmBtn {
+    float: right;
+    margin-top: 15px;
+    padding: 10px 25px;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.futureStep {
+    padding: 15px 25px;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 16px;
+    color: #ccc;
+    font-weight: 700;
+    font-size: 1rem;
+}
