@@ -4,8 +4,9 @@ import styles from './Menu.module.css';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
+import { useCourseData } from '@/app/context/CourseContext';
 
-export default function Menu({ isCollapsed = false }) {
+export default function Menu({ isCollapsed = false, onToggle }) {
     const pathname = usePathname();
 
     const MENU_LINKS = [
@@ -16,6 +17,8 @@ export default function Menu({ isCollapsed = false }) {
         { href: '/dashboard/plan-nauki', label: 'Plan Nauki', icon: '/assets/img/menu/calendar-icon.svg' },
         { href: '/dashboard/slabe-punkty', label: 'Słabe punkty', icon: '/assets/img/menu/weak-icon.svg' },
     ];
+    const { userId } = useCourseData();
+    console.log("Zalogowany użytkownik to:", userId);
 
     return (
         <div className={styles.container}>
@@ -59,10 +62,26 @@ export default function Menu({ isCollapsed = false }) {
                         );
                     })}
                 </div>
+                <div className={styles.sidebar_collapse_container}>
+                    <button 
+                        className={`${styles.collapse_button} ${isCollapsed ? styles.rotate : ''}`}
+                        onClick={onToggle}
+                        aria-label={isCollapsed ? "Rozwiń menu" : "Zwiń menu"}
+                    >
+                        <Image
+                            src={isCollapsed ? "/assets/img/menu/unfold-icon.svg" : "/assets/img/menu/fold-icon.svg"}
+                            alt={isCollapsed ? "Rozwiń menu" : "Zwiń menu"}
+                            className={styles.collapse_icon}
+                            width={40}
+                            height={40}
+                        />
+                    </button>
+                </div>
 
                 {!isCollapsed && (
                     <ul className={styles.extra_links}>
                         <li><Link href="/dashboard/testing">Testy komponentów</Link></li>
+                        <p>Id uzytkownika: {userId}</p>
                     </ul>
                 )}
             </div>

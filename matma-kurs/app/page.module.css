@@ -5,12 +5,13 @@ body {
 }
 
 .container {
-  height: 100vh;
+  /*height: 100vh; */
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   gap: 20px;
+  height: 100%;
 }
 
 .title {

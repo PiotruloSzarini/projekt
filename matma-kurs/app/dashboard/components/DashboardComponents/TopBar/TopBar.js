@@ -34,8 +34,8 @@ export default function Topbar({ children }) {
                 >
                     <div className={styles.dropdown_img_prefix}>
                         <Image
-                        src={'/assets/img/topbar/down-icon.svg'}
-                        alt="down icon"
+                        src={'/assets/img/topbar/up-icon.svg'}
+                        alt="up icon"
                         width={32}
                         height={32}
                         />
@@ -57,7 +57,7 @@ export default function Topbar({ children }) {
                     </div>
                     <div className={styles.stat_item}>
                         <Image src='/assets/img/topbar/fire-icon.svg' alt="fire" width={32} height={32} />
-                        <span className={styles.stat_value}>20</span>
+                        <span className={styles.streak_value}>20</span>
                     </div>
                     <div className={styles.user_avatar}>
                         <Image src='/assets/img/topbar/user-icon.svg' alt="user" width={56} height={56} className={styles.avatar_image} />
@@ -78,8 +78,8 @@ export default function Topbar({ children }) {
                                     <div className={styles.item_prefix}>
                                         {index === 0 ? (
                                             <Image
-                                                src='/assets/img/topbar/up-icon.svg'
-                                                alt="up icon"
+                                                src='/assets/img/topbar/down-icon.svg'
+                                                alt="down icon"
                                                 width={32}
                                                 height={32}
                                             />

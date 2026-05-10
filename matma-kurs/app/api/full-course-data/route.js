@@ -4,12 +4,27 @@ import pool from '../../lib/db';
 export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const courseId = searchParams.get('courseId');
+    const userId = searchParams.get('userId'); // Pobieramy userId przekazany z kontekstu
 
-    if (!courseId) {
-        return NextResponse.json({ error: "Brak ID kursu" }, { status: 400 });
+    if (!courseId || !userId) {
+        return NextResponse.json({ error: "Brak ID kursu lub ID użytkownika" }, { status: 400 });
     }
 
     try {
+        // --- KROK 1: Sprawdzenie uprawnień (Weryfikacja w user_courses) ---
+        const [userAccess] = await pool.execute(
+            'SELECT * FROM user_courses WHERE user_id = ? AND course_id = ?',
+            [userId, courseId]
+        );
+
+        if (userAccess.length === 0) {
+            return NextResponse.json({ 
+                error: "Brak dostępu do tego kursu. Musisz go najpierw aktywować." 
+            }, { status: 403 });
+        }
+
+        // --- KROK 2: Pobieranie danych (Zoptymalizowane pod konkretny kurs) ---
+        // Zamiast pobierać wszystko (SELECT * FROM topics), filtrujemy po courseId tam, gdzie się da.
         const [
             [courses], [chapters], [topics], [lessons], [videos],
             [tasks], [taskTypes], [taskGroups],
@@ -21,25 +36,32 @@ export async function GET(request) {
         ] = await Promise.all([
             pool.execute('SELECT * FROM courses WHERE course_id = ?', [courseId]),
             pool.execute('SELECT * FROM chapters WHERE course_id = ? ORDER BY chapter_id ASC', [courseId]),
-            pool.execute('SELECT * FROM topics ORDER BY sort_order ASC'),
-            pool.execute('SELECT * FROM lessons ORDER BY lesson_id ASC'),
-            pool.execute('SELECT * FROM videos ORDER BY video_id ASC'),
-            pool.execute('SELECT * FROM tasks ORDER BY task_id ASC'),
-            pool.execute('SELECT * FROM task_types ORDER BY task_type_id ASC'),
-            pool.execute('SELECT * FROM task_groups ORDER BY task_group_id ASC'),
+            // Pobieramy tematy tylko dla rozdziałów tego kursu
+            pool.execute('SELECT * FROM topics WHERE chapter_id IN (SELECT chapter_id FROM chapters WHERE course_id = ?) ORDER BY sort_order ASC', [courseId]),
+            // Pobieramy lekcje tylko dla tematów tego kursu
+            pool.execute(`
+                SELECT l.* FROM lessons l 
+                JOIN topics t ON l.topic_id = t.topic_id 
+                JOIN chapters c ON t.chapter_id = c.chapter_id 
+                WHERE c.course_id = ?`, [courseId]),
+            // Wideo, zadania itd.
+            pool.execute('SELECT * FROM videos'),
+            pool.execute('SELECT * FROM tasks'),
+            pool.execute('SELECT * FROM task_types'),
+            pool.execute('SELECT * FROM task_groups'),
             pool.execute('SELECT * FROM task_multiple_choice'),
-            pool.execute('SELECT * FROM task_multiple_choice_answers ORDER BY sort_order ASC'),
+            pool.execute('SELECT * FROM task_multiple_choice_answers'),
             pool.execute('SELECT * FROM task_single_input'),
             pool.execute('SELECT * FROM task_matching_pairs'),
-            pool.execute('SELECT * FROM task_matching_pairs_items ORDER BY sort_order ASC'),
+            pool.execute('SELECT * FROM task_matching_pairs_items'),
             pool.execute('SELECT * FROM task_step_by_step'),
-            pool.execute('SELECT * FROM task_step_by_step_steps ORDER BY sort_order ASC'),
+            pool.execute('SELECT * FROM task_step_by_step_steps'),
             pool.execute('SELECT * FROM task_explanation'),
-            pool.execute('SELECT * FROM task_explanation_steps ORDER BY sort_order ASC'),
-            pool.execute('SELECT * FROM task_hints ORDER BY sort_order ASC')
+            pool.execute('SELECT * FROM task_explanation_steps'),
+            pool.execute('SELECT * FROM task_hints')
         ]);
 
-
+        // --- KROK 3: Mapowanie zadań (Twoja istniejąca logika) ---
         const fullTasks = tasks.map(task => {
             let details = {};
             
@@ -81,10 +103,10 @@ export async function GET(request) {
             }
 
             details.hints = hints.filter(h => h.task_id === task.task_id);
-
             return { ...task, details }; 
         });
 
+        // --- KROK 4: Budowanie struktury (Twoja istniejąca logika) ---
         const structure = chapters.map(chapter => ({
             ...chapter,
             topics: topics
@@ -107,9 +129,11 @@ export async function GET(request) {
                 }))
         }));
 
+        // --- KROK 5: Zwracanie danych ---
         return NextResponse.json({
             course: courses[0],
-            structure: structure
+            structure: structure,
+            user_info: { userId, owned_at: userAccess[0].owned_at } // Dodatkowe info o dostępie
         });
 
     } catch (error) {
