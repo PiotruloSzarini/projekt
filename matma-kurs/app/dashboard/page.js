@@ -69,10 +69,10 @@ export default function MyProgressPage() {
                             <p>Ładowanie kursów...</p>
                         ) : (
                             courses.map(course => (
-                                <ConditionalLink 
+                                <Link 
                                     key={course.course_id} 
-                                    condition={course.owned} 
                                     href={`/dashboard/kursy/${course.slug}`}
+                                    style={{ textDecoration: 'none', width: '100%' }}
                                 >
                                     <HomeCourseCard 
                                         title={course.title} 
@@ -82,7 +82,7 @@ export default function MyProgressPage() {
                                         progress={course.progress || 0} 
                                         owned={course.owned}
                                     />
-                                </ConditionalLink>
+                                </Link>
                             ))
                         )}
                     </div>
@@ -112,12 +112,9 @@ export default function MyProgressPage() {
 }
 
 function ConditionalLink({ condition, href, children }) {
-    if (condition) {
-        return (
-            <Link href={href} style={{ textDecoration: 'none', width: '100%' }}>
-                {children}
-            </Link>
-        );
-    }
-    return <div style={{ width: '100%', cursor: 'default' }}>{children}</div>;
+    return (
+        <Link href={href} style={{ textDecoration: 'none', width: '100%' }}>
+            {children}
+        </Link>
+    );
 }
