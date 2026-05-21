@@ -1,5 +1,5 @@
 .card {
-    width: 670px;
+    width: 100%;
     background-color: white;
     border-radius: 24px;
     padding: 9px 16px;
@@ -86,6 +86,4 @@
 
 .locked {
     opacity: 0.5;
-    cursor: not-allowed;
-    user-select: none;
 }

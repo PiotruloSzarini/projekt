@@ -40,12 +40,12 @@ export default function HomeCourseCard({
             
             <div className={styles.card_task_video}>
                 <div className={styles.tasksCount_div}>
-                    <Image src="/assets/img/home/home-video-icon.svg" alt="task icon" width={16} height={16} />
-                    <p>{tasksCount}</p>
+                    <Image src="/assets/img/home/home-video-icon.svg" alt="video icon" width={16} height={16} />
+                    <p>{videosCount}</p>
                 </div>
                 <div className={styles.videosCount_div}>
-                    <Image src="/assets/img/home/home-task-icon.svg" alt="video icon" width={16} height={16} />
-                    <p>{videosCount}</p>
+                    <Image src="/assets/img/home/home-task-icon.svg" alt="task icon" width={16} height={16} />
+                    <p>{tasksCount}</p>
                 </div>
             </div>
             <div className={styles.card_progress}>

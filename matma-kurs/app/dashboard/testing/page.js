@@ -47,6 +47,10 @@ export default function testing() {
             <Link href="/dashboard/testing/weakpoints-components">
                 weakpoints components
             </Link>
+            <br></br>
+            <Link href="/dashboard/testing/dailychallange-components">
+                daily challenge components
+            </Link>
         </div>
     );
 }

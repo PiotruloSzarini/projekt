@@ -1,0 +1,63 @@
+.page_container {
+    padding: 32px;
+    display: grid;
+    grid-template-columns: 1fr 350px; /* Lewa strona elastyczna, prawa (stats) stała */
+    gap: 32px;
+    width: 100%;
+
+}
+
+.page_container_left {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.page_container_right {
+    background-color: #FEFFFF;
+    border-radius: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+    height: 100%;
+}
+
+.home_course_card_container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    height: 370px;
+    overflow: auto;
+}
+
+.home_course_card_list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow: auto;
+}
+
+.home_course_card_header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.home_course_card_header p {
+    font-size: 24px;
+    font-weight: 700;
+    color: #032327;
+}
+
+
+
+.home_stats_container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    align-items: center;
+    justify-content: flex-end;
+}

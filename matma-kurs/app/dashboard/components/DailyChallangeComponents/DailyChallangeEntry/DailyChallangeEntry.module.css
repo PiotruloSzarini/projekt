@@ -1,0 +1,104 @@
+.card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    border-radius: 32px;
+    gap: 32px;
+    padding: 16px;
+    background-color: #032327;
+}
+.card_top {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: center;
+    gap: 24px;
+}
+
+.card_top h1 {
+    font-size: 40px;
+    font-weight: 700;
+    color: #FEFFFF;
+}
+
+.card_top p {
+    font-size: 16px;
+    font-weight: 500;
+    color: #FEFFFF80;
+}
+
+.card_bottom {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+    gap: 16px;
+}
+
+.card_level_container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    width: 100%;
+}
+.card_level {
+    min-height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: calc(100%/3);
+    background-color: #FEFFFF40;
+}
+
+.card_level:first-child {
+    border-top-left-radius: 24px;
+    border-bottom-left-radius: 24px;
+}
+.card_level:last-child {
+    border-top-right-radius: 24px;
+    border-bottom-right-radius: 24px;
+}
+
+.card_level p {
+    font-size: 16px;
+    font-weight: 500;
+    color: #FEFFFF;
+}
+
+
+.level_container_info {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.level_info p {
+    font-size: 16px;
+    font-weight: 500;
+    color: #FEFFFF;
+}
+
+.level_time_left p {
+    font-size: 16px;
+    font-weight: 500;
+    color: #FEFFFF;
+}
+
+.next_level {
+    border: 1px solid #FEFFFF;
+}
+
+.level_completed {
+    background-color: #FEFFFF;
+}
+.level_completed p {
+    color: #032327;
+    font-weight: 700;
+}
