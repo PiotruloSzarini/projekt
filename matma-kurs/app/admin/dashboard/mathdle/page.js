@@ -302,10 +302,10 @@ export default function MathdlePage() {
                             >
                                 <option value="">--- Wybierz zadanie ---</option>
                                 {allTasks
-                                    .filter(t => t.difficulty === diff)
+                                    .filter(t => Number(t.difficulty) === diff)
                                     .map(t => (
                                         <option key={t.task_id} value={t.task_id}>
-                                            ID: {t.task_id} | {t.question.substring(0, 40)}...
+                                            ID: {t.task_id} | [{t.task_type_code}] {t.question.substring(0, 40)}...
                                         </option>
                                     ))
                                 }

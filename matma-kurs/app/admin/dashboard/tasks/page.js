@@ -140,12 +140,19 @@ export default function TaskDatabase() {
         if (!confirm("Czy na pewno usunąć to zadanie? (Obrazki zostaną również usunięte z chmury)")) return;
         try {
             const res = await fetch(`/api/admin/tasks/delete?task_id=${selectedTask.task_id}`, { method: 'DELETE' });
+            const result = await res.json();
             if (res.ok) {
                 const newTasks = tasks.filter(t => t.task_id !== selectedTask.task_id);
                 setTasks(newTasks);
                 setSelectedTask(newTasks.length > 0 ? newTasks[0] : null);
+                alert(result.message || "Zadanie usunięte pomyślnie!");
+            } else {
+                alert(result.error || "Nie udało się usunąć zadania.");
             }
-        } catch (err) { console.error(err); }
+        } catch (err) {
+            console.error(err);
+            alert("Błąd usuwania: " + err.message);
+        }
     };
 
     const handleAssign = async (taskId, groupId) => {

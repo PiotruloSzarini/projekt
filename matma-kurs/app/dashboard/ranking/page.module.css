@@ -1,0 +1,162 @@
+.ranking_page {
+    width: 100%;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+    background-color: #F3F7F8;
+    color: #032327;
+}
+
+.summary_row {
+    display: grid;
+    grid-template-columns: 180px 180px minmax(360px, 1fr);
+    gap: 16px;
+    align-items: stretch;
+}
+
+.top_section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.section_title,
+.card_title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1.2;
+    color: #032327;
+}
+
+.top_cards {
+    display: grid;
+    grid-template-columns: minmax(280px, 1.2fr) minmax(220px, 0.9fr) minmax(220px, 0.9fr);
+    gap: 16px;
+    align-items: stretch;
+}
+
+.bottom_section {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 200px;
+    gap: 16px;
+    align-items: stretch;
+}
+
+.my_ranking,
+.my_rank {
+    min-height: 284px;
+    padding: 16px;
+    border-radius: 8px;
+    background-color: #FEFFFF;
+}
+
+.ranking_rows {
+    display: flex;
+    flex-direction: column;
+    margin-top: 12px;
+}
+
+.ranking_row {
+    height: 28px;
+    display: grid;
+    grid-template-columns: 18px minmax(0, 1fr) 40px;
+    gap: 8px;
+    align-items: center;
+    border-bottom: 1px solid #D6E0E2;
+    color: rgba(3, 35, 39, 0.24);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.active_row {
+    color: #032327;
+    font-weight: 800;
+}
+
+.row_avatar {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background-image: url('/assets/img/topbar/user-icon.svg');
+    background-size: cover;
+    background-position: center;
+    opacity: 0.5;
+}
+
+.active_row .row_avatar {
+    opacity: 1;
+}
+
+.row_name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.row_points {
+    text-align: right;
+}
+
+.my_rank {
+    display: flex;
+    flex-direction: column;
+}
+
+.rank_content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.buggie {
+    width: 128px;
+    aspect-ratio: 1;
+    background-color: #20C9D8;
+    mask: url('/assets/img/home/ranking/buggy-silver.svg') center / contain no-repeat;
+    -webkit-mask: url('/assets/img/home/ranking/buggy-silver.svg') center / contain no-repeat;
+}
+
+.rank_name {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.15;
+    font-weight: 800;
+    text-align: center;
+    color: #032327;
+}
+
+@media (max-width: 1100px) {
+    .summary_row {
+        grid-template-columns: repeat(2, minmax(160px, 1fr));
+    }
+
+    .summary_row > :last-child {
+        grid-column: 1 / -1;
+    }
+
+    .top_cards {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 760px) {
+    .ranking_page {
+        padding: 12px;
+    }
+
+    .summary_row,
+    .bottom_section {
+        grid-template-columns: 1fr;
+    }
+
+    .my_rank {
+        min-height: 220px;
+    }
+}

@@ -8,9 +8,8 @@ export function UserProvider({ children, userId }) {
     const [loading, setLoading] = useState(true);
 
     const fetchAllUserData = useCallback(async () => {
-        console.log("Current UserID in Provider:", userId);
-
         if (!userId) {
+            setUserData(null);
             setLoading(false);
             return;
         }
@@ -25,9 +24,8 @@ export function UserProvider({ children, userId }) {
 
             const profile = await profileRes.json();
             setUserData(profile);
-            
         } catch (err) {
-            console.error("Błąd ładowania danych użytkownika:", err);
+            console.error('Błąd ładowania danych użytkownika:', err);
         } finally {
             setLoading(false);
         }
@@ -38,7 +36,7 @@ export function UserProvider({ children, userId }) {
     }, [fetchAllUserData]);
 
     return (
-        <UserContext.Provider value={{ user: userData, loading, refresh: fetchAllUserData }}>
+        <UserContext.Provider value={{ userId, user: userData, loading, refresh: fetchAllUserData }}>
             {children}
         </UserContext.Provider>
     );

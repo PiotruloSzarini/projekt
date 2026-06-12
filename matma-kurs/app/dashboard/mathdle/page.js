@@ -1,206 +1,320 @@
-"use client";
-import { useState, useEffect } from 'react';
+'use client';
+/* eslint-disable @next/next/no-img-element */
+
+import { useEffect, useMemo, useState } from 'react';
 import styles from './page.module.css';
+import DailyChallangeEntry from '../components/DailyChallangeComponents/DailyChallangeEntry/DailyChallangeEntry';
+import DailyChallangeCard from '../components/DailyChallangeComponents/DailyChallangeCard/DailyChallangeCard';
+import TaskTypeSingleInput from '../components/TasksComponents/TaskTypePages/TaskTypeSingleInput/TaskTypeSingleInput';
+import TaskTypeMultipleChoice from '../components/TasksComponents/TaskTypePages/TaskTypeMultipleChoice/TaskTypeMultipleChoice';
+import TaskTypeStepByStep from '../components/TasksComponents/TaskTypePages/TaskTypeStepByStep/TaskTypeStepByStep';
+import TaskTypeMatching from '../components/TasksComponents/TaskTypePages/TaskTypeMatching/TaskTypeMatching';
+import { useUser } from '@/app/context/UserContext';
+
+const DIFFICULTY_META = {
+    1: { label: 'ŁATWE', points: 1, theme: '#1180F6' },
+    2: { label: 'ŚREDNIE', points: 2, theme: '#0f766e' },
+    3: { label: 'TRUDNE', points: 3, theme: '#032327' },
+};
+
+function getDefaultAnswer(task) {
+    const typeCode = String(task?.task_type_code || '').trim().toUpperCase();
+    if (typeCode === 'MULTIPLE_CHOICE') return null;
+    if (typeCode === 'MATCHING' || typeCode === 'STEP_BY_STEP') return {};
+    return '';
+}
 
 export default function MathdleUserPage() {
+    const { user } = useUser();
     const [tasks, setTasks] = useState([]);
-    const [selectedTask, setSelectedTask] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [timeLeft, setTimeLeft] = useState("");
-    const [completedCount, setCompletedCount] = useState(0);
     const [completedTaskIds, setCompletedTaskIds] = useState([]);
-
-    const [userAnswer, setUserAnswer] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [selectedTask, setSelectedTask] = useState(null);
+    const [taskAnswer, setTaskAnswer] = useState('');
+    const [stepIndex, setStepIndex] = useState(0);
+    const [visibleHintsCount, setVisibleHintsCount] = useState(0);
     const [feedback, setFeedback] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    useEffect(() => {
-        fetch('/api/admin/mathdle/today')
-            .then(res => res.json())
-            .then(data => {
-                const tasksData = Array.isArray(data) ? data : [];
-                setTasks(tasksData.sort((a, b) => a.difficulty - b.difficulty));
-                setLoading(false);
-            })
-            .catch(err => {
-                console.error("Błąd pobierania zadań:", err);
-                setLoading(false);
-            });
+    const completedCount = completedTaskIds.length;
+    const activeTaskType = String(selectedTask?.task_type_code || '').trim().toUpperCase();
+    const stepDetails = selectedTask?.details?.step_by_step?.steps || [];
+    const activeStep = stepDetails[stepIndex] || null;
+    const multipleChoiceTask = selectedTask ? { ...selectedTask, details: selectedTask.details?.multiple_choice || {} } : null;
+    const matchingTask = selectedTask ? { ...selectedTask, details: selectedTask.details?.matching_pairs || {} } : null;
+    const stepTask = selectedTask ? { ...selectedTask, details: selectedTask.details?.step_by_step || {} } : null;
 
-        const timer = setInterval(() => {
-            const now = new Date();
-            const tomorrow = new Date();
-            tomorrow.setHours(24, 0, 0, 0);
-            const diff = tomorrow - now;
-            if (diff <= 0) {
-                setTimeLeft("00:00:00");
-                return;
+    const canSubmit = useMemo(() => {
+        if (!selectedTask) return false;
+        if (activeTaskType === 'MULTIPLE_CHOICE') return taskAnswer !== null;
+        if (activeTaskType === 'MATCHING') return Object.keys(taskAnswer || {}).length > 0;
+        if (activeTaskType === 'STEP_BY_STEP') {
+            return !!activeStep && !!String(taskAnswer?.[activeStep.step_id] ?? '').trim();
+        }
+        return !!String(taskAnswer ?? '').trim();
+    }, [activeTaskType, activeStep, selectedTask, taskAnswer]);
+
+    useEffect(() => {
+        const loadDaily = async () => {
+            try {
+                const res = await fetch('/api/admin/mathdle/today');
+                const data = await res.json();
+                setTasks(Array.isArray(data.tasks) ? data.tasks : []);
+                setCompletedTaskIds(Array.isArray(data.completedTaskIds) ? data.completedTaskIds : []);
+            } catch (err) {
+                console.error('Błąd pobierania zadań:', err);
+                setTasks([]);
+                setCompletedTaskIds([]);
+            } finally {
+                setLoading(false);
             }
-            const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-            const minutes = Math.floor((diff / 1000 / 60) % 60);
-            const seconds = Math.floor((diff / 1000) % 60);
-            const format = (num) => String(num).padStart(2, '0');
-            setTimeLeft(`${format(hours)}:${format(minutes)}:${format(seconds)}`);
-        }, 1000);
-        return () => clearInterval(timer);
+        };
+
+        loadDaily();
     }, []);
 
-    // OBLICZANIE POSTĘPU (Zdefiniowane tutaj, aby pasek u góry je widział)
-    const progressPercent = tasks.length > 0 ? (completedCount / tasks.length) * 100 : 0;
+    const sortedTasks = useMemo(() => [...tasks].sort((a, b) => a.difficulty - b.difficulty), [tasks]);
+
+    const closePanel = () => {
+        setSelectedTask(null);
+        setTaskAnswer('');
+        setStepIndex(0);
+        setVisibleHintsCount(0);
+        setFeedback(null);
+    };
+
+    const openTask = (task) => {
+        if (!task || task.isCompleted) return;
+        const index = sortedTasks.findIndex((item) => item.task_id === task.task_id);
+        const previousTask = sortedTasks[index - 1];
+        const isUnlocked = index === 0 || completedTaskIds.includes(previousTask?.task_id);
+
+        if (!isUnlocked) return;
+
+        setSelectedTask(task);
+        setTaskAnswer(getDefaultAnswer(task));
+        setStepIndex(0);
+        setVisibleHintsCount(0);
+        setFeedback(null);
+    };
 
     const handleSubmit = async () => {
-        if (!userAnswer.trim()) return;
+        if (!selectedTask || isSubmitting || !canSubmit) return;
+
+        const stepId = activeTaskType === 'STEP_BY_STEP' ? activeStep?.step_id : undefined;
+        const currentAnswer = activeTaskType === 'STEP_BY_STEP'
+            ? taskAnswer?.[activeStep?.step_id] ?? ''
+            : taskAnswer;
+
         setIsSubmitting(true);
         setFeedback(null);
+
         try {
             const response = await fetch('/api/admin/mathdle/submit', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    userId: 1, 
                     taskId: selectedTask.task_id,
                     difficulty: selectedTask.difficulty,
-                    userAnswer: userAnswer
-                })
+                    userAnswer: currentAnswer,
+                    stepId,
+                }),
             });
+
             const result = await response.json();
-            setFeedback(result);
-            if (result.isCorrect) {
-                setCompletedCount(prev => prev + 1);
-                setCompletedTaskIds(prev => [...prev, selectedTask.task_id]);
+            const message = result?.message || result?.error || (result?.isCorrect ? 'Udało się.' : 'Zła odpowiedź, spróbuj jeszcze raz!');
+            setFeedback({ ...result, message });
+
+            if (result?.isCorrect && result?.stepCompleted && activeTaskType === 'STEP_BY_STEP') {
+                setStepIndex((prev) => prev + 1);
+                return;
             }
-        } catch (error) {
-            setFeedback({ isCorrect: false, message: "Błąd serwera. Spróbuj później." });
+
+            if (result?.isCorrect) {
+                setCompletedTaskIds(result.completedTaskIds || [...completedTaskIds, selectedTask.task_id]);
+                setTasks((prev) => prev.map((task) => (
+                    task.task_id === selectedTask.task_id ? { ...task, isCompleted: true } : task
+                )));
+
+                setTimeout(() => {
+                    closePanel();
+                }, 850);
+            }
+        } catch (err) {
+            console.error(err);
+            setFeedback({ isCorrect: false, message: 'Błąd serwera. Spróbuj później.' });
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    const closeModal = () => {
-        setSelectedTask(null);
-        setFeedback(null);
-        setUserAnswer('');
-    };
-
-    if (loading) return <div className={styles.loader}>Wczytywanie wyzwań...</div>;
+    if (loading) {
+        return <div className={styles.loader}>Wczytywanie wyzwań...</div>;
+    }
 
     return (
         <div className={styles.container}>
             <div className={styles.content_wrapper}>
-                <div className={styles.banner}>
-                    <h1 className={styles.banner_title}>Daily challenge</h1>
-                    <p className={styles.banner_desc}>
-                        Rozwiązuj zadania matematyczne i rywalizuj z innymi! Wykonuj codzienne zadania, zgarniaj punkty i pnij się w rankingu. 
-                        Poniżej Twoja dzisiejsza dawka matematycznych zagwozdek:
-                    </p>
-                    
-                    <div className={styles.filter_bar}>
-                    {/* Białe wypełnienie paska */}
-                    <div 
-                        className={styles.progress_fill} 
-                        style={{ width: `${progressPercent}%` }}
-                    ></div>
-
-                    {/* Dynamiczne podświetlanie elementów */}
-                        <div className={styles.item_container}>
-                            <div className={`${styles.filter_item} ${completedCount === 0 ? styles.active_filter : ""}`}>
-                                ŁATWE
-                            </div>
-                            <div className={`${styles.filter_item} ${completedCount === 1 ? styles.active_filter : ""}`}>
-                                ŚREDNIE
-                            </div>
-                            <div className={`${styles.filter_item} ${completedCount === 2 ? styles.active_filter : ""}`}>
-                                TRUDNE
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <DailyChallangeEntry completed={completedCount} total={sortedTasks.length || 3} />
 
                 <div className={styles.card_grid}>
-                    {tasks.map((task, index) => {
-                        const isDone = completedTaskIds.includes(task.task_id);
-                        const isLocked = index > 0 && !completedTaskIds.includes(tasks[index - 1].task_id);
-                        
-                        return (
-                            <div 
-                                key={task.task_id} 
-                                className={`${styles.card} ${isLocked ? styles.card_locked : ""} ${isDone ? styles.card_done : ""}`}
-                            >
-                                {isDone && (
-                                    <div className={styles.done_overlay}>
-                                        <svg width="150" height="113" viewBox="0 0 150 113" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M126.285 4.87412C128.513 2.1775 131.705 0.456958 135.183 0.0787463C138.66 -0.299466 142.148 0.69452 144.904 2.84912C146.257 3.89713 147.386 5.20579 148.225 6.69775C149.064 8.1897 149.595 9.83467 149.787 11.5354C149.98 13.2362 149.829 14.9583 149.345 16.5998C148.86 18.2414 148.051 19.7692 146.966 21.0929L76.4661 107.718C75.2862 109.149 73.8222 110.32 72.1665 111.156C70.5109 111.993 68.6997 112.477 66.8475 112.577C64.9953 112.677 63.1425 112.392 61.4061 111.74C59.6697 111.088 58.0876 110.082 56.7598 108.787L3.88484 56.8491L2.9661 55.8741C-1.2714 50.7741 -0.971408 43.2554 3.88484 38.4929C8.74109 33.7304 16.4098 33.4304 21.6036 37.5929L22.5973 38.4929L65.1598 80.1179L126.472 4.93037L126.285 4.87412Z" fill="#FEFFFF"/>
-                                        </svg>
+                    {sortedTasks.length > 0 ? (
+                        sortedTasks.map((task, index) => {
+                            const previousTask = sortedTasks[index - 1];
+                            const isUnlocked = index === 0 || completedTaskIds.includes(previousTask?.task_id);
+                            const meta = DIFFICULTY_META[task.difficulty] || DIFFICULTY_META[1];
 
-                                    </div>
-                                )}
-
-                                <div className={styles.icon_wrapper}>
-                                    <img 
-                                        src={
-                                            task.difficulty === 1 ? "/assets/img/dashboardLayoutIcons/calc.svg" : 
-                                            task.difficulty === 2 ? "/assets/img/dashboardLayoutIcons/geo.svg" : 
-                                            "/assets/img/dashboardLayoutIcons/func.svg"
-                                        } 
-                                        alt="ikona" 
-                                        className={styles.card_icon}
-                                    />
-                                </div>
-                                <div className={styles.card_info}>
-                                    <h3>Zadanie {index + 1}: {task.difficulty === 1 ? 'Łatwe' : task.difficulty === 2 ? 'Średnie' : 'Trudne'}</h3>
-                                    <p className={styles.points_label}>
-                                        {task.difficulty === 1 ? '1 punkt' : 
-                                         task.difficulty === 2 ? '2 punkty' : 
-                                         '3 punkty'}
-                                    </p>
-                                </div>
-                                <button 
-                                    className={styles.start_btn} 
-                                    onClick={() => !isLocked && !isDone && setSelectedTask(task)}
-                                    disabled={isLocked || isDone}
-                                >
-                                    {isDone ? "Ukończono" : isLocked ? "Zablokowane" : "Rozpocznij"}
-                                </button>
-                            </div>
-                        );
-                    })}
+                            return (
+                                <DailyChallangeCard
+                                    key={task.task_id}
+                                    title={task.difficulty === 1 ? 'Podstawy' : task.difficulty === 2 ? 'Geometria' : 'Funkcje'}
+                                    type={meta.label}
+                                    points={meta.points}
+                                    img={
+                                        task.difficulty === 1
+                                            ? '/assets/img/dashboardLayoutIcons/calc.svg'
+                                            : task.difficulty === 2
+                                                ? '/assets/img/dashboardLayoutIcons/geo.svg'
+                                                : '/assets/img/dashboardLayoutIcons/func.svg'
+                                    }
+                                    count={index + 1}
+                                    completed={task.isCompleted}
+                                    locked={!task.isCompleted && !isUnlocked}
+                                    onOpen={() => openTask(task)}
+                                />
+                            );
+                        })
+                    ) : (
+                        <div className={styles.empty_state}>
+                            <h2>Brak zadań na dziś</h2>
+                        </div>
+                    )}
                 </div>
             </div>
 
             {selectedTask && (
-                <div className={styles.modal_overlay} onClick={closeModal}>
-                    <div className={styles.modal_content} onClick={e => e.stopPropagation()}>
-                        <button className={styles.close_btn_top} onClick={closeModal}>&times;</button>
-                        <div className={styles.modal_body}>
-                            <h2 className={styles.modal_task_id}>Zadanie #{selectedTask.task_id}</h2>
-                            <p className={styles.question_text}>{selectedTask.question}</p>
-                            <input 
-                                type="text" 
-                                className={styles.answer_input} 
-                                placeholder="Wpisz wynik..." 
-                                value={userAnswer}
-                                onChange={(e) => setUserAnswer(e.target.value)}
-                                disabled={isSubmitting || feedback?.isCorrect}
-                                autoFocus
-                            />
+                <div className={styles.task_overlay} onClick={closePanel}>
+                    <div className={styles.task_panel} onClick={(e) => e.stopPropagation()}>
+                        <button className={styles.close_btn} onClick={closePanel} type="button">
+                            ×
+                        </button>
+
+                        <div className={styles.task_panel_header}>
+                            <div>
+                                <p className={styles.task_kicker}>Daily challenge</p>
+                                <h2>{selectedTask.question}</h2>
+                                <div className={styles.task_meta_row}>
+                                    <span>{DIFFICULTY_META[selectedTask.difficulty]?.label || 'ŁATWE'}</span>
+                                    <span>{DIFFICULTY_META[selectedTask.difficulty]?.points || 1} pkt</span>
+                                </div>
+                            </div>
+                            <div className={styles.task_status}>
+                                <span>Użytkownik</span>
+                                <strong>{user?.name || 'Użytkownik'}</strong>
+                            </div>
+                        </div>
+
+                        {(selectedTask.math_content || selectedTask.math_img) && (
+                            <div className={styles.task_formula_box}>
+                                {selectedTask.math_content && (
+                                    <div className={styles.task_formula}>{selectedTask.math_content}</div>
+                                )}
+                                {selectedTask.math_img && (
+                                    <img
+                                        src={selectedTask.math_img}
+                                        alt="Ilustracja zadania"
+                                        className={styles.task_formula_image}
+                                    />
+                                )}
+                            </div>
+                        )}
+
+                        <div className={styles.task_type_badge_row}>
+                            <span className={styles.task_type_badge}>{activeTaskType || 'SINGLE_INPUT'}</span>
+                            {activeTaskType === 'STEP_BY_STEP' && (
+                                <span className={styles.task_step_badge}>
+                                    Krok {Math.min(stepIndex + 1, Math.max(stepDetails.length, 1))} / {Math.max(stepDetails.length, 1)}
+                                </span>
+                            )}
+                        </div>
+
+                        {selectedTask.hints?.length > 0 && (
+                            <div className={`${styles.hint_shell} ${visibleHintsCount > 0 ? styles.hint_shell_active : ''}`}>
+                                <button
+                                    type="button"
+                                    className={styles.hint_button}
+                                    onClick={() => {
+                                        if (visibleHintsCount < selectedTask.hints.length) {
+                                            setVisibleHintsCount((prev) => prev + 1);
+                                        }
+                                    }}
+                                >
+                                    {visibleHintsCount === 0 ? 'Pokaż podpowiedź' : 'Pokaż kolejną podpowiedź'}
+                                </button>
+
+                                {visibleHintsCount > 0 && (
+                                    <div className={styles.hint_list}>
+                                        {selectedTask.hints.slice(0, visibleHintsCount).map((hint) => (
+                                            <div key={hint.hint_id} className={styles.hint_item}>
+                                                {hint.content}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        <div className={styles.answer_block}>
+                            {activeTaskType === 'MULTIPLE_CHOICE' && (
+                                <TaskTypeMultipleChoice
+                                    task={multipleChoiceTask}
+                                    answer={taskAnswer}
+                                    setAnswer={setTaskAnswer}
+                                    courseColor="#1180f6"
+                                />
+                            )}
+
+                            {activeTaskType === 'STEP_BY_STEP' && (
+                                <TaskTypeStepByStep
+                                    task={stepTask}
+                                    answer={taskAnswer}
+                                    setAnswer={setTaskAnswer}
+                                    stepIdx={stepIndex}
+                                    courseColor="#1180f6"
+                                />
+                            )}
+
+                            {activeTaskType === 'MATCHING' && (
+                                <TaskTypeMatching
+                                    task={matchingTask}
+                                    answer={taskAnswer}
+                                    setAnswer={setTaskAnswer}
+                                    courseColor="#1180f6"
+                                />
+                            )}
+
+                            {(!activeTaskType || activeTaskType === 'SINGLE_INPUT') && (
+                                <TaskTypeSingleInput
+                                    answer={taskAnswer}
+                                    setAnswer={setTaskAnswer}
+                                    courseColor="#1180f6"
+                                />
+                            )}
+
                             {feedback && (
                                 <div className={feedback.isCorrect ? styles.feedback_success : styles.feedback_error}>
-                                    {feedback.message}
+                                    {feedback.message || (feedback.isCorrect ? 'Udało się.' : 'Zła odpowiedź, spróbuj jeszcze raz!')}
                                 </div>
                             )}
-                            {!feedback?.isCorrect ? (
-                                <button 
-                                    className={styles.modal_submit_btn} 
-                                    onClick={handleSubmit}
-                                    disabled={isSubmitting || !userAnswer.trim()}
-                                >
-                                    {isSubmitting ? "Sprawdzanie..." : "Sprawdź odpowiedź"}
-                                </button>
-                            ) : (
-                                <button className={styles.modal_close_final} onClick={closeModal}>
-                                    Zamknij i odbierz nagrodę
-                                </button>
-                            )}
+
+                            <button
+                                type="button"
+                                className={styles.submit_button}
+                                onClick={handleSubmit}
+                                disabled={isSubmitting || !canSubmit}
+                            >
+                                {isSubmitting ? 'Sprawdzanie...' : activeTaskType === 'STEP_BY_STEP' ? 'Sprawdź krok' : 'Sprawdź odpowiedź'}
+                            </button>
                         </div>
                     </div>
                 </div>

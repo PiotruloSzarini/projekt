@@ -1,0 +1,103 @@
+.page {
+    width: 100%;
+    min-height: 100%;
+    padding: 16px;
+    background-color: #F3F7F8;
+    color: #032327;
+}
+
+.exam_panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.exam_header {
+    min-height: 124px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px;
+    border-radius: 12px;
+    color: #FEFFFF;
+}
+
+.exam_header h1 {
+    max-width: 320px;
+    margin: 0;
+    font-size: 32px;
+    font-weight: 900;
+    line-height: 0.95;
+}
+
+.exam_header p {
+    margin: 8px 0 0;
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(254, 255, 255, 0.72);
+}
+
+.exam_header strong {
+    font-size: 32px;
+    font-weight: 900;
+}
+
+.paper_grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.paper_link {
+    color: inherit;
+    text-decoration: none;
+}
+
+.paper_card {
+    height: 64px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    padding: 14px;
+    border: 1px solid #CBD8DB;
+    border-radius: 8px;
+    background-color: #FEFFFF;
+}
+
+.paper_card h2 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 900;
+}
+
+.paper_card p {
+    margin: 0;
+    font-size: 9px;
+    font-weight: 700;
+    color: rgba(3, 35, 39, 0.42);
+}
+
+.active_card {
+    border-color: transparent;
+    color: #FEFFFF;
+}
+
+.active_card p {
+    color: rgba(254, 255, 255, 0.72);
+}
+
+@media (max-width: 640px) {
+    .page {
+        padding: 12px;
+    }
+
+    .paper_grid {
+        grid-template-columns: 1fr;
+    }
+
+    .exam_header h1 {
+        font-size: 26px;
+    }
+}
