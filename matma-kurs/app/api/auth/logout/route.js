@@ -7,6 +7,11 @@ export async function POST() {
         httpOnly: true,
         maxAge: 0,
     });
+    response.cookies.set('session_user_role', '', {
+        path: '/',
+        httpOnly: true,
+        maxAge: 0,
+    });
 
     return response;
 }

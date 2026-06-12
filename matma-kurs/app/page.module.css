@@ -5,29 +5,63 @@ body {
 }
 
 .container {
-  /*height: 100vh; */
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 20px;
-  height: 100%;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at top left, rgba(17, 128, 246, 0.16), transparent 36%),
+    radial-gradient(circle at bottom right, rgba(3, 35, 39, 0.12), transparent 32%),
+    linear-gradient(180deg, #f8fafc 0%, #edf2f7 100%);
+  padding: 32px;
+}
+
+.panel {
+  width: min(100%, 560px);
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 28px;
+  padding: 32px;
+  box-shadow: 0 24px 80px rgba(3, 35, 39, 0.12);
+  backdrop-filter: blur(16px);
+}
+
+.kicker {
+  margin: 0 0 12px;
+  color: #1180f6;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .title {
-  font-size: 32px;
+  margin: 0 0 12px;
+  font-size: clamp(28px, 4vw, 42px);
+  color: #032327;
+}
+
+.subtitle {
+  margin: 0 0 24px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.actions {
+  display: grid;
+  gap: 12px;
 }
 
 .button {
-  padding: 12px 24px;
-  font-size: 16px;
-  cursor: pointer;
-  border: none;
-  border-radius: 8px;
-  background-color: #111;
-  color: white;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  padding: 14px 18px;
+  border-radius: 16px;
+  font-weight: 800;
+  text-decoration: none;
+  color: #fff;
+  background: #1180f6;
 }
 
-.button:hover {
-  background-color: #333;
+.button_secondary {
+  background: #032327;
 }
