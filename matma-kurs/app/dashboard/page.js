@@ -45,7 +45,6 @@ export default function MyProgressPage() {
         { id: 1, label: 'Obejrzane lekcje', value: user?.videos_watched || 0, icon: '/assets/img/home/stats/stats-video.svg' },
         { id: 2, label: 'Ukończone zadania', value: user?.tasks_completed || 0, icon: '/assets/img/home/stats/stats-task.svg' },
         { id: 3, label: 'Daily challenge', value: user?.daily_completed || 0, icon: '/assets/img/home/stats/stats-daily.svg' },
-        { id: 4, label: 'Słabe punkty', value: user?.weak_points_completed || 0, icon: '/assets/img/home/stats/stats-weak.svg' },
     ];
 
     if (userLoading) return <p>Ładowanie profilu...</p>;

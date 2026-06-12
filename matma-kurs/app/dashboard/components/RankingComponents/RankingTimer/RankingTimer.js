@@ -13,9 +13,10 @@ export default function RankingTimer({ datetime }) {
     });
 
     useEffect(() => {
-        const targetDate = new Date(datetime).getTime();
-
         const calculateTime = () => {
+            const targetDate = datetime
+                ? new Date(datetime).getTime()
+                : getNextMidnight().getTime();
             const now = new Date().getTime();
             const difference = targetDate - now;
 
@@ -64,3 +65,9 @@ export default function RankingTimer({ datetime }) {
         </div>
     );
 } 
+
+function getNextMidnight() {
+    const nextMidnight = new Date();
+    nextMidnight.setHours(24, 0, 0, 0);
+    return nextMidnight;
+}

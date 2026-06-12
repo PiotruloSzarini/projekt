@@ -1,8 +1,8 @@
 
 .timeCounter_div_main {
     position: relative;
-    height: 64px;
-    width: 96px;
+    height: 48px;
+    width: 56px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -12,8 +12,8 @@
 }
 
 .timeCounter_div_top {
-    height: 32px;
-    width: 96px;
+    height: 24px;
+    width: 56px;
     background-color: #032327;
     box-shadow: inset 0px -2px 2px 0px #00000040;
     border-radius: 8px;
@@ -21,8 +21,8 @@
 }
 
 .timeCounter_div_bottom {
-    height: 32px;
-    width: 96px;
+    height: 24px;
+    width: 56px;
     background-color: #032327;
     box-shadow: inset 0px 2px 2px 0px #FEFFFF40;
     border-radius: 8px;
@@ -31,7 +31,7 @@
 
 
 .timeCounter_div_int {
-    font-size: 40px;
+    font-size: 28px;
     font-weight: 700;
     position: absolute;
     color: white;
@@ -41,8 +41,8 @@
 .timeCounter_div_top_upper{
     position: absolute;
     top: 0;
-    height: 32px;
-    width: 96px;
+    height: 24px;
+    width: 56px;
     background-color: transparent;
     box-shadow: inset 0px -2px 2px 0px #00000040;
     border-radius: 8px;
@@ -50,10 +50,10 @@
 }
 
 .timeCounter_div_bottom_upper {
-    top: -32px;
+    top: -24px;
     position: absolute;
-    height: 32px;
-    width: 96px;
+    height: 24px;
+    width: 56px;
     background-color: transparent;
     box-shadow: inset 0px 2px 2px 0px #FEFFFF40;
     border-radius: 8px;

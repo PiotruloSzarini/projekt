@@ -1,0 +1,235 @@
+.page {
+    width: 100%;
+    min-height: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 240px;
+    gap: 16px;
+    padding: 16px;
+    background-color: #F3F7F8;
+    color: #032327;
+}
+
+.exam_list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+}
+
+.exam_link {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+}
+
+.exam_tile {
+    height: 152px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 18px;
+    border-radius: 12px;
+    color: #FEFFFF;
+    overflow: hidden;
+}
+
+.exam_tile h2 {
+    max-width: 280px;
+    margin: 0;
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 0.95;
+}
+
+.exam_tile p {
+    margin: 8px 0 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(254, 255, 255, 0.72);
+}
+
+.tile_footer {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.tile_footer span {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0;
+}
+
+.tile_footer strong {
+    font-size: 32px;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.calendar_card,
+.stats_card {
+    padding: 14px;
+    border-radius: 12px;
+    background-color: #FEFFFF;
+}
+
+.calendar_header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.calendar_header button {
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: 50%;
+    background-color: transparent;
+    color: #032327;
+    font-size: 18px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.calendar_grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-top: 12px;
+    text-align: center;
+    font-size: 10px;
+    color: rgba(3, 35, 39, 0.48);
+}
+
+.calendar_grid b {
+    width: 24px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    justify-self: center;
+    border-radius: 50%;
+    background-color: #E83286;
+    color: #FEFFFF;
+}
+
+.calendar_result {
+    margin: 12px 0 0;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.calendar_result strong {
+    color: #0CAA7C;
+}
+
+.stats_card h3 {
+    margin: 0 0 12px;
+    font-size: 15px;
+    font-weight: 900;
+}
+
+.buggie {
+    width: 96px;
+    aspect-ratio: 1;
+    margin: 0 auto;
+    background-color: #20C9D8;
+    mask: url('/assets/img/home/ranking/buggy-silver.svg') center / contain no-repeat;
+    -webkit-mask: url('/assets/img/home/ranking/buggy-silver.svg') center / contain no-repeat;
+}
+
+.rank_name {
+    margin: 4px 0 10px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 900;
+}
+
+.ranking_rows,
+.stat_rows {
+    display: flex;
+    flex-direction: column;
+}
+
+.ranking_row {
+    height: 25px;
+    display: grid;
+    grid-template-columns: 16px minmax(0, 1fr) 30px;
+    gap: 6px;
+    align-items: center;
+    border-bottom: 1px solid #D6E0E2;
+    color: rgba(3, 35, 39, 0.24);
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.active_row {
+    color: #032327;
+    font-weight: 900;
+}
+
+.row_avatar {
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: url('/assets/img/topbar/user-icon.svg') center / cover;
+}
+
+.ranking_row span:nth-child(2) {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ranking_row strong {
+    text-align: right;
+}
+
+.stat_rows {
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.stat_rows p {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 0;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #D6E0E2;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+@media (max-width: 920px) {
+    .page {
+        grid-template-columns: 1fr;
+    }
+
+    .sidebar {
+        display: none;
+    }
+}
+
+@media (max-width: 560px) {
+    .page {
+        padding: 12px;
+    }
+
+    .exam_tile {
+        height: 132px;
+    }
+
+    .exam_tile h2 {
+        font-size: 26px;
+    }
+}

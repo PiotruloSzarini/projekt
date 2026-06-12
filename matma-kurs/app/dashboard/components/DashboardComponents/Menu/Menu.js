@@ -15,7 +15,6 @@ export default function Menu({ isCollapsed = false, onToggle }) {
         { href: '/dashboard/ranking', label: 'Ranking', icon: '/assets/img/menu/rank-icon.svg' },
         { href: '/dashboard/mathdle', label: 'Daily Challenge', icon: '/assets/img/menu/game-icon.svg' },
         { href: '/dashboard/plan-nauki', label: 'Plan Nauki', icon: '/assets/img/menu/calendar-icon.svg' },
-        { href: '/dashboard/slabe-punkty', label: 'Słabe punkty', icon: '/assets/img/menu/weak-icon.svg' },
     ];
     const { userId } = useCourseData();
     console.log("Zalogowany użytkownik to:", userId);
