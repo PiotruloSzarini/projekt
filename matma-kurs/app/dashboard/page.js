@@ -1,33 +1,52 @@
 'use client';
 
-import { useState } from "react";
-import Link from "next/link";
-import styles from "./page.module.css";
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import styles from './page.module.css';
 
-import HomeEntryCard from "./components/HomeComponents/HomeEntryCard/HomeEntryCard";
-import HomeCourseCard from "./components/HomeComponents/HomeCourseCard/HomeCourseCard";
-import StudyPlanCard from "./components/HomeComponents/HomeStudyPlan/StudyPlanCard/StudyPlanCard";
-import HomeRanking from "./components/HomeComponents/HomeRanking/HomeRanking";
-import HomeStats from "./components/HomeComponents/HomeStats/HomeStats";
-import HomeBuyNowButton from "./components/buttons/HomeBuyNowButton/HomeBuyNowButton";
+import HomeEntryCard from './components/HomeComponents/HomeEntryCard/HomeEntryCard';
+import HomeCourseCard from './components/HomeComponents/HomeCourseCard/HomeCourseCard';
+import StudyPlanCard from './components/HomeComponents/HomeStudyPlan/StudyPlanCard/StudyPlanCard';
+import HomeRanking from './components/HomeComponents/HomeRanking/HomeRanking';
+import HomeStats from './components/HomeComponents/HomeStats/HomeStats';
+import HomeBuyNowButton from './components/buttons/HomeBuyNowButton/HomeBuyNowButton';
 
-import { useCourseNavigation } from "@/app/hooks/useCourseNavigation";
-import { useUser } from "@/app/context/UserContext";
+import { useCourseNavigation } from '@/app/hooks/useCourseNavigation';
+import { useUser } from '@/app/context/UserContext';
 
 export default function MyProgressPage() {
     const { loading: coursesLoading, courses } = useCourseNavigation();
-    
     const { user, loading: userLoading } = useUser();
 
     const [tasks, setTasks] = useState([
         { id: 1, title: 'Skończyć rozdział', category: 'Matematyka Podstawowa', deadline: 'dziś', isCompleted: true },
-        { id: 2, title: 'Rozwiązać daily challenge', category: null, deadline: 'dziś', isCompleted: false },
+        { id: 2, title: 'Rozwiązać daily challenge', category: null, deadline: 'dziś', isCompleted: false, href: '/dashboard/mathdle' },
         { id: 3, title: 'Podejść do próbnej matury', category: null, deadline: 'do 28 grudnia', isCompleted: false },
     ]);
 
+    useEffect(() => {
+        const loadDailyStatus = async () => {
+            try {
+                const res = await fetch('/api/admin/mathdle/today');
+                const data = await res.json();
+                const dailyCompleted = (data?.completedCount || 0) > 0;
+
+                setTasks((prevTasks) =>
+                    prevTasks.map((task) => (
+                        task.id === 2 ? { ...task, isCompleted: dailyCompleted } : task
+                    ))
+                );
+            } catch (err) {
+                console.error('Błąd odczytu daily challenge:', err);
+            }
+        };
+
+        loadDailyStatus();
+    }, []);
+
     const handleTaskToggle = (taskId) => {
-        setTasks(prevTasks => 
-            prevTasks.map(task => 
+        setTasks((prevTasks) =>
+            prevTasks.map((task) =>
                 task.id === taskId ? { ...task, isCompleted: !task.isCompleted } : task
             )
         );
@@ -53,32 +72,31 @@ export default function MyProgressPage() {
         <div className={styles.page_container}>
             <div className={styles.page_container_left}>
                 <div className={styles.home_entry_card_container}>
-                    {/* DYNAMICZNE IMIĘ Z BAZY */}
-                    <HomeEntryCard name={user?.name || "Użytkownik"} continueLink="/dashboard/kursy"/>
+                    <HomeEntryCard name={user?.name || 'Użytkownik'} continueLink="/dashboard/kursy" />
                 </div>
 
                 <div className={styles.home_course_card_container}>
                     <div className={styles.home_course_card_header}>
                         <p>Kursy:</p>
-                        <HomeBuyNowButton text="Sklep" link="/sklep"/>
+                        <HomeBuyNowButton text="Sklep" link="/sklep" />
                     </div>
 
                     <div className={styles.home_course_card_list}>
                         {coursesLoading ? (
                             <p>Ładowanie kursów...</p>
                         ) : (
-                            courses.map(course => (
-                                <Link 
-                                    key={course.course_id} 
+                            courses.map((course) => (
+                                <Link
+                                    key={course.course_id}
                                     href={`/dashboard/kursy/${course.slug}`}
                                     style={{ textDecoration: 'none', width: '100%' }}
                                 >
-                                    <HomeCourseCard 
-                                        title={course.title} 
-                                        backgroundColor={course.color} 
-                                        tasksCount={course.total_tasks || 0} 
-                                        videosCount={course.total_videos || 0} 
-                                        progress={course.progress || 0} 
+                                    <HomeCourseCard
+                                        title={course.title}
+                                        backgroundColor={course.color}
+                                        tasksCount={course.total_tasks || 0}
+                                        videosCount={course.total_videos || 0}
+                                        progress={course.progress || 0}
                                         owned={course.owned}
                                     />
                                 </Link>
@@ -88,10 +106,7 @@ export default function MyProgressPage() {
                 </div>
 
                 <div className={styles.home_study_plan_card_container}>
-                    <StudyPlanCard
-                        tasks={tasks}
-                        onTaskToggle={handleTaskToggle}
-                    />
+                    <StudyPlanCard tasks={tasks} onTaskToggle={handleTaskToggle} />
                 </div>
             </div>
 
@@ -99,7 +114,7 @@ export default function MyProgressPage() {
                 <div className={styles.home_ranking_container}>
                     <HomeRanking users={rankingData} />
                 </div>
-                <div style={{textAlign: 'center', marginBottom: '16px', fontSize: '18px'}}>
+                <div style={{ textAlign: 'center', marginBottom: '16px', fontSize: '18px' }}>
                     streak: <strong>{user?.current_streak || 0} dni</strong>
                 </div>
                 <div className={styles.home_stats_container}>
@@ -107,13 +122,5 @@ export default function MyProgressPage() {
                 </div>
             </div>
         </div>
-    );
-}
-
-function ConditionalLink({ condition, href, children }) {
-    return (
-        <Link href={href} style={{ textDecoration: 'none', width: '100%' }}>
-            {children}
-        </Link>
     );
 }

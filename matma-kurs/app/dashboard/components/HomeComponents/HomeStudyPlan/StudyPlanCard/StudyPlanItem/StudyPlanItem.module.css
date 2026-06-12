@@ -5,6 +5,8 @@
     padding: 0 0 8px 0;
     border-bottom: 1px solid #03232740;
     cursor: pointer;
+    position: relative;
+    text-decoration: none;
 }
 .item_left {
     display: flex;
@@ -25,6 +27,41 @@
 
 .checked {
     border-color: #032327; 
+}
+
+.completed {
+    background: linear-gradient(90deg, rgba(17, 128, 246, 0.12), rgba(255, 255, 255, 0.7));
+    border-radius: 18px;
+    padding: 10px 12px 12px;
+    margin: -10px -12px 0;
+    overflow: hidden;
+}
+
+.completed::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    backdrop-filter: blur(2px);
+    background: rgba(255, 255, 255, 0.16);
+    pointer-events: none;
+}
+
+.completed .item_title,
+.completed .item_category,
+.completed .item_deadline {
+    position: relative;
+    z-index: 1;
+}
+
+.completed .checkbox {
+    position: relative;
+    z-index: 1;
+    background: #032327;
+}
+
+.completed .checkbox img {
+    position: relative;
+    z-index: 2;
 }
 
 .item_text {

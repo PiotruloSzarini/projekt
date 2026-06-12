@@ -13,6 +13,53 @@
     gap: 32px;
 }
 
+.daily_notice {
+    position: relative;
+    overflow: hidden;
+    padding: 24px 28px;
+    border-radius: 24px;
+    background: linear-gradient(135deg, rgba(5, 22, 26, 0.98), rgba(17, 128, 246, 0.88));
+    color: #fff;
+    box-shadow: 0 18px 40px rgba(5, 22, 26, 0.18);
+}
+
+.daily_notice::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    backdrop-filter: blur(6px);
+    background: rgba(255, 255, 255, 0.08);
+    pointer-events: none;
+}
+
+.daily_notice > * {
+    position: relative;
+    z-index: 1;
+}
+
+.daily_notice_badge {
+    display: inline-flex;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.18);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.daily_notice h2 {
+    margin: 14px 0 8px;
+    font-size: 28px;
+}
+
+.daily_notice p {
+    margin: 0;
+    max-width: 660px;
+    color: rgba(255, 255, 255, 0.84);
+    line-height: 1.55;
+}
+
 .page_container_right {
     background-color: #FEFFFF;
     border-radius: 24px;

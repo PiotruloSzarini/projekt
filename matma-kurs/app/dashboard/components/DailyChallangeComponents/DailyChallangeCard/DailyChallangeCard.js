@@ -1,5 +1,4 @@
 import styles from './DailyChallangeCard.module.css';
-import Link from 'next/link';
 import Image from 'next/image';
 
 export default function DailyChallangeCard({
@@ -7,34 +6,41 @@ export default function DailyChallangeCard({
     type,
     points,
     img,
-    link,
     count,
-    completed = 0
+    completed = false,
+    locked = false,
+    onOpen,
 }) {
-    const taskIndex = count - 1;
-
-    const isFinished = taskIndex < completed;
-    
-    const isOverlayBlocked = isFinished;  
-
-    const isButtonDisabled = taskIndex > completed;
-
-    let pointsText = "punkt";
+    let pointsText = 'punktów';
     switch (points) {
-        case 1: pointsText = "punkt"; break;
-        case 3: pointsText = "punkty"; break;
-        default: pointsText = "punktów";
+        case 1:
+            pointsText = 'punkt';
+            break;
+        case 2:
+            pointsText = 'punkty';
+            break;
+        default:
+            pointsText = 'punktów';
     }
 
+    const statusLabel = completed ? 'Ukończono' : locked ? 'Zablokowane' : 'Rozpocznij';
+
     return (
-        <div className={styles.card}>
-            {isOverlayBlocked && (
+        <button
+            type="button"
+            className={`${styles.card} ${completed ? styles.card_completed : ''} ${locked ? styles.card_locked : ''}`}
+            onClick={() => {
+                if (!completed && !locked) onOpen?.();
+            }}
+            disabled={completed || locked}
+        >
+            {completed && (
                 <div className={styles.card_overlay}>
-                    <Image 
-                        src="/assets/img/dailyChallangeTypes/blocked_img.svg" 
-                        alt="Zablokowane" 
-                        width={225} 
-                        height={225} 
+                    <Image
+                        src="/assets/img/dailyChallangeTypes/blocked_img.svg"
+                        alt="Ukończone"
+                        width={225}
+                        height={225}
                         className={styles.card_blocked_img}
                     />
                 </div>
@@ -44,7 +50,7 @@ export default function DailyChallangeCard({
                 <span></span>
             </div>
             <div className={styles.card_type_img}>
-                <Image src={img} alt={type} width={196} height={196} />
+                <Image src={img} alt={type} width={196} height={196} className={styles.card_icon} />
             </div>
             <div className={styles.card_info}>
                 <div className={styles.card_info_top}>
@@ -53,16 +59,10 @@ export default function DailyChallangeCard({
                 <div className={styles.card_info_bottom}>
                     <p>{points} {pointsText}</p>
                 </div>
-                <div className={styles.card_info_button} style={isButtonDisabled ? { backgroundColor: '#03232740', pointerEvents: 'none', cursor: 'not-allowed' } : {}}>
-                    <Link 
-                        href={isButtonDisabled || isOverlayBlocked ? "#" : link} 
-                        className={styles.button}
-                        style={isButtonDisabled ? { pointerEvents: 'none', cursor: 'not-allowed', userSelect: 'none' } : {}}
-                    >
-                        {isFinished ? "Ukończono" : "Rozpocznij"}
-                    </Link>
+                <div className={styles.card_info_button}>
+                    <span className={styles.button}>{statusLabel}</span>
                 </div>
             </div>
-        </div>
+        </button>
     );
 }
