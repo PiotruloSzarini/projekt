@@ -2,9 +2,9 @@
     width: 100%;
     min-height: 100%;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 240px;
-    gap: 16px;
-    padding: 16px;
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 460px);
+    gap: 20px;
+    padding: 24px;
     background-color: #F3F7F8;
     color: #032327;
 }
@@ -12,7 +12,7 @@
 .exam_list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 18px;
     min-width: 0;
 }
 
@@ -23,29 +23,29 @@
 }
 
 .exam_tile {
-    height: 152px;
+    min-height: 246px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 18px;
-    border-radius: 12px;
+    padding: 30px;
+    border-radius: 26px;
     color: #FEFFFF;
     overflow: hidden;
 }
 
 .exam_tile h2 {
-    max-width: 280px;
+    max-width: 420px;
     margin: 0;
-    font-size: 32px;
+    font-size: clamp(36px, 4vw, 52px);
     font-weight: 800;
     line-height: 0.95;
 }
 
 .exam_tile p {
-    margin: 8px 0 0;
-    font-size: 12px;
+    margin: 12px 0 0;
+    font-size: 14px;
     font-weight: 600;
-    color: rgba(254, 255, 255, 0.72);
+    color: rgba(254, 255, 255, 0.78);
 }
 
 .tile_footer {
@@ -56,13 +56,12 @@
 }
 
 .tile_footer span {
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 800;
-    letter-spacing: 0;
 }
 
 .tile_footer strong {
-    font-size: 32px;
+    font-size: clamp(40px, 3.8vw, 56px);
     font-weight: 900;
     line-height: 1;
 }
@@ -70,14 +69,18 @@
 .sidebar {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
+    position: sticky;
+    top: 20px;
+    align-self: start;
 }
 
 .calendar_card,
 .stats_card {
-    padding: 14px;
-    border-radius: 12px;
+    padding: 18px;
+    border-radius: 18px;
     background-color: #FEFFFF;
+    box-shadow: 0 14px 32px rgba(3, 35, 39, 0.08);
 }
 
 .calendar_header {
@@ -85,34 +88,34 @@
     align-items: center;
     justify-content: space-between;
     gap: 8px;
-    font-size: 13px;
+    font-size: 15px;
 }
 
 .calendar_header button {
-    width: 28px;
-    height: 28px;
+    width: 36px;
+    height: 36px;
     border: 0;
     border-radius: 50%;
-    background-color: transparent;
+    background-color: #f3f7f8;
     color: #032327;
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 800;
     cursor: pointer;
 }
 
 .calendar_grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(7, 1fr);
     gap: 8px;
-    margin-top: 12px;
+    margin-top: 14px;
     text-align: center;
-    font-size: 10px;
+    font-size: 11px;
     color: rgba(3, 35, 39, 0.48);
 }
 
 .calendar_grid b {
-    width: 24px;
-    height: 24px;
+    width: 30px;
+    height: 30px;
     display: grid;
     place-items: center;
     justify-self: center;
@@ -122,8 +125,8 @@
 }
 
 .calendar_result {
-    margin: 12px 0 0;
-    font-size: 12px;
+    margin: 14px 0 0;
+    font-size: 13px;
     font-weight: 700;
 }
 
@@ -132,13 +135,13 @@
 }
 
 .stats_card h3 {
-    margin: 0 0 12px;
-    font-size: 15px;
+    margin: 0 0 14px;
+    font-size: 18px;
     font-weight: 900;
 }
 
 .buggie {
-    width: 96px;
+    width: 112px;
     aspect-ratio: 1;
     margin: 0 auto;
     background-color: #20C9D8;
@@ -147,9 +150,9 @@
 }
 
 .rank_name {
-    margin: 4px 0 10px;
+    margin: 8px 0 14px;
     text-align: center;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 900;
 }
 
@@ -160,14 +163,14 @@
 }
 
 .ranking_row {
-    height: 25px;
+    min-height: 32px;
     display: grid;
-    grid-template-columns: 16px minmax(0, 1fr) 30px;
-    gap: 6px;
+    grid-template-columns: 18px minmax(0, 1fr) 36px;
+    gap: 8px;
     align-items: center;
     border-bottom: 1px solid #D6E0E2;
     color: rgba(3, 35, 39, 0.24);
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 700;
 }
 
@@ -177,8 +180,8 @@
 }
 
 .row_avatar {
-    width: 13px;
-    height: 13px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
     background: url('/assets/img/topbar/user-icon.svg') center / cover;
 }
@@ -195,8 +198,8 @@
 }
 
 .stat_rows {
-    gap: 8px;
-    margin-top: 12px;
+    gap: 10px;
+    margin-top: 14px;
 }
 
 .stat_rows p {
@@ -204,32 +207,29 @@
     justify-content: space-between;
     gap: 8px;
     margin: 0;
-    padding-bottom: 6px;
+    padding-bottom: 8px;
     border-bottom: 1px solid #D6E0E2;
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 800;
 }
 
-@media (max-width: 920px) {
+@media (max-width: 1024px) {
     .page {
         grid-template-columns: 1fr;
     }
 
     .sidebar {
-        display: none;
+        position: static;
     }
 }
 
 @media (max-width: 560px) {
     .page {
-        padding: 12px;
+        padding: 14px;
     }
 
     .exam_tile {
-        height: 132px;
-    }
-
-    .exam_tile h2 {
-        font-size: 26px;
+        min-height: 200px;
+        padding: 24px;
     }
 }

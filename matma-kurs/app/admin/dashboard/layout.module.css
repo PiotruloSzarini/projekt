@@ -3,90 +3,84 @@ body {
     padding: 0;
     box-sizing: border-box;
 }
+
 .container {
     height: 100vh;
     width: 100vw;
     display: flex;
     flex-direction: row;
+    background: linear-gradient(180deg, #f4f7fb 0%, #edf2f6 100%);
 }
+
 .wrapper {
-    width: 80%;
+    flex: 1;
     display: flex;
     flex-direction: column;
-}
-
-.topbar {
-    height: 100px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 20px;
-}
-
-.search {
-    padding: 8px 12px;
-    border-radius: 6px;
-    border: 1px solid black;
-}
-
-.userIcon {
-    font-size: 20px;
-    cursor: pointer;
+    min-width: 0;
 }
 
 .sidebar {
-    width: 20%;
-    background-color: #f4f4f4;
-    padding: 32px;
+    width: 280px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(12px);
+    padding: 28px 20px;
+    border-right: 1px solid rgba(3, 35, 39, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+.logo {
+    display: flex;
+    justify-content: center;
 }
 
 .sidebar_links_div {
     display: flex;
-    align-items: center;
-    justify-content: center;
     flex-direction: column;
-    gap: 24px;
-    width: 100%;
+    gap: 12px;
 }
 
 .sidebar_link {
-    width: 100%;
-    min-width: 100%;
     display: flex;
-    flex-direction: row;
     align-items: center;
-    justify-content: flex-start;
-    padding: 8px 16px;
-    gap: 16px;
-    border-radius: 24px;
-}
-
-.sidebar_link_link {
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 18px;
     text-decoration: none;
     color: #032327;
     font-weight: 700;
-    width: 100%;
-    font-size: 24px;
+    transition: transform 0.2s ease, background 0.2s ease;
 }
 
-.sidebar_active{
-    border: 1px solid #E81A84;
+.sidebar_link:hover {
+    background: rgba(17, 128, 246, 0.08);
+    transform: translateX(2px);
 }
 
-.sidebar ul {
-    list-style: none;
-    padding: 0;
+.sidebar_link_link {
+    font-size: 18px;
+    line-height: 1.2;
 }
 
-.sidebar li {
-    margin-top: 10px;
-    cursor: pointer;
+.body {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .content {
-    width: 100%;
-    height: calc(100vh);
-    background-color: lightgrey;
-    overflow: hidden;
-    position: fixed;
+    flex: 1;
+    overflow-y: auto;
+}
+
+@media (max-width: 960px) {
+    .container {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+    }
 }

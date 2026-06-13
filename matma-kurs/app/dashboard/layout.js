@@ -7,10 +7,11 @@ import DashboardClientWrapper from './layoutDashboardWrapper';
 export default async function DashboardLayout({ children }) {
     const cookieStore = await cookies();
     const userId = cookieStore.get('session_user_id')?.value;
+    const userRole = cookieStore.get('session_user_role')?.value || 'user';
 
     return (
         <UserProvider userId={userId}>
-            <CourseProvider initialUserId={userId}>
+            <CourseProvider initialUserId={userId} initialUserRole={userRole}>
                 <DashboardClientWrapper>
                     {children}
                 </DashboardClientWrapper>

@@ -58,6 +58,40 @@ async function ensureUserStatsRow(connection, userId) {
     );
 }
 
+async function seedUserStats(connection, userId, stats) {
+    const {
+        total_points = 0,
+        tasks_completed = 0,
+        videos_watched = 0,
+        daily_completed = 0,
+        weak_points_completed = 0,
+        level = 1,
+    } = stats || {};
+
+    await connection.execute(
+        `
+        INSERT INTO user_stats (
+            user_id,
+            total_points,
+            tasks_completed,
+            videos_watched,
+            daily_completed,
+            weak_points_completed,
+            level
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+            total_points = VALUES(total_points),
+            tasks_completed = VALUES(tasks_completed),
+            videos_watched = VALUES(videos_watched),
+            daily_completed = VALUES(daily_completed),
+            weak_points_completed = VALUES(weak_points_completed),
+            level = VALUES(level)
+        `,
+        [userId, total_points, tasks_completed, videos_watched, daily_completed, weak_points_completed, level]
+    );
+}
+
 async function createCredentials(connection, { loginName, password, isAdmin = false }) {
     const salt = crypto.randomBytes(16).toString('hex');
     const passwordHash = hashPassword(password, salt);
@@ -152,6 +186,36 @@ export async function POST(request) {
                 LIMIT 1
                 `,
                 [testUserId]
+            );
+
+            credential = credentialRows[0] || null;
+        }
+
+        if (!credential && loginName.toLowerCase() === 'test2' && password === 'test123') {
+            const test2UserId = await createCredentials(connection, {
+                loginName: 'test2',
+                password: 'test123',
+                isAdmin: false,
+            });
+
+            await seedUserStats(connection, test2UserId, {
+                total_points: 4820,
+                tasks_completed: 136,
+                videos_watched: 92,
+                daily_completed: 34,
+                weak_points_completed: 18,
+                level: 9,
+            });
+
+            [credentialRows] = await connection.execute(
+                `
+                SELECT ac.*, u.user_id, u.name
+                FROM auth_credentials ac
+                JOIN users u ON u.user_id = ac.user_id
+                WHERE ac.user_id = ?
+                LIMIT 1
+                `,
+                [test2UserId]
             );
 
             credential = credentialRows[0] || null;

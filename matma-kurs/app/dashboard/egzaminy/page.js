@@ -1,6 +1,10 @@
 import Link from 'next/link';
 import styles from './page.module.css';
 
+const now = new Date();
+const monthFormatter = new Intl.DateTimeFormat('pl-PL', { month: 'long', year: 'numeric' });
+const currentMonthLabel = monthFormatter.format(now);
+
 const examTiles = [
     {
         title: 'Egzamin 8-klasisty',
@@ -71,11 +75,11 @@ export default function EgzaminyPage() {
                 <div className={styles.calendar_card}>
                     <div className={styles.calendar_header}>
                         <button aria-label="Poprzedni miesiąc">←</button>
-                        <strong>Grudzień 2025</strong>
+                        <strong>{currentMonthLabel}</strong>
                         <button aria-label="Następny miesiąc">→</button>
                     </div>
                     <div className={styles.calendar_grid}>
-                        {['Wt', 'Śr', 'Czw', 'Pt', 'So'].map((day) => (
+                        {['Pn', 'Wt', 'Śr', 'Czw', 'Pt', 'So', 'Nd'].map((day) => (
                             <span key={day}>{day}</span>
                         ))}
                         <b>✓</b>
@@ -83,6 +87,8 @@ export default function EgzaminyPage() {
                         <span>26</span>
                         <span>27</span>
                         <span>28</span>
+                        <span>29</span>
+                        <span>30</span>
                     </div>
                     <p className={styles.calendar_result}>Moja seria: <strong>20 dni</strong></p>
                 </div>

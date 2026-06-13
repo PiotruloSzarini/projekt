@@ -1,10 +1,16 @@
 .page_container {
     padding: 32px;
-    display: grid;
-    grid-template-columns: 1fr 350px; /* Lewa strona elastyczna, prawa (stats) stała */
+    display: flex;
+    flex-direction: column;
     gap: 32px;
     width: 100%;
 
+}
+
+.page_container_top {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 420px);
+    gap: 32px;
 }
 
 .page_container_left {
@@ -68,13 +74,22 @@
     align-items: center;
     gap: 32px;
     height: 100%;
+    min-width: 0;
+    padding: 20px;
+}
+
+.streak_box {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 16px;
+    font-size: 18px;
 }
 
 .home_course_card_container {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    height: 370px;
+    min-height: 370px;
     overflow: auto;
 }
 
@@ -107,4 +122,63 @@
     gap: 32px;
     align-items: center;
     justify-content: flex-end;
+}
+
+.home_stats_section {
+    width: 100%;
+    padding: 24px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(243, 248, 255, 0.92));
+    border-radius: 28px;
+    box-shadow: 0 18px 40px rgba(3, 35, 39, 0.08);
+    display: grid;
+    gap: 18px;
+}
+
+.home_stats_header {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    align-items: center;
+}
+
+.home_stats_header h2 {
+    margin: 0;
+    font-size: 28px;
+    color: #032327;
+}
+
+.user_strip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.user_avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(17, 128, 246, 0.18);
+    box-shadow: 0 10px 18px rgba(3, 35, 39, 0.08);
+}
+
+@media (max-width: 1200px) {
+    .page_container_top {
+        grid-template-columns: 1fr;
+    }
+
+    .page_container_right {
+        order: 2;
+    }
+}
+
+@media (max-width: 720px) {
+    .home_stats_section {
+        padding: 18px;
+    }
+
+    .home_stats_header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
 }

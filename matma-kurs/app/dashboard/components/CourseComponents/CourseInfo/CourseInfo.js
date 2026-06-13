@@ -36,7 +36,7 @@ export default function CourseInfo({
                         <div className={styles.course_info_not_owned_top}>
                             <p>Pozostałe kursy:</p>
                             <Link href={link2} style={{ textDecoration: 'none' }}>
-                                <p className={styles.course_info_not_owned_buy}>KUP KURS</p>
+                                <p className={styles.course_info_not_owned_buy}>OTWÓRZ SKLEP</p>
                             </Link>
                         </div>
                         <div className={styles.course_info_not_owned_children}>

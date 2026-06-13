@@ -2,30 +2,28 @@
 
 import { useState, useEffect, useRef } from 'react';
 import styles from './page.module.css';
-
-// Importujemy nasze funkcje serwerowe z pliku obok
 import { fetchTasksFromDB, addTaskToDB, toggleTaskInDB, deleteTaskFromDB } from './actions';
 
 export default function PlanNaukiPage() {
-    const loggedInUserId = 1; 
+    const loggedInUserId = 1;
+    const now = new Date();
 
     const [tasks, setTasks] = useState([]);
     const [selectedDate, setSelectedDate] = useState(null);
     const [popupPosition, setPopupPosition] = useState({ top: 0, left: 0 });
-    const [newTaskTitle, setNewTaskTitle] = useState("");
+    const [newTaskTitle, setNewTaskTitle] = useState('');
     const [loading, setLoading] = useState(true);
 
-    const [currentYear, setCurrentYear] = useState(2026);
-    const [currentMonth, setCurrentMonth] = useState(3); // Kwiecień
+    const [currentYear, setCurrentYear] = useState(now.getFullYear());
+    const [currentMonth, setCurrentMonth] = useState(now.getMonth());
 
     const gridRef = useRef(null);
 
     const monthNames = [
-        "Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec",
-        "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"
+        'Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec',
+        'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'
     ];
 
-    // Pobieranie zadań z bazy przy uruchomieniu lub zmianie miesiąca
     useEffect(() => {
         const loadInitialData = async () => {
             setLoading(true);
@@ -33,10 +31,10 @@ export default function PlanNaukiPage() {
             setTasks(Array.isArray(data) ? data : []);
             setLoading(false);
         };
-        loadInitialData();
-    }, [currentMonth, currentYear]);
 
-    // Obsługa dodawania nowego zadania
+        loadInitialData();
+    }, []);
+
     const handleAddTask = async (e) => {
         e.preventDefault();
         if (!newTaskTitle.trim() || !selectedDate) return;
@@ -44,27 +42,24 @@ export default function PlanNaukiPage() {
         const addedTask = await addTaskToDB(loggedInUserId, newTaskTitle, selectedDate);
         if (addedTask) {
             setTasks(prev => [...prev, addedTask]);
-            setNewTaskTitle("");
+            setNewTaskTitle('');
         }
     };
 
-    // Zmiana statusu zrobione/niezrobione (Checkbox)
     const handleToggleTask = async (taskId) => {
         setTasks(prev => prev.map(t => t.id === taskId ? { ...t, is_completed: t.is_completed === 1 ? 0 : 1 } : t));
         await toggleTaskInDB(loggedInUserId, taskId);
     };
 
-    // Usuwanie zadania
     const handleDeleteTask = async (taskId) => {
         setTasks(prev => prev.filter(t => t.id !== taskId));
         await deleteTaskFromDB(loggedInUserId, taskId);
     };
 
-    // Generowanie siatki dni kalendarza
     const generateCalendarCells = () => {
         const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
         let firstDayIndex = new Date(currentYear, currentMonth, 1).getDay() - 1;
-        if (firstDayIndex === -1) firstDayIndex = 6; 
+        if (firstDayIndex === -1) firstDayIndex = 6;
 
         const prevMonthDaysCount = new Date(currentYear, currentMonth, 0).getDate();
         const prevCells = [];
@@ -108,7 +103,7 @@ export default function PlanNaukiPage() {
     };
 
     const handleDayClick = (e, cell) => {
-        if (!cell.isCurrent) return; 
+        if (!cell.isCurrent) return;
 
         const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(cell.day).padStart(2, '0')}`;
 
@@ -120,10 +115,10 @@ export default function PlanNaukiPage() {
         const cellRect = e.currentTarget.getBoundingClientRect();
         const gridRect = gridRef.current.getBoundingClientRect();
 
-        const top = cellRect.bottom - gridRect.top + 8; 
+        const top = cellRect.bottom - gridRect.top + 8;
         let left = cellRect.left - gridRect.left;
 
-        const popupWidth = 380; 
+        const popupWidth = 380;
         if (left + popupWidth > gridRect.width) {
             left = gridRect.width - popupWidth - 10;
         }
@@ -159,13 +154,13 @@ export default function PlanNaukiPage() {
                         const dayTasks = tasks.filter(t => t.task_date === dateStr);
 
                         return (
-                            <div 
-                                key={`${cell.type}-${cell.day}-${index}`} 
+                            <div
+                                key={`${cell.type}-${cell.day}-${index}`}
                                 className={`${styles.day_box} ${!cell.isCurrent ? styles.inactive_day : ''} ${selectedDate === dateStr ? styles.selected_day : ''}`}
                                 onClick={(e) => handleDayClick(e, cell)}
                             >
                                 <span className={styles.day_num}>{cell.day}</span>
-                                
+
                                 {cell.isCurrent && dayTasks.length > 0 && (
                                     <div className={styles.task_badge}>
                                         {dayTasks.length === 1 ? '1 zadanie' : `${dayTasks.length} zadania`}
@@ -175,10 +170,9 @@ export default function PlanNaukiPage() {
                         );
                     })}
 
-                    {/* OKIENKO POPUP */}
                     {selectedDate && (
-                        <div 
-                            className={styles.floating_popup} 
+                        <div
+                            className={styles.floating_popup}
                             style={{ top: `${popupPosition.top}px`, left: `${popupPosition.left}px` }}
                             onClick={(e) => e.stopPropagation()}
                         >
@@ -188,10 +182,10 @@ export default function PlanNaukiPage() {
                             </div>
 
                             <form onSubmit={handleAddTask} className={styles.task_input_row}>
-                                <span className={styles.bullet_icon}>⬜</span>
-                                <input 
-                                    type="text" 
-                                    placeholder="Dodaj zadanie i kliknij Enter +" 
+                                <span className={styles.bullet_icon}>⬠</span>
+                                <input
+                                    type="text"
+                                    placeholder="Dodaj zadanie i kliknij Enter +"
                                     value={newTaskTitle}
                                     onChange={(e) => setNewTaskTitle(e.target.value)}
                                     className={styles.plain_input}
@@ -203,8 +197,8 @@ export default function PlanNaukiPage() {
                                     activeDayTasks.map(task => (
                                         <div key={task.id} className={styles.task_row}>
                                             <div className={styles.task_left}>
-                                                <input 
-                                                    type="checkbox" 
+                                                <input
+                                                    type="checkbox"
                                                     checked={task.is_completed === 1}
                                                     onChange={() => handleToggleTask(task.id)}
                                                     className={styles.custom_checkbox}

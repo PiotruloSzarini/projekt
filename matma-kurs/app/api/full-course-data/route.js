@@ -5,9 +5,11 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const courseId = searchParams.get('courseId');
     const userId = searchParams.get('userId');
+    const role = request.cookies.get('session_user_role')?.value || 'user';
+    const isAdmin = role === 'admin';
 
     if (!courseId) {
-        return NextResponse.json({ error: "Brak ID kursu" }, { status: 400 });
+        return NextResponse.json({ error: 'Brak ID kursu' }, { status: 400 });
     }
 
     try {
@@ -19,10 +21,15 @@ export async function GET(request) {
                 'SELECT * FROM user_courses WHERE user_id = ? AND course_id = ?',
                 [userId, courseId]
             );
+
             if (userAccess.length > 0) {
                 isOwned = true;
                 ownershipData = userAccess[0];
             }
+        }
+
+        if (isAdmin) {
+            isOwned = true;
         }
 
         const [
@@ -32,15 +39,15 @@ export async function GET(request) {
             [siData],
             [matchingPairs], [matchingItems],
             [sbsData], [sbsSteps],
-            [explanations], [explanationSteps], [hints] 
+            [explanations], [explanationSteps], [hints]
         ] = await Promise.all([
             pool.execute('SELECT * FROM courses WHERE course_id = ?', [courseId]),
             pool.execute('SELECT * FROM chapters WHERE course_id = ? ORDER BY chapter_id ASC', [courseId]),
             pool.execute('SELECT * FROM topics WHERE chapter_id IN (SELECT chapter_id FROM chapters WHERE course_id = ?) ORDER BY sort_order ASC', [courseId]),
             pool.execute(`
-                SELECT l.* FROM lessons l 
-                JOIN topics t ON l.topic_id = t.topic_id 
-                JOIN chapters c ON t.chapter_id = c.chapter_id 
+                SELECT l.* FROM lessons l
+                JOIN topics t ON l.topic_id = t.topic_id
+                JOIN chapters c ON t.chapter_id = c.chapter_id
                 WHERE c.course_id = ?`, [courseId]),
             pool.execute(`SELECT v.* FROM videos v JOIN lessons l ON v.lesson_id = l.lesson_id JOIN topics t ON l.topic_id = t.topic_id JOIN chapters c ON t.chapter_id = c.chapter_id WHERE c.course_id = ?`, [courseId]),
             pool.execute(`SELECT ts.* FROM tasks ts JOIN task_groups tg ON ts.task_group_id = tg.task_group_id JOIN lessons l ON tg.lesson_id = l.lesson_id JOIN topics t ON l.topic_id = t.topic_id JOIN chapters c ON t.chapter_id = c.chapter_id WHERE c.course_id = ?`, [courseId]),
@@ -60,27 +67,34 @@ export async function GET(request) {
         const fullTasks = tasks.map(task => {
             let details = {};
             switch (task.task_type_id) {
-                case 1: // MULTIPLE_CHOICE
+                case 1: {
                     const mc = mcQuestions.find(q => q.task_id === task.task_id);
                     if (mc) details.answers = mcAnswers.filter(a => a.task_multiple_id === mc.task_multiple_id);
                     break;
-                case 2: // SINGLE_INPUT
+                }
+                case 2: {
                     const si = siData.find(si => si.task_id === task.task_id);
                     if (si) details.correct_value = si.correct_value;
                     break;
-                case 3: // MATCHING
+                }
+                case 3: {
                     const mp = matchingPairs.find(p => p.task_id === task.task_id);
                     if (mp) details.items = matchingItems.filter(i => i.task_pair_id === mp.task_pair_id);
                     break;
-                case 4: // STEP_BY_STEP
+                }
+                case 4: {
                     const sbs = sbsData.find(s => s.task_id === task.task_id);
                     if (sbs) details.steps = sbsSteps.filter(st => st.task_step_by_step_id === sbs.task_step_by_step_id);
                     break;
+                }
             }
+
             const explanationHeader = explanations.find(e => e.task_id === task.task_id);
-            details.explanation = explanationHeader ? { ...explanationHeader, steps: explanationSteps.filter(es => es.explanation_id === explanationHeader.explanation_id) } : null;
+            details.explanation = explanationHeader
+                ? { ...explanationHeader, steps: explanationSteps.filter(es => es.explanation_id === explanationHeader.explanation_id) }
+                : null;
             details.hints = hints.filter(h => h.task_id === task.task_id);
-            return { ...task, details }; 
+            return { ...task, details };
         });
 
         const structure = chapters.map(chapter => ({
@@ -106,12 +120,11 @@ export async function GET(request) {
         return NextResponse.json({
             course: courses[0],
             owned: isOwned,
-            structure: structure,
+            structure,
             user_info: ownershipData ? { userId, owned_at: ownershipData.owned_at } : null
         });
-
     } catch (error) {
-        console.error("Błąd preloadu:", error);
-        return NextResponse.json({ error: "Błąd serwera podczas pobierania danych" }, { status: 500 });
+        console.error('Błąd preloadu:', error);
+        return NextResponse.json({ error: 'Błąd serwera podczas pobierania danych' }, { status: 500 });
     }
 }
