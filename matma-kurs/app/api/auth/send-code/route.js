@@ -92,6 +92,62 @@ async function seedUserStats(connection, userId, stats) {
     );
 }
 
+async function ensureOwnedCourse(connection, userId, courseSearches) {
+    const searchTerms = Array.isArray(courseSearches) ? courseSearches : [courseSearches];
+    const whereParts = [];
+    const params = [];
+
+    for (const term of searchTerms) {
+        const normalized = String(term ?? '').trim().toLowerCase();
+        if (!normalized) continue;
+
+        whereParts.push('LOWER(slug) = ?');
+        params.push(normalized);
+
+        whereParts.push('LOWER(title) = ?');
+        params.push(normalized);
+
+        whereParts.push('LOWER(title) LIKE ?');
+        params.push(`%${normalized}%`);
+    }
+
+    whereParts.push('(LOWER(title) LIKE ? AND LOWER(title) LIKE ?)');
+    params.push('%matura%', '%podstawowa%');
+
+    whereParts.push('(LOWER(title) LIKE ? AND LOWER(title) LIKE ?)');
+    params.push('%matematyka%', '%podstawowa%');
+
+    const [courseRows] = await connection.execute(
+        `
+        SELECT course_id
+        FROM courses
+        WHERE ${whereParts.join(' OR ')}
+        ORDER BY course_id ASC
+        LIMIT 1
+        `,
+        params
+    );
+
+    const courseId = courseRows[0]?.course_id;
+    if (!courseId) {
+        return null;
+    }
+
+    const [ownedRows] = await connection.execute(
+        'SELECT 1 FROM user_courses WHERE user_id = ? AND course_id = ? LIMIT 1',
+        [userId, courseId]
+    );
+
+    if (ownedRows.length === 0) {
+        await connection.execute(
+            'INSERT INTO user_courses (user_id, course_id, owned_at) VALUES (?, ?, NOW())',
+            [userId, courseId]
+        );
+    }
+
+    return courseId;
+}
+
 async function createCredentials(connection, { loginName, password, isAdmin = false }) {
     const salt = crypto.randomBytes(16).toString('hex');
     const passwordHash = hashPassword(password, salt);
@@ -207,6 +263,13 @@ export async function POST(request) {
                 level: 9,
             });
 
+            await ensureOwnedCourse(connection, test2UserId, [
+                'matura-podstawowa',
+                'matematyka-podstawowa',
+                'matura podstawowa',
+                'matematyka podstawowa',
+            ]);
+
             [credentialRows] = await connection.execute(
                 `
                 SELECT ac.*, u.user_id, u.name
@@ -260,6 +323,15 @@ export async function POST(request) {
 
         if (!isPasswordValid) {
             return NextResponse.json({ error: 'Nieprawidłowe hasło' }, { status: 401 });
+        }
+
+        if (credential.login_name?.toLowerCase() === 'test2') {
+            await ensureOwnedCourse(connection, credential.user_id, [
+                'matura-podstawowa',
+                'matematyka-podstawowa',
+                'matura podstawowa',
+                'matematyka podstawowa',
+            ]);
         }
 
         const mockCode = crypto.randomInt(100000, 1000000).toString();
