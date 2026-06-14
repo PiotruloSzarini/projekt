@@ -98,7 +98,7 @@ export default function LoginPage() {
                 <h1>{step === 1 ? 'Zaloguj się' : 'Weryfikacja kodem'}</h1>
                 <p className={styles.subtitle}>
                     {step === 1
-                        ? 'Wpisz nazwę i hasło. Kod 2FA jest na razie wyświetlany tutaj, a później podepniemy maila.'
+                        ? 'Wpisz nazwę i hasło. Kod 2FA do celów testowych wyswietli sie na kolejnej stronie. Docelowo będzie wysyłany on na maila.'
                         : 'Wpisz kod, żeby dokończyć logowanie.'}
                 </p>
 
