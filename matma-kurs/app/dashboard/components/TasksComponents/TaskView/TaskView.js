@@ -87,7 +87,7 @@ export default function TaskView({ tasks, courseColor }) {
         break;
     }
 
-    setMsg(isCorrect ? "Klasa jesteś gitem!" : "Rozjebałeś się na komendzie.");
+    setMsg(isCorrect ? "Super zadanie" : "Spróbuj jeszcze raz");
   };
 
   const renderTaskType = () => {
@@ -185,7 +185,7 @@ export default function TaskView({ tasks, courseColor }) {
               Sprawdź odpowiedź
             </button>
             {msg && (
-            <p className={style.message} style={{ color: msg.includes("Klasa") || msg.includes("Dobrze") ? 'green' : 'red' }}>
+            <p className={style.message} style={{ color: msg === "Super zadanie" || msg.includes("Dobrze") ? 'green' : 'red' }}>
               {msg}
             </p>
           )}

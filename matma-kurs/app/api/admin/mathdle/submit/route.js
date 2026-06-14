@@ -221,7 +221,7 @@ export async function POST(req) {
                 await connection.rollback();
                 return NextResponse.json({
                     isCorrect: false,
-                    message: 'Zła odpowiedź, spróbuj jeszcze raz!',
+                    message: 'Spróbuj jeszcze raz',
                 });
             }
         } else if (typeCode === 'MULTIPLE_CHOICE') {
@@ -243,7 +243,7 @@ export async function POST(req) {
                 await connection.rollback();
                 return NextResponse.json({
                     isCorrect: false,
-                    message: 'Zła odpowiedź, spróbuj jeszcze raz!',
+                    message: 'Spróbuj jeszcze raz',
                 });
             }
         } else if (typeCode === 'MATCHING') {
@@ -261,7 +261,7 @@ export async function POST(req) {
                 await connection.rollback();
                 return NextResponse.json({
                     isCorrect: false,
-                    message: 'Zła odpowiedź, spróbuj jeszcze raz!',
+                    message: 'Spróbuj jeszcze raz',
                 });
             }
         } else if (typeCode === 'STEP_BY_STEP') {
@@ -284,7 +284,7 @@ export async function POST(req) {
                 await connection.rollback();
                 return NextResponse.json({
                     isCorrect: false,
-                    message: 'Zła odpowiedź, spróbuj jeszcze raz!',
+                    message: 'Spróbuj jeszcze raz',
                 });
             }
 
