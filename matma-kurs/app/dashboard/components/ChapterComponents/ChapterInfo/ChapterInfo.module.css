@@ -1,5 +1,6 @@
 .rozdzialInfo_div_container{
-    max-width: 670px;
+    width: 100%;
+    max-width: none;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -14,7 +15,8 @@
     justify-content: space-between;
     padding: 16px;
     border-radius: 24px;
-    width: 670px; /* do zmiany */
+    width: 100%;
+    min-height: 225px;
     height: 225px;
     color: white;
 }

@@ -10,7 +10,7 @@
 .chapter_card {
     position: relative;
     width: 100%;
-    max-width: 670px; /*  KURWA TO JEST DO ZMIANY JAK BEDZIE KURWA DIV JEBANY W [CHAPTERSLUG]*/
+    max-width: none;
     height: 100%;
     min-height: 150px;
     background-color: white;
