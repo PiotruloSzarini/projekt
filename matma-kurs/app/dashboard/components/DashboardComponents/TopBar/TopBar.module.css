@@ -198,6 +198,47 @@
     padding: 14px 0;
 }
 
+.admin_switcher {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 8px;
+    border-radius: 16px;
+    background: rgba(3, 35, 39, 0.06);
+    border: 1px solid rgba(3, 35, 39, 0.08);
+}
+
+.switcher_item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 10px;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #032327;
+    text-align: center;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 800;
+    transition: transform 0.2s, background 0.2s, color 0.2s;
+}
+
+.switcher_item:hover {
+    transform: translateY(-1px);
+    background: rgba(17, 128, 246, 0.08);
+}
+
+.switcher_admin {
+    background: linear-gradient(135deg, #032327 0%, #0a3a43 100%);
+    color: #ffffff;
+}
+
+.switcher_admin:hover {
+    background: linear-gradient(135deg, #0a3a43 0%, #032327 100%);
+    color: #ffffff;
+}
+
 .profile_menu_item {
     display: block;
     padding: 12px 14px;

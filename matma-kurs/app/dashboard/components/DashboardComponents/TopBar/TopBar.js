@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import styles from './TopBar.module.css';
 import { useUser } from '@/app/context/UserContext';
+import { useCourseData } from '@/app/context/CourseContext';
 
 const SUBJECTS = [
     { name: 'Matematyka', icon: '/assets/img/topbar/matma-icon.svg' },
@@ -18,6 +19,7 @@ const SUBJECTS = [
 export default function Topbar({ children }) {
     const router = useRouter();
     const { user, loading } = useUser();
+    const { isAdmin } = useCourseData();
     const [isSubjectDropdownOpen, setIsSubjectDropdownOpen] = useState(false);
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
     const [selectedSubject, setSelectedSubject] = useState(SUBJECTS[0]);
@@ -138,6 +140,17 @@ export default function Topbar({ children }) {
                         </div>
 
                         <nav className={styles.profile_menu}>
+                            {isAdmin && (
+                                <div className={styles.admin_switcher}>
+                                    <Link href="/dashboard" className={styles.switcher_item} onClick={() => setIsProfileMenuOpen(false)}>
+                                        <span>Panel użytkownika</span>
+                                    </Link>
+                                    <Link href="/admin/dashboard" className={`${styles.switcher_item} ${styles.switcher_admin}`} onClick={() => setIsProfileMenuOpen(false)}>
+                                        <span>Panel admina</span>
+                                    </Link>
+                                </div>
+                            )}
+
                             <Link href="/dashboard/profil" className={styles.profile_menu_item} onClick={() => setIsProfileMenuOpen(false)}>
                                 Mój profil
                             </Link>
