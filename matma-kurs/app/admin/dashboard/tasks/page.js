@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import MathRender from '@/app/components/MathRender/MathRender';
 
 const CLOUDINARY_UPLOAD_PRESET = "omm_photos"; 
 const CLOUDINARY_CLOUD_NAME = "ds6xrritb";
@@ -36,6 +37,15 @@ export default function TaskDatabase() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [availableGroups, setAvailableGroups] = useState([]);
+    const selectedGroup = availableGroups.find(group => Number(group.task_group_id) === Number(selectedTask?.task_group_id));
+    const selectedCourseId = selectedGroup?.course_id ? String(selectedGroup.course_id) : '';
+    const courseOptions = Array.from(
+        new Map(availableGroups.map(group => [group.course_id, group.course_title])).entries()
+    ).map(([course_id, course_title]) => ({ course_id, course_title }));
+    const filteredGroups = selectedCourseId
+        ? availableGroups.filter(group => String(group.course_id) === selectedCourseId)
+        : availableGroups;
+    const assignmentPositions = getAssignmentPositions(selectedTask, selectedGroup);
 
     useEffect(() => {
         loadTasks();
@@ -97,13 +107,14 @@ export default function TaskDatabase() {
 
         return {
             task_id: selectedTask.task_id,
-            task_group_id: selectedTask.task_group_id || 1, 
+            task_group_id: selectedTask.task_group_id || null, 
             task_type_id: typeId,
             question: selectedTask.question,
             math_img: selectedTask.math_img,
             math_content: selectedTask.math_content,
             points: parseInt(selectedTask.points),
             difficulty: parseInt(selectedTask.difficulty),
+            sort_order: parseInt(selectedTask.sort_order, 10) || null,
             hints: selectedTask.hints,
             explanation: selectedTask.explanation,
             details: details
@@ -173,6 +184,46 @@ export default function TaskDatabase() {
                 alert("Zadanie przypisane pomyślnie!");
             }
         } catch (err) { alert("Błąd przypisywania: " + err.message); }
+    };
+
+    const handleAssignPlacement = async (taskId, groupId) => {
+        if (!taskId) {
+            alert("Najpierw musisz zapisac zadanie, aby przypisac je do grupy.");
+            return;
+        }
+        const numericGroupId = groupId ? parseInt(groupId, 10) : null;
+        const numericSortOrder = selectedTask.sort_order ? parseInt(selectedTask.sort_order, 10) : null;
+        try {
+            const res = await fetch('/api/admin/tasks/assign', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ task_id: taskId, task_group_id: numericGroupId, sort_order: numericSortOrder })
+            });
+            const result = await res.json();
+            if (!res.ok) throw new Error(result.error || "Nie udalo sie przypisac zadania.");
+            setSelectedTask(prev => ({ ...prev, task_group_id: numericGroupId, sort_order: result.sort_order || numericSortOrder }));
+            setTasks(prevTasks => prevTasks.map(t => t.task_id === taskId ? { ...t, task_group_id: numericGroupId, sort_order: result.sort_order || numericSortOrder } : t));
+            await loadGroups();
+            alert("Zadanie przypisane pomyslnie!");
+        } catch (err) { alert("Blad przypisywania: " + err.message); }
+    };
+
+    const handleCourseChange = (courseId) => {
+        const nextGroup = availableGroups.find(group => String(group.course_id) === String(courseId));
+        setSelectedTask({
+            ...selectedTask,
+            task_group_id: nextGroup?.task_group_id || null,
+            sort_order: getDefaultSortOrder(selectedTask, nextGroup)
+        });
+    };
+
+    const handleGroupChange = (groupId) => {
+        const nextGroup = availableGroups.find(group => String(group.task_group_id) === String(groupId));
+        setSelectedTask({
+            ...selectedTask,
+            task_group_id: groupId ? parseInt(groupId, 10) : null,
+            sort_order: getDefaultSortOrder(selectedTask, nextGroup)
+        });
     };
 
     const updateNestedList = (path, index, field, value) => {
@@ -311,6 +362,12 @@ export default function TaskDatabase() {
                                         onChange={(e) => setSelectedTask({...selectedTask, math_content: e.target.value})} 
                                         placeholder="np. x^2 + y^2 = r^2"
                                     />
+                                    {selectedTask.math_content?.trim() && (
+                                        <div style={mathPreviewBox}>
+                                            <div style={mathPreviewLabel}>Podgląd</div>
+                                            <MathRender formula={selectedTask.math_content} style={adminMathPreviewRenderStyle} />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                             <div style={{display:'flex', flexDirection:'column', gap:'10px'}}>
@@ -398,21 +455,58 @@ export default function TaskDatabase() {
                         </div>
 
                         {/* GRUPA */}
-                        <div style={sectionStyle}>
+                        <div style={sectionStyle} data-has-legacy-assign={Boolean(handleAssign)}>
                             <label style={labelStyle}>PRZYPISZ DO GRUPY</label>
-                            <div style={{display: 'flex', gap: '10px', alignItems: 'center'}}>
+                            <div style={assignmentGrid}>
+                                <div>
+                                    <label style={labelStyle}>KURS</label>
+                                    <select
+                                        style={fullInput}
+                                        value={selectedCourseId}
+                                        onChange={(e) => handleCourseChange(e.target.value)}
+                                    >
+                                        <option value="">-- Wybierz kurs --</option>
+                                        {courseOptions.map(course => (
+                                            <option key={course.course_id} value={course.course_id}>{course.course_title}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style={labelStyle}>GRUPA / LEKCJA</label>
                                 <select
                                     style={fullInput}
                                     value={selectedTask.task_group_id || ''}
-                                    onChange={(e) => handleAssign(selectedTask.task_id, e.target.value)}
-                                    disabled={!selectedTask.task_id}
+                                    onChange={(e) => handleGroupChange(e.target.value)}
                                 >
                                     <option value="">-- Wybierz grupę --</option>
-                                    {availableGroups.map(group => (
-                                        <option key={group.task_group_id} value={group.task_group_id}>{group.name}</option>
+                                    {filteredGroups.map(group => (
+                                        <option key={group.task_group_id} value={group.task_group_id}>{formatGroupLabel(group)}</option>
                                     ))}
                                 </select>
+                                </div>
+                                <div>
+                                    <label style={labelStyle}>KTORE ZADANIE</label>
+                                    <select
+                                        style={fullInput}
+                                        value={selectedTask.sort_order || ''}
+                                        onChange={(e) => setSelectedTask({...selectedTask, sort_order: e.target.value ? parseInt(e.target.value, 10) : null})}
+                                        disabled={!selectedTask.task_group_id}
+                                    >
+                                        <option value="">Na koniec</option>
+                                        {assignmentPositions.map(position => (
+                                            <option key={position} value={position}>Zadanie {position}</option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
+                            {selectedTask.task_id && (
+                                <button
+                                    style={{...miniBtn, marginTop: '10px'}}
+                                    onClick={() => handleAssignPlacement(selectedTask.task_id, selectedTask.task_group_id)}
+                                >
+                                    Zastosuj przypisanie
+                                </button>
+                            )}
                         </div>
 
                         <div style={footerStyle}>
@@ -487,6 +581,11 @@ function TypeSpecificEditor({ task, onUpdate, onAdd, onRemove, setTask, uploadIm
                             {/* LEWA STRONA */}
                             <div style={{flex: 1}}>
                                 <input style={fullInput} value={pair.left_text || ''} placeholder="Tekst lewy" onChange={(e) => onUpdate('pairs_left', idx, null, e.target.value)} />
+                                {pair.left_text?.trim() && (
+                                    <div style={matchingMathPreview}>
+                                        <MathRender formula={pair.left_text} displayMode={false} style={matchingMathRenderStyle} />
+                                    </div>
+                                )}
                                 <div style={uploadRow}>
                                     <input type="file" style={{fontSize:'9px'}} onChange={async (e) => {
                                         const url = await uploadImage(e.target.files[0]);
@@ -501,6 +600,11 @@ function TypeSpecificEditor({ task, onUpdate, onAdd, onRemove, setTask, uploadIm
                             {/* PRAWA STRONA */}
                             <div style={{flex: 1}}>
                                 <input style={fullInput} value={pair.right_text || ''} placeholder="Tekst prawy" onChange={(e) => onUpdate('pairs_right', idx, null, e.target.value)} />
+                                {pair.right_text?.trim() && (
+                                    <div style={matchingMathPreview}>
+                                        <MathRender formula={pair.right_text} displayMode={false} style={matchingMathRenderStyle} />
+                                    </div>
+                                )}
                                 <div style={uploadRow}>
                                     <input type="file" style={{fontSize:'9px'}} onChange={async (e) => {
                                         const url = await uploadImage(e.target.files[0]);
@@ -580,6 +684,12 @@ const pairContainer = { padding: '10px', border: '1px solid #eee', marginBottom:
 const uploadRow = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '5px' };
 const sbsStepBox = { border: '1px solid #ddd', padding: '15px', borderRadius: '8px', marginBottom: '10px', backgroundColor: '#fff' };
 const deleteTaskBtn = { background: 'none', border: 'none', color: '#ff4d4f', cursor: 'pointer', fontSize: '13px', width: '100%', marginTop: '15px', textDecoration: 'underline' };
+const assignmentGrid = { display: 'grid', gridTemplateColumns: '1fr 1.4fr 160px', gap: '12px', alignItems: 'end' };
+const mathPreviewBox = { marginTop: '10px', padding: '10px 12px', borderRadius: '8px', border: '1px solid #e5e7eb', background: '#f8fafc', maxHeight: '120px', overflow: 'auto', maxWidth: '100%', fontSize: '16px' };
+const mathPreviewLabel = { fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', marginBottom: '8px' };
+const adminMathPreviewRenderStyle = { width: 'max-content', maxWidth: '100%', fontSize: '20px', lineHeight: 1.25 };
+const matchingMathPreview = { margin: '4px 0 8px', minHeight: '28px', padding: '5px 8px', borderRadius: '6px', background: '#f8fafc', border: '1px solid #eef2f7', display: 'flex', alignItems: 'center', justifyContent: 'center' };
+const matchingMathRenderStyle = { width: 'auto', fontSize: '18px', lineHeight: 1.2 };
 
 const typeBadge = (type) => ({
     fontSize: '9px', padding: '2px 6px', borderRadius: '4px',
@@ -587,3 +697,24 @@ const typeBadge = (type) => ({
     color: type === 'MULTIPLE_CHOICE' ? '#1890ff' : '#52c41a',
     fontWeight: 'bold', marginBottom: '5px', display: 'inline-block'
 });
+
+function getDefaultSortOrder(task, group) {
+    if (!group) return null;
+    if (Number(task?.task_group_id) === Number(group.task_group_id) && task?.sort_order) {
+        return task.sort_order;
+    }
+    return Number(group.tasks_count || 0) + 1;
+}
+
+function getAssignmentPositions(task, group) {
+    if (!group) return [];
+    const taskIsAlreadyInGroup = Number(task?.task_group_id) === Number(group.task_group_id) && task?.task_id;
+    const maxPosition = Number(group.tasks_count || 0) + (taskIsAlreadyInGroup ? 0 : 1);
+    return Array.from({ length: Math.max(maxPosition, 1) }, (_, index) => index + 1);
+}
+
+function formatGroupLabel(group) {
+    const lesson = group.lesson_sort ? `Lekcja ${group.lesson_sort}` : group.lesson_title;
+    const context = [group.chapter_title, group.topic_title, lesson].filter(Boolean).join(' / ');
+    return `${context} - ${group.name} (${group.tasks_count || 0} zadan)`;
+}

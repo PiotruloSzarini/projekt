@@ -1,14 +1,31 @@
 import { NextResponse } from "next/server";
 import pool from "@/app/lib/db";
 
+async function ensureTaskSortOrderColumn() {
+    const [columns] = await pool.query(`
+        SELECT COLUMN_NAME
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'tasks'
+          AND COLUMN_NAME = 'sort_order'
+        LIMIT 1
+    `);
+
+    if (columns.length === 0) {
+        await pool.query(`ALTER TABLE tasks ADD COLUMN sort_order INT NULL`);
+    }
+}
+
 export async function GET() {
     try {
+        await ensureTaskSortOrderColumn();
+
         // 1. Pobieramy podstawowe dane o wszystkich zadaniach
         const [tasks] = await pool.query(`
             SELECT t.*, tt.code as task_type_code 
             FROM tasks t
             JOIN task_types tt ON t.task_type_id = tt.task_type_id
-            ORDER BY t.created_at DESC
+            ORDER BY COALESCE(t.sort_order, 999999), t.created_at DESC
         `);
 
         if (tasks.length === 0) return NextResponse.json([]);

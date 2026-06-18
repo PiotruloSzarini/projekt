@@ -1,0 +1,15 @@
+.math_render {
+  width: 100%;
+  color: #032327;
+  font-size: clamp(1.9rem, 3vw, 3.4rem);
+  line-height: 1.15;
+}
+
+.math_render :global(.katex-display) {
+  margin: 0;
+  font-size: inherit;
+}
+
+.math_render :global(.katex) {
+  font-size: inherit;
+}

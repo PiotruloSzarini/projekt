@@ -1,6 +1,48 @@
 import { NextResponse } from "next/server";
 import pool from "@/app/lib/db";
 
+async function ensureTaskSortOrderColumn(connection) {
+    const [columns] = await connection.query(`
+        SELECT COLUMN_NAME
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'tasks'
+          AND COLUMN_NAME = 'sort_order'
+        LIMIT 1
+    `);
+
+    if (columns.length === 0) {
+        await connection.query(`ALTER TABLE tasks ADD COLUMN sort_order INT NULL`);
+    }
+}
+
+async function placeTaskInGroup(connection, taskId, groupId, sortOrder) {
+    if (!groupId) return;
+
+    const [groupTasks] = await connection.query(
+        `SELECT task_id
+         FROM tasks
+         WHERE task_group_id = ? AND task_id <> ?
+         ORDER BY COALESCE(sort_order, 999999), task_id ASC`,
+        [groupId, taskId]
+    );
+
+    const maxPosition = groupTasks.length + 1;
+    const desiredPosition = Math.min(
+        Math.max(parseInt(sortOrder, 10) || maxPosition, 1),
+        maxPosition
+    );
+    const orderedIds = groupTasks.map((task) => task.task_id);
+    orderedIds.splice(desiredPosition - 1, 0, taskId);
+
+    for (let index = 0; index < orderedIds.length; index += 1) {
+        await connection.query(
+            `UPDATE tasks SET task_group_id = ?, sort_order = ? WHERE task_id = ?`,
+            [groupId, index + 1, orderedIds[index]]
+        );
+    }
+}
+
 export async function POST(request) {
     const connection = await pool.getConnection();
     try {
@@ -14,12 +56,14 @@ export async function POST(request) {
             math_content,
             difficulty, 
             points,
+            sort_order,
             details,      
             hints,        
             explanation   
         } = body;
 
         await connection.beginTransaction();
+        await ensureTaskSortOrderColumn(connection);
 
         let finalGroupId = null;
         if (task_group_id) {
@@ -43,6 +87,7 @@ export async function POST(request) {
             [finalGroupId, parseInt(task_type_id), question, math_img || null, math_content || null, difficulty || 1, points || 0]
         );
         const taskId = taskResult.insertId;
+        await placeTaskInGroup(connection, taskId, finalGroupId, sort_order);
 
         // 2. OBSŁUGA TYPÓW ZADAŃ (Tutaj kod zostaje bez zmian, bo bazuje na taskId)
         

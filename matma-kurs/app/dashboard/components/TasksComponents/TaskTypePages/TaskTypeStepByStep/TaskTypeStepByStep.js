@@ -1,47 +1,100 @@
 import styles from './TaskTypeStepByStep.module.css';
 
-export default function TaskTypeStepByStep({ task, answer, setAnswer, stepIdx, courseColor }) {
+export default function TaskTypeStepByStep({
+  task,
+  answer = {},
+  setAnswer,
+  stepIdx,
+  courseColor,
+  onConfirmStep,
+  feedback = null,
+}) {
   const steps = task.details?.steps || [];
+  const showFeedback = Boolean(feedback?.status);
 
   const handleStepChange = (stepId, value) => {
-    const currentAnswers = answer || {};
     setAnswer({
-      ...currentAnswers,
-      [stepId]: value
+      ...(answer || {}),
+      [stepId]: value,
     });
   };
 
+  const renderStepSummary = (step, index, status = 'completed') => {
+    const isCorrect = status === 'correct';
+    const isIncorrect = status === 'incorrect';
+    const summaryClass = isCorrect
+      ? styles.correct
+      : isIncorrect
+        ? styles.incorrect
+        : styles.completed;
+
+    return (
+      <div
+        key={step.step_id}
+        className={`${styles.stepSummary} ${summaryClass}`}
+        style={!isCorrect && !isIncorrect ? { backgroundColor: courseColor } : undefined}
+      >
+        <span>Krok {index + 1}.</span>
+        <span className={styles.statusIcon}>
+          {isIncorrect ? '\u00d7' : '\u2713'}
+        </span>
+      </div>
+    );
+  };
+
+  if (showFeedback) {
+    return (
+      <div className={styles.container}>
+        {steps.map((step, index) => (
+          renderStepSummary(step, index, feedback.steps?.[step.step_id])
+        ))}
+      </div>
+    );
+  }
+
+  const activeStep = steps[stepIdx];
+  const activeValue = activeStep ? answer?.[activeStep.step_id] || '' : '';
+  const canConfirmActiveStep = Boolean(String(activeValue).trim());
+
   return (
     <div className={styles.container}>
-      {steps.slice(0, stepIdx + 1).map((step, index) => {
-        const isCompleted = index < stepIdx;
+      {steps.slice(0, stepIdx).map((step, index) => (
+        renderStepSummary(step, index)
+      ))}
 
-        return (
-          <div 
-            key={step.step_id} 
-            className={`${styles.stepBox} ${isCompleted ? styles.completed : styles.activeStep}`}
-            style={{ borderLeft: isCompleted ? `4px solid #e0e0e0` : `4px solid ${courseColor}` }}
-          >
-            <h2 className={styles.stepTitle}>Krok {index + 1}.</h2>
-            <p className={styles.instruction}>{step.step_instruction}</p>
-            
-            <div className={styles.inputWrapper}>
-              <input 
-                type="text" 
-                className={styles.inputField}
-                value={answer?.[step.step_id] || ""}
-                onChange={(e) => handleStepChange(step.step_id, e.target.value)}
-                disabled={isCompleted}
-                style={{ borderColor: isCompleted ? '#eee' : courseColor }}
-                placeholder="Twoja odpowiedź..."
-              />
-            </div>
+      {activeStep && (
+        <div className={styles.stepBox}>
+          <h2 className={styles.stepTitle}>Krok {stepIdx + 1}.</h2>
+          <p className={styles.instruction}>{activeStep.step_instruction}</p>
+
+          <div className={styles.inputRow}>
+            <input
+              type="text"
+              className={styles.inputField}
+              value={activeValue}
+              onChange={(e) => handleStepChange(activeStep.step_id, e.target.value)}
+              placeholder="wpisz tutaj"
+            />
           </div>
-        );
-      })}
+
+          {onConfirmStep && (
+            <div className={styles.actions}>
+              <button
+                type="button"
+                className={styles.confirmBtn}
+                style={{ backgroundColor: courseColor }}
+                onClick={onConfirmStep}
+                disabled={!canConfirmActiveStep}
+              >
+                Zatwierdź krok
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {steps.slice(stepIdx + 1).map((step, index) => (
-        <div key={`future-${index}`} className={styles.futureStep}>
+        <div key={step.step_id} className={styles.futureStep}>
           Krok {stepIdx + index + 2}.
         </div>
       ))}

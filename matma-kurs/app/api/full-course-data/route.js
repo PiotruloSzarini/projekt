@@ -50,7 +50,7 @@ export async function GET(request) {
                 JOIN chapters c ON t.chapter_id = c.chapter_id
                 WHERE c.course_id = ?`, [courseId]),
             pool.execute(`SELECT v.* FROM videos v JOIN lessons l ON v.lesson_id = l.lesson_id JOIN topics t ON l.topic_id = t.topic_id JOIN chapters c ON t.chapter_id = c.chapter_id WHERE c.course_id = ?`, [courseId]),
-            pool.execute(`SELECT ts.* FROM tasks ts JOIN task_groups tg ON ts.task_group_id = tg.task_group_id JOIN lessons l ON tg.lesson_id = l.lesson_id JOIN topics t ON l.topic_id = t.topic_id JOIN chapters c ON t.chapter_id = c.chapter_id WHERE c.course_id = ?`, [courseId]),
+            pool.execute(`SELECT ts.* FROM tasks ts JOIN task_groups tg ON ts.task_group_id = tg.task_group_id JOIN lessons l ON tg.lesson_id = l.lesson_id JOIN topics t ON l.topic_id = t.topic_id JOIN chapters c ON t.chapter_id = c.chapter_id WHERE c.course_id = ? ORDER BY COALESCE(ts.sort_order, 999999), ts.task_id ASC`, [courseId]),
             pool.execute('SELECT * FROM task_groups'),
             pool.execute('SELECT * FROM task_multiple_choice'),
             pool.execute('SELECT * FROM task_multiple_choice_answers'),

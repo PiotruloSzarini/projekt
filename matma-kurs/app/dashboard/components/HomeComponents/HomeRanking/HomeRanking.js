@@ -5,7 +5,7 @@ import Image from 'next/image';
 export default function HomeRanking({ users }) {
     return (
         <div className={styles.card}>
-            <h1 className={styles.title}>Moje statystyki:</h1>
+            <h1 className={styles.title}>Ogólne statystyki:</h1>
             
             <div className={styles.rank_header}>
                 <Image src="/assets/img/home/ranking/buggy-silver.svg" alt="rank" width={96} height={96} />

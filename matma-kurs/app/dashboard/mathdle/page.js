@@ -10,6 +10,7 @@ import TaskTypeMultipleChoice from '../components/TasksComponents/TaskTypePages/
 import TaskTypeStepByStep from '../components/TasksComponents/TaskTypePages/TaskTypeStepByStep/TaskTypeStepByStep';
 import TaskTypeMatching from '../components/TasksComponents/TaskTypePages/TaskTypeMatching/TaskTypeMatching';
 import { useUser } from '@/app/context/UserContext';
+import MathRender from '@/app/components/MathRender/MathRender';
 
 const DIFFICULTY_META = {
     1: { label: 'ŁATWE', points: 1, theme: '#1180F6' },
@@ -35,6 +36,7 @@ export default function MathdleUserPage() {
     const [visibleHintsCount, setVisibleHintsCount] = useState(0);
     const [feedback, setFeedback] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [choiceFeedback, setChoiceFeedback] = useState(null);
 
     const completedCount = completedTaskIds.length;
     const activeTaskType = String(selectedTask?.task_type_code || '').trim().toUpperCase();
@@ -81,6 +83,7 @@ export default function MathdleUserPage() {
         setStepIndex(0);
         setVisibleHintsCount(0);
         setFeedback(null);
+        setChoiceFeedback(null);
     };
 
     const openTask = (task) => {
@@ -96,6 +99,7 @@ export default function MathdleUserPage() {
         setStepIndex(0);
         setVisibleHintsCount(0);
         setFeedback(null);
+        setChoiceFeedback(null);
     };
 
     const handleSubmit = async () => {
@@ -108,6 +112,7 @@ export default function MathdleUserPage() {
 
         setIsSubmitting(true);
         setFeedback(null);
+        setChoiceFeedback(null);
 
         try {
             const response = await fetch('/api/admin/mathdle/submit', {
@@ -124,6 +129,18 @@ export default function MathdleUserPage() {
             const result = await response.json();
             const message = result?.message || result?.error || (result?.isCorrect ? 'Udało się.' : 'Zła odpowiedź, spróbuj jeszcze raz!');
             setFeedback({ ...result, message });
+
+            if (activeTaskType === 'MULTIPLE_CHOICE') {
+                const answers = selectedTask?.details?.multiple_choice?.answers || [];
+                const selectedAnswerId = taskAnswer;
+                const correctAnswer = answers.find((answer) => Number(answer.is_correct) === 1);
+
+                setChoiceFeedback({
+                    status: result?.isCorrect ? 'correct' : 'incorrect',
+                    selectedAnswerId,
+                    correctAnswerId: correctAnswer?.answer_id ?? null,
+                });
+            }
 
             if (result?.isCorrect && result?.stepCompleted && activeTaskType === 'STEP_BY_STEP') {
                 setStepIndex((prev) => prev + 1);
@@ -217,7 +234,9 @@ export default function MathdleUserPage() {
                         {(selectedTask.math_content || selectedTask.math_img) && (
                             <div className={styles.task_formula_box}>
                                 {selectedTask.math_content && (
-                                    <div className={styles.task_formula}>{selectedTask.math_content}</div>
+                                    <div className={styles.task_formula}>
+                                        <MathRender formula={selectedTask.math_content} />
+                                    </div>
                                 )}
                                 {selectedTask.math_img && (
                                     <img
@@ -271,6 +290,7 @@ export default function MathdleUserPage() {
                                     answer={taskAnswer}
                                     setAnswer={setTaskAnswer}
                                     courseColor="#1180f6"
+                                    feedback={choiceFeedback}
                                 />
                             )}
 

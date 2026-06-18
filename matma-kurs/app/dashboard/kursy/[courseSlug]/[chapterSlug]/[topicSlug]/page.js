@@ -9,6 +9,43 @@ import LessonTaskChild from '@/app/dashboard/components/LessonComponents/LessonT
 import TaskView from '@/app/dashboard/components/TasksComponents/TaskView/TaskView';
 import style from './page.module.css';
 
+const FALLBACK_VIDEO_URL = 'https://youtu.be/tqSyQgLTgyg';
+
+function extractYouTubeVideoId(url) {
+  if (!url) return null;
+
+  try {
+    const parsed = new URL(url);
+
+    if (parsed.hostname.includes('youtu.be')) {
+      return parsed.pathname.replace('/', '').trim() || null;
+    }
+
+    if (parsed.hostname.includes('youtube.com')) {
+      const videoId = parsed.searchParams.get('v');
+      if (videoId) {
+        return videoId;
+      }
+
+      const embedMatch = parsed.pathname.match(/^\/embed\/([^/?]+)/);
+      if (embedMatch?.[1]) {
+        return embedMatch[1];
+      }
+    }
+  } catch (error) {
+    return null;
+  }
+
+  return null;
+}
+
+function getYouTubeEmbedUrl(url) {
+  const videoId = extractYouTubeVideoId(url);
+  if (!videoId) return null;
+
+  return `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&playsinline=1`;
+}
+
 export default function TopicLessonsPage() {
   const { courseSlug, chapterSlug, topicSlug } = useParams();
   const router = useRouter();
@@ -30,10 +67,10 @@ export default function TopicLessonsPage() {
     if (lessonsInTopic.length > 0 && !activeContent) {
       const firstLesson = lessonsInTopic[0];
       if (firstLesson.video) {
-        setActiveContent({ 
-            type: 'video', 
-            id: firstLesson.video.video_id, 
-            data: firstLesson.video 
+        setActiveContent({
+            type: 'video',
+            id: firstLesson.video.video_id,
+            data: firstLesson.video
         });
       }
     }
@@ -48,10 +85,10 @@ export default function TopicLessonsPage() {
       <div className={style.lessonSelect_conatiner}>
         {allTopicsInChapter.map((topic, index) => (
           <div key={topic.topic_id} onClick={() => router.push(`/dashboard/kursy/${courseSlug}/${chapterSlug}/${topic.slug}`)}>
-            <LessonSelect 
-              count={index + 1} 
-              active={topic.slug === topicSlug} 
-              backgroundColor={topic.slug === topicSlug ? course.color : "#FFFFFF"} 
+            <LessonSelect
+              count={index + 1}
+              active={topic.slug === topicSlug}
+              backgroundColor={topic.slug === topicSlug ? course.color : "#FFFFFF"}
               fontColor={topic.slug === topicSlug ? "#FEFFFF" : "#032327"}
               link={`/dashboard/kursy/${courseSlug}/${chapterSlug}/${topic.slug}`}
             />
@@ -69,7 +106,7 @@ export default function TopicLessonsPage() {
           {lessonsInTopic.map((lesson) => {
             const video = lesson.video;
             const tasks = lesson.tasks; // Zadania są już w lekcji dzięki SQL!
-            
+
             const isVideoActive = activeContent?.type === 'video' && activeContent?.id === video?.video_id;
             const isTasksActive = activeContent?.type === 'task' && activeContent?.parentId === video?.video_id;
 
@@ -77,10 +114,10 @@ export default function TopicLessonsPage() {
               <div key={lesson.lesson_id} className={style.lesson_wrapper}>
                 {video && (
                   <div className={style.lesson_video_wrapper}>
-                    <div onClick={() => setActiveContent({ type: 'video', id: video.video_id, data: video })}>
+                    <div onClick={() => setActiveContent({ type: 'video', id: video.video_id, data: video, tasks: tasks || [] })}>
                       <LessonTask
                         title={video.title}
-                        active={isVideoActive || isTasksActive} 
+                        active={isVideoActive || isTasksActive}
                         hasActiveChild={isTasksActive}
                         backgroundColor={course.color}
                         fontColor="#FEFFFF"
@@ -88,16 +125,16 @@ export default function TopicLessonsPage() {
                       >
                         {/* Jeśli lekcja ma zadania, pokaż przycisk "Zadania" */}
                         {tasks && tasks.length > 0 && (
-                          <div 
+                          <div
                             onClick={(e) => {
                               e.stopPropagation();
-                              setActiveContent({ 
-                                type: 'task', 
+                              setActiveContent({
+                                type: 'task',
                                 id: lesson.task_group_id, // Używamy ID grupy zadań
                                 parentId: video.video_id,
                                 tasks: tasks // Przekazujemy gotowe zadania!
                               });
-                            }} 
+                            }}
                             style={{ width: '100%', userSelect: 'none' }}
                           >
                             <LessonTaskChild
@@ -122,17 +159,55 @@ export default function TopicLessonsPage() {
         <div className={style.lesson_content_container_children}>
           {activeContent?.type === 'video' && (
             <div className={style.video_player_container}>
-              <div style={{ width: '100%', aspectRatio: '16/9', backgroundColor: '#000', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
-                  <p>Wideo: {activeContent.data.title}</p>
+              <div className={style.video_frame}>
+                {getYouTubeEmbedUrl(activeContent.data?.url || FALLBACK_VIDEO_URL) ? (
+                  <iframe
+                    src={getYouTubeEmbedUrl(activeContent.data?.url || FALLBACK_VIDEO_URL)}
+                    title={activeContent.data?.title || 'Wideo'}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className={style.video_placeholder}>
+                    <p>Wideo: {activeContent.data?.title || 'Lekcja'}</p>
+                  </div>
+                )}
               </div>
-              {activeContent.data?.text && <p style={{ marginTop: '20px' }}>{activeContent.data.text}</p>}
+
+              {activeContent.data?.text && <p className={style.video_description}>{activeContent.data.text}</p>}
+
+              <a
+                href={activeContent.data?.url || FALLBACK_VIDEO_URL}
+                className={style.open_video_button}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Otwórz film na YouTube
+              </a>
+
+              {activeContent.tasks && activeContent.tasks.length > 0 && (
+                <button
+                  type="button"
+                  className={style.go_to_tasks_button}
+                  onClick={() => setActiveContent({
+                    type: 'task',
+                    id: activeContent.id,
+                    parentId: activeContent.id,
+                    tasks: activeContent.tasks,
+                  })}
+                >
+                  Przejdź do zadań
+                </button>
+              )}
             </div>
           )}
 
           {activeContent?.type === 'task' && (
-            <TaskView 
+            <TaskView
                 tasks={activeContent.tasks} // PRZEKAZUJEMY GOTOWE DANE
-                courseColor={course.color} 
+                courseColor={course.color}
             />
           )}
 

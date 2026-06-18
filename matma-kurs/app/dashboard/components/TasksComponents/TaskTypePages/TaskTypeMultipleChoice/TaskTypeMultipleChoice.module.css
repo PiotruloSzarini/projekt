@@ -12,7 +12,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 100%; 
+    width: 100%;
     padding: 16px 24px;
     border: 1px solid #03232740;
     border-radius: 24px;
@@ -20,20 +20,73 @@
     transition: all 0.2s ease;
     box-sizing: border-box;
     text-align: center;
+    position: relative;
+    min-height: 56px;
+    background: #fff;
+    color: #032327;
 }
 
 .optionLabel.active {
     border-color: var(--active-color);
-    background-color: rgba(var(--active-color-rgb), 0.05);
+    background-color: rgba(17, 128, 246, 0.05);
+}
+
+.optionLabel.correct {
+    border-color: #22c55e;
+    background-color: #ffffff;
+    box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.2);
+}
+
+.optionLabel.correctSelected {
+    border-color: #12c642;
+    background-color: #12c642;
+}
+
+.optionLabel.incorrect {
+    border-color: #dc2626;
+    background-color: #dc2626;
 }
 
 .radioInput {
     display: none;
 }
 
+.statusMark {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 20px;
+    line-height: 1;
+    font-weight: 800;
+}
+
+.statusCorrect {
+    color: #22c55e;
+}
+
+.statusWrong {
+    color: #ffffff;
+}
+
+.optionLabel.correct .answerText {
+    color: #22c55e;
+}
+
+.optionLabel.correctSelected .answerText,
+.optionLabel.incorrect .answerText {
+    color: #ffffff;
+}
+
+.optionLabel.correctSelected .statusMark {
+    color: #ffffff;
+}
+
 .answerText {
     font-size: 16px;
     font-weight: 500;
     line-height: 1.4;
-    color: #03232740;
+    color: #032327;
+    width: 100%;
+    text-align: center;
 }

@@ -1,75 +1,72 @@
 import { useState, useEffect } from 'react';
 import styles from './TaskTypeMatching.module.css';
+import MathRender from '@/app/components/MathRender/MathRender';
 
-export default function TaskTypeMatching({ task, answer = {}, setAnswer, courseColor }) {
+const matchingMathStyle = {
+  width: 'auto',
+  fontSize: '1.35rem',
+  lineHeight: 1.2,
+};
+
+export default function TaskTypeMatching({
+  task,
+  answer = {},
+  setAnswer,
+  courseColor,
+  feedback = null,
+}) {
   const items = task.details?.items || [];
   const [shuffledRights, setShuffledRights] = useState([]);
+  const showFeedback = feedback?.status === 'correct' || feedback?.status === 'incorrect';
 
   useEffect(() => {
-    const rights = items.map(item => ({
-      id: item.pair_item_id,
-      text: item.right_text,
-      photo: item.right_photo_url
-    })).sort(() => Math.random() - 0.5);
+    const rights = items
+      .map((item) => ({
+        id: item.pair_item_id,
+        text: item.right_text,
+        photo: item.right_photo_url,
+      }))
+      .sort(() => Math.random() - 0.5);
     setShuffledRights(rights);
   }, [task.task_id]);
 
-  // UPROSZCZONY onDragStart - przekazujemy same ID
   const onDragStart = (e, draggedItemId, sourceFieldId) => {
-    e.dataTransfer.setData("draggedItemId", draggedItemId);
-    e.dataTransfer.setData("sourceFieldId", sourceFieldId); // To z automatu staje się stringiem w dataTransfer
+    e.dataTransfer.setData('draggedItemId', draggedItemId);
+    e.dataTransfer.setData('sourceFieldId', sourceFieldId);
   };
 
   const handleDrop = (e, targetFieldId = null) => {
     e.preventDefault();
-    
-    // Pobieramy dane jako czyste wartości
-    const draggedItemId = Number(e.dataTransfer.getData("draggedItemId"));
-    const sourceFieldIdRaw = e.dataTransfer.getData("sourceFieldId");
-    
-    // Odzyskujemy typ sourceFieldId (jeśli to nie "pool", to musi być liczba, by zgadzała się z kluczami)
-    const sourceFieldId = sourceFieldIdRaw === "pool" ? "pool" : Number(sourceFieldIdRaw);
+
+    const draggedItemId = Number(e.dataTransfer.getData('draggedItemId'));
+    const sourceFieldIdRaw = e.dataTransfer.getData('sourceFieldId');
+    const sourceFieldId = sourceFieldIdRaw === 'pool' ? 'pool' : Number(sourceFieldIdRaw);
 
     let nextState = { ...answer };
 
-    // --- PRZYPADEK 1: Upuszczenie do puli (targetFieldId to null) ---
     if (targetFieldId === null) {
-      if (sourceFieldId !== "pool") {
+      if (sourceFieldId !== 'pool') {
         delete nextState[sourceFieldId];
       }
       setAnswer(nextState);
       return;
     }
 
-    // --- PRZYPADEK 2: Upuszczenie do POLA ---
     const existingItemIdInTarget = nextState[targetFieldId];
-
-    // Zabezpieczenie: Jeśli upuszczamy w tym samym miejscu, nie robimy nic
     if (sourceFieldId === targetFieldId) return;
 
-    // A. Jeśli przeciągamy z PULI
-    if (sourceFieldId === "pool") {
-      // Jeśli w polu docelowym coś było, zostanie po prostu nadpisane, 
-      // a tym samym usunięte ze stanu answer i wróci do puli.
+    if (sourceFieldId === 'pool') {
       nextState[targetFieldId] = draggedItemId;
-    } 
-    // B. Jeśli przeciągamy z INNEGO POLA
-    else {
+    } else {
       if (existingItemIdInTarget !== undefined) {
-        // ZAMIANA (SWAP): W polu docelowym coś jest
-        // Pole źródłowe otrzymuje to, co było w polu docelowym
         nextState[sourceFieldId] = existingItemIdInTarget;
       } else {
-        // PRZENIESIENIE (MOVE): Pole docelowe jest puste
-        // Czyścimy pole źródłowe
         delete nextState[sourceFieldId];
       }
-      // W obu przypadkach pole docelowe otrzymuje przeciągany element
       nextState[targetFieldId] = draggedItemId;
     }
 
-    // Dodatkowe zabezpieczenie czyszczące ewentualne duplikaty na innych polach
-    Object.keys(nextState).forEach(key => {
+    Object.keys(nextState).forEach((key) => {
       if (nextState[key] === draggedItemId && Number(key) !== targetFieldId) {
         delete nextState[key];
       }
@@ -78,34 +75,72 @@ export default function TaskTypeMatching({ task, answer = {}, setAnswer, courseC
     setAnswer(nextState);
   };
 
-  // Funkcja pomocnicza do szukania pełnego obiektu na podstawie ID
   const getFullItemObj = (id) => {
-    return items.find(i => i.pair_item_id === id) || shuffledRights.find(i => i.id === id);
+    return items.find((i) => i.pair_item_id === id) || shuffledRights.find((i) => i.id === id);
+  };
+
+  const getItemState = (item) => {
+    if (!showFeedback) return '';
+    const selectedId = answer[item.pair_item_id];
+    if (selectedId === undefined || selectedId === null) return '';
+    return selectedId === item.pair_item_id ? styles.correct : styles.incorrect;
+  };
+
+  const getItemIcon = (item) => {
+    if (!showFeedback) return null;
+    const selectedId = answer[item.pair_item_id];
+    if (selectedId === undefined || selectedId === null) return null;
+    return selectedId === item.pair_item_id ? '\u2713' : '\u00d7';
+  };
+
+  const getDropZoneStyle = (item) => {
+    if (showFeedback) {
+      if (answer[item.pair_item_id] === undefined || answer[item.pair_item_id] === null) {
+        return { borderColor: '#ccc' };
+      }
+      return {
+        borderColor: answer[item.pair_item_id] === item.pair_item_id ? '#22c55e' : '#ef4444',
+      };
+    }
+
+    return {
+      borderColor: answer[item.pair_item_id] ? courseColor : '#ccc',
+    };
   };
 
   return (
     <div className={styles.container}>
-
       <div className={styles.matchingGrid}>
         {items.map((item) => (
           <div key={item.pair_item_id} className={styles.matchBox}>
             <div className={styles.leftSide}>
-              {item.left_photo_url ? <img src={item.left_photo_url} alt="Zadanie" /> : <span>{item.left_text}</span>}
+              {item.left_photo_url ? (
+                <img src={item.left_photo_url} alt="Zadanie" />
+              ) : (
+                <MathRender
+                  formula={item.left_text}
+                  displayMode={false}
+                  className={styles.matchingMath}
+                  style={matchingMathStyle}
+                />
+              )}
             </div>
-            
-            <div 
-              className={styles.dropZone}
+
+            <div
+              className={`${styles.dropZone} ${getItemState(item)}`}
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => handleDrop(e, item.pair_item_id)}
-              style={{ borderColor: answer[item.pair_item_id] ? courseColor : '#ccc' }}
+              style={getDropZoneStyle(item)}
             >
               {answer[item.pair_item_id] ? (
-                <div 
+                <div
                   className={styles.droppedItem}
                   draggable
-                  // Tutaj przekazujemy ID elementu oraz ID POLA, w którym aktualnie się znajduje
                   onDragStart={(e) => onDragStart(e, answer[item.pair_item_id], item.pair_item_id)}
                 >
+                  {getItemIcon(item) && (
+                    <span className={styles.statusIcon}>{getItemIcon(item)}</span>
+                  )}
                   {itemObjDisplay(getFullItemObj(answer[item.pair_item_id]))}
                 </div>
               ) : (
@@ -116,7 +151,11 @@ export default function TaskTypeMatching({ task, answer = {}, setAnswer, courseC
         ))}
       </div>
 
-      <div className={styles.pool} onDragOver={(e) => e.preventDefault()} onDrop={(e) => handleDrop(e, null)}>
+      <div
+        className={styles.pool}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => handleDrop(e, null)}
+      >
         <div className={styles.poolItems}>
           {shuffledRights.map((right) => {
             const isDropped = Object.values(answer).includes(right.id);
@@ -127,7 +166,7 @@ export default function TaskTypeMatching({ task, answer = {}, setAnswer, courseC
                 ) : (
                   <div
                     draggable
-                    onDragStart={(e) => onDragStart(e, right.id, "pool")}
+                    onDragStart={(e) => onDragStart(e, right.id, 'pool')}
                     className={styles.draggableItem}
                     style={{ border: `1px solid ${courseColor || '#ccc'}` }}
                   >
@@ -148,6 +187,11 @@ function itemObjDisplay(obj) {
   return obj.photo || obj.right_photo_url ? (
     <img src={obj.photo || obj.right_photo_url} alt="Element" className={styles.smallImg} />
   ) : (
-    <span>{obj.text || obj.right_text}</span>
+    <MathRender
+      formula={obj.text || obj.right_text}
+      displayMode={false}
+      className={styles.matchingMath}
+      style={matchingMathStyle}
+    />
   );
 }

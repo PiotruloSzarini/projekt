@@ -63,7 +63,7 @@ export default function RankingPage() {
 
             <section className={styles.bottom_section}>
                 <div className={styles.my_ranking}>
-                    <h2 className={styles.card_title}>Mój ranking:</h2>
+                    <h2 className={styles.card_title}>Ogólny ranking:</h2>
                     <div className={styles.ranking_rows}>
                         {rankingData.rows.map((row) => (
                             <div

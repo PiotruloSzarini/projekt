@@ -1,18 +1,87 @@
 import { NextResponse } from "next/server";
 import pool from "@/app/lib/db";
 
+async function ensureTaskSortOrderColumn(connection) {
+    const [columns] = await connection.query(`
+        SELECT COLUMN_NAME
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'tasks'
+          AND COLUMN_NAME = 'sort_order'
+        LIMIT 1
+    `);
+
+    if (columns.length === 0) {
+        await connection.query(`ALTER TABLE tasks ADD COLUMN sort_order INT NULL`);
+    }
+}
+
+async function normalizeTaskGroup(connection, groupId) {
+    if (!groupId) return;
+
+    const [rows] = await connection.query(
+        `SELECT task_id
+         FROM tasks
+         WHERE task_group_id = ?
+         ORDER BY COALESCE(sort_order, 999999), task_id ASC`,
+        [groupId]
+    );
+
+    for (let index = 0; index < rows.length; index += 1) {
+        await connection.query(
+            `UPDATE tasks SET sort_order = ? WHERE task_id = ?`,
+            [index + 1, rows[index].task_id]
+        );
+    }
+}
+
+async function placeTaskInGroup(connection, taskId, groupId, sortOrder) {
+    if (!groupId) {
+        await connection.query(
+            `UPDATE tasks SET task_group_id = NULL, sort_order = NULL WHERE task_id = ?`,
+            [taskId]
+        );
+        return;
+    }
+
+    const [groupTasks] = await connection.query(
+        `SELECT task_id
+         FROM tasks
+         WHERE task_group_id = ? AND task_id <> ?
+         ORDER BY COALESCE(sort_order, 999999), task_id ASC`,
+        [groupId, taskId]
+    );
+
+    const maxPosition = groupTasks.length + 1;
+    const desiredPosition = Math.min(
+        Math.max(parseInt(sortOrder, 10) || maxPosition, 1),
+        maxPosition
+    );
+    const orderedIds = groupTasks.map((task) => task.task_id);
+    orderedIds.splice(desiredPosition - 1, 0, taskId);
+
+    for (let index = 0; index < orderedIds.length; index += 1) {
+        await connection.query(
+            `UPDATE tasks SET task_group_id = ?, sort_order = ? WHERE task_id = ?`,
+            [groupId, index + 1, orderedIds[index]]
+        );
+    }
+}
+
 export async function PUT(request) {
     const connection = await pool.getConnection();
     try {
         const body = await request.json();
         const { 
             task_id, 
+            task_group_id,
             task_type_id, 
             question,
             math_img,      
             math_content,
             difficulty, 
             points,
+            sort_order,
             details,     
             hints,        
             explanation   
@@ -21,12 +90,37 @@ export async function PUT(request) {
         if (!task_id) return NextResponse.json({ error: "Brak ID zadania" }, { status: 400 });
 
         await connection.beginTransaction();
+        await ensureTaskSortOrderColumn(connection);
+
+        const [currentTaskRows] = await connection.query(
+            `SELECT task_group_id FROM tasks WHERE task_id = ? FOR UPDATE`,
+            [task_id]
+        );
+        const oldGroupId = currentTaskRows[0]?.task_group_id;
 
         // 1. UPDATE GŁÓWNEGO ZADANIA
         await connection.execute(
             `UPDATE tasks SET question = ?, math_img = ?, math_content = ?, difficulty = ?, points = ? WHERE task_id = ?`,
             [question, math_img || null, math_content || null, difficulty, points, task_id]
         );
+
+        const nextGroupId = task_group_id ? parseInt(task_group_id, 10) : null;
+        if (nextGroupId) {
+            const [groupRows] = await connection.query(
+                `SELECT task_group_id FROM task_groups WHERE task_group_id = ?`,
+                [nextGroupId]
+            );
+            if (groupRows.length === 0) {
+                await connection.rollback();
+                return NextResponse.json({ error: "Nie znaleziono grupy zadan" }, { status: 404 });
+            }
+        }
+
+        await normalizeTaskGroup(connection, oldGroupId);
+        await placeTaskInGroup(connection, task_id, nextGroupId, sort_order);
+        if (oldGroupId && Number(oldGroupId) !== Number(nextGroupId)) {
+            await normalizeTaskGroup(connection, oldGroupId);
+        }
 
         // 2. SZCZEGÓŁY TYPU (Logika Sync dla list)
         
@@ -96,6 +190,69 @@ export async function PUT(request) {
                         `INSERT INTO task_matching_pairs_items (task_pair_id, left_text, left_photo_url, right_text, right_photo_url, sort_order) 
                         VALUES (?, ?, ?, ?, ?, ?)`,
                         [pairId, p.left_text || null, p.left_photo_url || null, p.right_text || null, p.right_photo_url || null, p.sort_order]
+                    );
+                }
+            }
+        }
+
+        // --- TYP 4: STEP BY STEP ---
+        else if (parseInt(task_type_id) === 4) {
+            await connection.execute(
+                `UPDATE task_step_by_step SET instruction = ? WHERE task_id = ?`,
+                [details.instruction || null, task_id]
+            );
+
+            const [sbsRows] = await connection.execute(
+                `SELECT task_step_by_step_id FROM task_step_by_step WHERE task_id = ?`,
+                [task_id]
+            );
+            const sbsId = sbsRows[0]?.task_step_by_step_id;
+
+            if (!sbsId) {
+                throw new Error('Nie znaleziono konfiguracji step by step dla tego zadania');
+            }
+
+            const incomingStepIds = details.steps.filter(step => step.step_id).map(step => step.step_id);
+            if (incomingStepIds.length > 0) {
+                await connection.query(
+                    `DELETE FROM task_step_by_step_steps WHERE task_step_by_step_id = ? AND step_id NOT IN (?)`,
+                    [sbsId, incomingStepIds]
+                );
+            } else {
+                await connection.execute(
+                    `DELETE FROM task_step_by_step_steps WHERE task_step_by_step_id = ?`,
+                    [sbsId]
+                );
+            }
+
+            for (const step of details.steps) {
+                if (step.step_id) {
+                    await connection.execute(
+                        `UPDATE task_step_by_step_steps
+                         SET step_instruction = ?, step_answer = ?, answer_type = ?, tolerance = ?, sort_order = ?
+                         WHERE step_id = ?`,
+                        [
+                            step.step_instruction,
+                            step.step_answer,
+                            step.answer_type,
+                            step.tolerance || 0,
+                            step.sort_order,
+                            step.step_id
+                        ]
+                    );
+                } else {
+                    await connection.execute(
+                        `INSERT INTO task_step_by_step_steps
+                         (task_step_by_step_id, step_instruction, step_answer, answer_type, tolerance, sort_order)
+                         VALUES (?, ?, ?, ?, ?, ?)`,
+                        [
+                            sbsId,
+                            step.step_instruction,
+                            step.step_answer,
+                            step.answer_type,
+                            step.tolerance || 0,
+                            step.sort_order
+                        ]
                     );
                 }
             }
