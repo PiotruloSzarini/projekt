@@ -205,7 +205,7 @@ export async function POST(req) {
 
         const typeCode = String(task.task_type_code || '').trim().toUpperCase();
         const pointsMap = { 1: 1, 2: 3, 3: 5 };
-        const pointsToAdd = pointsMap[difficulty] ?? Number(task.points || 0) ?? 0;
+        const pointsToAdd = pointsMap[difficulty] ?? 0;
 
         if (typeCode === 'SINGLE_INPUT') {
             const correctValue = task.details?.single_input?.correct_value;

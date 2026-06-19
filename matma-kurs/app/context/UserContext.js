@@ -16,7 +16,9 @@ export function UserProvider({ children, userId }) {
 
         setLoading(true);
         try {
-            const profileRes = await fetch(`/api/user/profile?userId=${userId}`);
+            const profileRes = await fetch(`/api/user/profile?userId=${userId}`, {
+                cache: 'no-store',
+            });
 
             if (!profileRes.ok) {
                 throw new Error(`Błąd API: ${profileRes.status}`);

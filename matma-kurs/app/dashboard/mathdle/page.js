@@ -14,8 +14,8 @@ import MathRender from '@/app/components/MathRender/MathRender';
 
 const DIFFICULTY_META = {
     1: { label: 'ŁATWE', points: 1, theme: '#1180F6' },
-    2: { label: 'ŚREDNIE', points: 2, theme: '#0f766e' },
-    3: { label: 'TRUDNE', points: 3, theme: '#032327' },
+    2: { label: 'ŚREDNIE', points: 3, theme: '#0f766e' },
+    3: { label: 'TRUDNE', points: 5, theme: '#032327' },
 };
 
 function getDefaultAnswer(task) {
@@ -26,7 +26,7 @@ function getDefaultAnswer(task) {
 }
 
 export default function MathdleUserPage() {
-    const { user } = useUser();
+    const { user, refresh: refreshUser } = useUser();
     const [tasks, setTasks] = useState([]);
     const [completedTaskIds, setCompletedTaskIds] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -152,6 +152,7 @@ export default function MathdleUserPage() {
                 setTasks((prev) => prev.map((task) => (
                     task.task_id === selectedTask.task_id ? { ...task, isCompleted: true } : task
                 )));
+                await refreshUser?.();
 
                 setTimeout(() => {
                     closePanel();

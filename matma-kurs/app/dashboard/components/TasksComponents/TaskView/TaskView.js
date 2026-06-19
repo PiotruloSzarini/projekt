@@ -1,5 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useCourseData } from '@/app/context/CourseContext';
+import { useUser } from '@/app/context/UserContext';
 
 import MultipleChoice from '../TaskTypePages/TaskTypeMultipleChoice/TaskTypeMultipleChoice';
 import SingleInput from '../TaskTypePages/TaskTypeSingleInput/TaskTypeSingleInput';
@@ -11,6 +13,8 @@ import TaskSelect from '../TaskSelect/TaskSelect';
 import MathRender from '@/app/components/MathRender/MathRender';
 
 export default function TaskView({ tasks, courseColor }) {
+  const { userId } = useCourseData();
+  const { refresh: refreshUser } = useUser();
   const [activeIndex, setActiveIndex] = useState(0);
   const [answers, setAnswers] = useState({});
   const [taskResults, setTaskResults] = useState({});
@@ -59,7 +63,8 @@ export default function TaskView({ tasks, courseColor }) {
   const isStepByStep = Number(task.task_type_id) === 4;
   const stepItems = task.details?.steps || [];
   const isStepTaskReadyToCheck = !isStepByStep || stepItems.length === 0 || stepIdx >= stepItems.length;
-  const isCheckDisabled = isStepByStep && !currentResult && !isStepTaskReadyToCheck;
+  const hasCorrectResult = currentResult === 'correct';
+  const isCheckDisabled = hasCorrectResult || (isStepByStep && !currentResult && !isStepTaskReadyToCheck);
 
   const normalizeAnswer = (value) => String(value || '').trim().toLowerCase();
 
@@ -131,7 +136,39 @@ export default function TaskView({ tasks, courseColor }) {
       ...prev,
       [task.task_id]: isCorrect ? 'correct' : 'incorrect',
     }));
-    setMsg('');
+
+    if (isCorrect) {
+      awardTaskPoints(task.task_id);
+    } else {
+      setMsg('');
+    }
+  };
+
+  const awardTaskPoints = async (taskId) => {
+    if (!userId) {
+      setMsg('Brak aktywnej sesji.');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/tasks/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ taskId }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Nie udało się naliczyć punktów.');
+      }
+
+      setMsg(data.message || '');
+      await refreshUser?.();
+    } catch (error) {
+      console.error('Błąd naliczania punktów:', error);
+      setMsg('Zadanie zaliczone, ale nie udało się naliczyć punktów.');
+    }
   };
 
   const renderTaskType = () => {
