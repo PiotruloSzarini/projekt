@@ -1,9 +1,6 @@
 import { NextResponse } from 'next/server';
 import pool from '@/app/lib/db';
-
-function getSessionUserId(request) {
-    return request.cookies.get('session_user_id')?.value || null;
-}
+import { getSessionUserId } from '@/app/lib/session';
 
 async function ensureTaskCompletionTable(connection) {
     await connection.query(`

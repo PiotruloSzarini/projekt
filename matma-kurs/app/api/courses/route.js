@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import pool from '../../lib/db';
+import { getSession } from '@/app/lib/session';
+import { getCoursesForUser } from '@/app/lib/services/courses';
 
 export async function GET(request) {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
-    const role = request.cookies.get('session_user_role')?.value || 'user';
-    const isAdmin = role === 'admin';
+    const session = getSession(request);
+    const userId = searchParams.get('userId') || session.userId;
 
     try {
         const query = `

@@ -1,32 +1,7 @@
 import { NextResponse } from 'next/server';
 import db from '@/app/lib/db';
-
-function getSessionUserId(request) {
-    return request.cookies.get('session_user_id')?.value || null;
-}
-
-function getWarsawDateString(date = new Date()) {
-    return new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'Europe/Warsaw',
-    }).format(date);
-}
-
-async function ensureDailyCompletionTable(connection) {
-    await connection.query(`
-        CREATE TABLE IF NOT EXISTS daily_challenge_completions (
-            completion_id INT NOT NULL AUTO_INCREMENT,
-            user_id INT NOT NULL,
-            assignment_date DATE NOT NULL,
-            task_id INT NOT NULL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (completion_id),
-            UNIQUE KEY uniq_daily_completion (user_id, assignment_date, task_id),
-            KEY idx_daily_completion_user_date (user_id, assignment_date),
-            CONSTRAINT fk_daily_completion_user FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-            CONSTRAINT fk_daily_completion_task FOREIGN KEY (task_id) REFERENCES tasks(task_id) ON DELETE CASCADE
-        )
-    `);
-}
+import { getSessionUserId } from '@/app/lib/session';
+import { ensureDailyCompletionTable, getWarsawDateString } from '@/app/lib/services/mathdle';
 
 export async function GET(request) {
     let connection;

@@ -1,55 +1,7 @@
 import { NextResponse } from 'next/server';
 import pool from '../../../lib/db';
-
-function getSessionUserId(request) {
-    return request.cookies.get('session_user_id')?.value || null;
-}
-
-function getFallbackAvatar(userId) {
-    const avatarIndex = Math.abs(Number(userId) || 0) % 5 + 1;
-    return `/assets/img/avatars/avatar-${avatarIndex}.svg`;
-}
-
-function isTrustedRemoteAvatar(url) {
-    try {
-        const parsed = new URL(url);
-        return parsed.hostname === 'res.cloudinary.com';
-    } catch {
-        return false;
-    }
-}
-
-function normalizeAvatarUrl(avatarUrl, name, userId) {
-    const raw = typeof avatarUrl === 'string' ? avatarUrl.trim() : '';
-
-    if (raw) {
-        const markdownMatch = raw.match(/\((https?:\/\/[^)\s]+)\)/i);
-        if (markdownMatch?.[1]) {
-            return isTrustedRemoteAvatar(markdownMatch[1]) ? markdownMatch[1] : getFallbackAvatar(userId);
-        }
-
-        const urlMatch = raw.match(/https?:\/\/[^\s)]+/i);
-        if (urlMatch?.[0]) {
-            const cleanedUrl = urlMatch[0].replace(/[\])]+$/g, '');
-            return isTrustedRemoteAvatar(cleanedUrl) ? cleanedUrl : getFallbackAvatar(userId);
-        }
-
-        if (raw.startsWith('/')) {
-            return raw;
-        }
-
-        try {
-            const parsed = new URL(raw);
-            if ((parsed.protocol === 'http:' || parsed.protocol === 'https:') && isTrustedRemoteAvatar(raw)) {
-                return raw;
-            }
-        } catch {
-            // fall back below
-        }
-    }
-
-    return getFallbackAvatar(userId);
-}
+import { getSessionUserId } from '@/app/lib/session';
+import { normalizeAvatarUrl } from '@/app/lib/avatar';
 
 export async function GET(request) {
     const { searchParams } = new URL(request.url);
@@ -91,7 +43,7 @@ export async function GET(request) {
 
         return NextResponse.json({
             ...user,
-            avatar_url: normalizeAvatarUrl(user.avatar_url, user.name, user.user_id),
+            avatar_url: normalizeAvatarUrl(user.avatar_url, user.user_id),
         });
     } catch (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
@@ -138,7 +90,7 @@ export async function PATCH(request) {
             success: true,
             user: {
                 ...user,
-                avatar_url: normalizeAvatarUrl(user.avatar_url, user.name, user.user_id),
+                avatar_url: normalizeAvatarUrl(user.avatar_url, user.user_id),
             },
         });
     } catch (error) {

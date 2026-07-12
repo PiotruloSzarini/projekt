@@ -28,7 +28,7 @@ export default function MyProgressPage() {
     useEffect(() => {
         const loadDailyStatus = async () => {
             try {
-                const res = await fetch('/api/admin/mathdle/today');
+                const res = await fetch('/api/mathdle/status');
                 const data = await res.json();
                 const dailyCompleted = (data?.completedCount || 0) > 0;
 
