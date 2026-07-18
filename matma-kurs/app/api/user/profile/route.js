@@ -1,62 +1,15 @@
 import { NextResponse } from 'next/server';
 import pool from '../../../lib/db';
-
-function getSessionUserId(request) {
-    return request.cookies.get('session_user_id')?.value || null;
-}
-
-function getFallbackAvatar(userId) {
-    const avatarIndex = Math.abs(Number(userId) || 0) % 5 + 1;
-    return `/assets/img/avatars/avatar-${avatarIndex}.svg`;
-}
-
-function isTrustedRemoteAvatar(url) {
-    try {
-        const parsed = new URL(url);
-        return parsed.hostname === 'res.cloudinary.com';
-    } catch {
-        return false;
-    }
-}
-
-function normalizeAvatarUrl(avatarUrl, name, userId) {
-    const raw = typeof avatarUrl === 'string' ? avatarUrl.trim() : '';
-
-    if (raw) {
-        const markdownMatch = raw.match(/\((https?:\/\/[^)\s]+)\)/i);
-        if (markdownMatch?.[1]) {
-            return isTrustedRemoteAvatar(markdownMatch[1]) ? markdownMatch[1] : getFallbackAvatar(userId);
-        }
-
-        const urlMatch = raw.match(/https?:\/\/[^\s)]+/i);
-        if (urlMatch?.[0]) {
-            const cleanedUrl = urlMatch[0].replace(/[\])]+$/g, '');
-            return isTrustedRemoteAvatar(cleanedUrl) ? cleanedUrl : getFallbackAvatar(userId);
-        }
-
-        if (raw.startsWith('/')) {
-            return raw;
-        }
-
-        try {
-            const parsed = new URL(raw);
-            if ((parsed.protocol === 'http:' || parsed.protocol === 'https:') && isTrustedRemoteAvatar(raw)) {
-                return raw;
-            }
-        } catch {
-            // fall back below
-        }
-    }
-
-    return getFallbackAvatar(userId);
-}
+import { getSessionUserId } from '@/app/lib/session';
+import { normalizeAvatarUrl } from '@/app/lib/avatar';
+import { validateString, validateUrl, ValidationError } from '@/app/lib/validation';
+import { checkRateLimit } from '@/app/lib/rateLimiter';
 
 export async function GET(request) {
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId') || getSessionUserId(request);
+    const userId = await getSessionUserId(request);
 
     if (!userId) {
-        return NextResponse.json({ error: 'Brak ID użytkownika' }, { status: 400 });
+        return NextResponse.json({ error: 'Brak aktywnej sesji' }, { status: 401 });
     }
 
     try {
@@ -91,27 +44,44 @@ export async function GET(request) {
 
         return NextResponse.json({
             ...user,
-            avatar_url: normalizeAvatarUrl(user.avatar_url, user.name, user.user_id),
+            avatar_url: normalizeAvatarUrl(user.avatar_url, user.user_id),
         });
     } catch (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        console.error('GET /api/user/profile error:', error);
+        return NextResponse.json({ error: 'Błąd serwera' }, { status: 500 });
     }
 }
 
 export async function PATCH(request) {
-    const sessionUserId = getSessionUserId(request);
+    const sessionUserId = await getSessionUserId(request);
 
     if (!sessionUserId) {
         return NextResponse.json({ error: 'Brak aktywnej sesji' }, { status: 401 });
     }
 
+    const { limited, retryAfterSec } = checkRateLimit(`profile-patch:${sessionUserId}`, {
+        maxAttempts: 10,
+        windowMs: 60 * 1000,
+    });
+    if (limited) {
+        return NextResponse.json(
+            { error: `Zbyt wiele prób. Poczekaj ${retryAfterSec}s.` },
+            { status: 429 }
+        );
+    }
+
     try {
         const body = await request.json();
-        const nextName = typeof body.name === 'string' ? body.name.trim() : '';
-        const nextAvatarUrl = typeof body.avatar_url === 'string' ? body.avatar_url.trim() : '';
 
-        if (!nextName) {
-            return NextResponse.json({ error: 'Nazwa użytkownika jest wymagana' }, { status: 400 });
+        let nextName, nextAvatarUrl;
+        try {
+            nextName = validateString(body.name, { field: 'Nazwa użytkownika', min: 1, max: 100 });
+            nextAvatarUrl = validateUrl(body.avatar_url, { field: 'Adres zdjęcia', max: 500, required: false });
+        } catch (err) {
+            if (err instanceof ValidationError) {
+                return NextResponse.json({ error: err.message }, { status: 400 });
+            }
+            throw err;
         }
 
         await pool.execute(
@@ -138,10 +108,11 @@ export async function PATCH(request) {
             success: true,
             user: {
                 ...user,
-                avatar_url: normalizeAvatarUrl(user.avatar_url, user.name, user.user_id),
+                avatar_url: normalizeAvatarUrl(user.avatar_url, user.user_id),
             },
         });
     } catch (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        console.error('PATCH /api/user/profile error:', error);
+        return NextResponse.json({ error: 'Błąd serwera' }, { status: 500 });
     }
 }

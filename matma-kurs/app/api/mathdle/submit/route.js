@@ -1,15 +1,9 @@
 import { NextResponse } from 'next/server';
 import db from '@/app/lib/db';
-
-function getSessionUserId(request) {
-    return request.cookies.get('session_user_id')?.value || null;
-}
-
-function getWarsawDateString(date = new Date()) {
-    return new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'Europe/Warsaw',
-    }).format(date);
-}
+import { getSessionUserId } from '@/app/lib/session';
+import { getWarsawDateString } from '@/app/lib/services/mathdle';
+import { validateInt, ValidationError } from '@/app/lib/validation';
+import { checkRateLimit } from '@/app/lib/rateLimiter';
 
 function normalizeAnswer(value) {
     return String(value ?? '')
@@ -17,29 +11,14 @@ function normalizeAnswer(value) {
         .toLowerCase()
         .replace(/\s+/g, '')
         .replace(/,/g, '.')
-        .replace(/[â’â€“â€”]/g, '-')
+        // en/em dashes → zwykły minus, curly apostrofy → prosty
+        .replace(/[–—−]/g, '-')
+        .replace(/[‘’“”]/g, "'")
         .normalize('NFKC');
 }
 
 function isSameAnswer(expected, actual) {
     return normalizeAnswer(expected) === normalizeAnswer(actual);
-}
-
-async function ensureDailyCompletionTable(connection) {
-    await connection.query(`
-        CREATE TABLE IF NOT EXISTS daily_challenge_completions (
-            completion_id INT NOT NULL AUTO_INCREMENT,
-            user_id INT NOT NULL,
-            assignment_date DATE NOT NULL,
-            task_id INT NOT NULL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (completion_id),
-            UNIQUE KEY uniq_daily_completion (user_id, assignment_date, task_id),
-            KEY idx_daily_completion_user_date (user_id, assignment_date),
-            CONSTRAINT fk_daily_completion_user FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-            CONSTRAINT fk_daily_completion_task FOREIGN KEY (task_id) REFERENCES tasks(task_id) ON DELETE CASCADE
-        )
-    `);
 }
 
 async function loadTaskBundle(connection, taskId) {
@@ -80,15 +59,7 @@ async function loadTaskBundle(connection, taskId) {
             [mcRows[0].task_multiple_id]
         );
 
-        return {
-            ...task,
-            details: {
-                multiple_choice: {
-                    ...mcRows[0],
-                    answers,
-                },
-            },
-        };
+        return { ...task, details: { multiple_choice: { ...mcRows[0], answers } } };
     }
 
     if (typeCode === 'MATCHING') {
@@ -104,15 +75,7 @@ async function loadTaskBundle(connection, taskId) {
             [pairRows[0].task_pair_id]
         );
 
-        return {
-            ...task,
-            details: {
-                matching_pairs: {
-                    ...pairRows[0],
-                    items,
-                },
-            },
-        };
+        return { ...task, details: { matching_pairs: { ...pairRows[0], items } } };
     }
 
     if (typeCode === 'STEP_BY_STEP') {
@@ -128,15 +91,7 @@ async function loadTaskBundle(connection, taskId) {
             [stepRows[0].task_step_by_step_id]
         );
 
-        return {
-            ...task,
-            details: {
-                step_by_step: {
-                    ...stepRows[0],
-                    steps,
-                },
-            },
-        };
+        return { ...task, details: { step_by_step: { ...stepRows[0], steps } } };
     }
 
     return { ...task, details: {} };
@@ -159,21 +114,69 @@ async function getTaskCompletionIds(connection, userId, date, taskIds) {
 }
 
 export async function POST(req) {
+    const sessionUserId = await getSessionUserId(req);
+
+    if (!sessionUserId) {
+        return NextResponse.json({ error: 'Brak aktywnej sesji' }, { status: 401 });
+    }
+
+    const { limited, retryAfterSec } = checkRateLimit(`mathdle-submit:${sessionUserId}`, {
+        maxAttempts: 30,
+        windowMs: 60 * 1000,
+    });
+    if (limited) {
+        return NextResponse.json(
+            { isCorrect: false, message: `Zbyt wiele prób. Poczekaj ${retryAfterSec}s.` },
+            { status: 429 }
+        );
+    }
+
     let connection;
 
     try {
-        const sessionUserId = getSessionUserId(req);
-        const { taskId, difficulty, userAnswer, stepId } = await req.json();
+        const body = await req.json();
 
-        if (!sessionUserId) {
-            return NextResponse.json({ error: 'Brak aktywnej sesji' }, { status: 401 });
+        let taskId, stepId;
+        try {
+            taskId = validateInt(body.taskId, { field: 'ID zadania', min: 1 });
+            stepId = validateInt(body.stepId, { field: 'ID kroku', min: 1, required: false });
+        } catch (err) {
+            if (err instanceof ValidationError) {
+                return NextResponse.json({ isCorrect: false, message: err.message }, { status: 400 });
+            }
+            throw err;
+        }
+
+        const userAnswer = body.userAnswer;
+        // Obiekty (MATCHING, STEP_BY_STEP) mają swoje sensowne rozmiary — limit tylko na stringi
+        if (typeof userAnswer === 'string' && userAnswer.length > 1000) {
+            return NextResponse.json(
+                { isCorrect: false, message: 'Odpowiedź jest za długa' },
+                { status: 400 }
+            );
         }
 
         connection = await db.getConnection();
-        await ensureDailyCompletionTable(connection);
         await connection.beginTransaction();
 
         const today = getWarsawDateString();
+
+        // Difficulty MUSI pochodzić z DB, nie z body — inaczej klient wybiera sobie punkty.
+        // Ten sam query waliduje że zadanie jest w ogóle przypisane na dziś.
+        const [assignmentRows] = await connection.query(
+            'SELECT difficulty FROM daily_assignments WHERE task_id = ? AND assignment_date = ? LIMIT 1',
+            [taskId, today]
+        );
+
+        if (!assignmentRows.length) {
+            await connection.rollback();
+            return NextResponse.json(
+                { isCorrect: false, message: 'To zadanie nie jest przypisane do dzisiejszego dnia.' },
+                { status: 400 }
+            );
+        }
+
+        const difficulty = assignmentRows[0].difficulty;
 
         const [alreadyDoneRows] = await connection.query(
             `
@@ -219,10 +222,7 @@ export async function POST(req) {
 
             if (!isSameAnswer(correctValue, userAnswer)) {
                 await connection.rollback();
-                return NextResponse.json({
-                    isCorrect: false,
-                    message: 'Spróbuj jeszcze raz',
-                });
+                return NextResponse.json({ isCorrect: false, message: 'Spróbuj jeszcze raz' });
             }
         } else if (typeCode === 'MULTIPLE_CHOICE') {
             const answers = task.details?.multiple_choice?.answers || [];
@@ -241,10 +241,7 @@ export async function POST(req) {
 
             if (!isCorrect) {
                 await connection.rollback();
-                return NextResponse.json({
-                    isCorrect: false,
-                    message: 'Spróbuj jeszcze raz',
-                });
+                return NextResponse.json({ isCorrect: false, message: 'Spróbuj jeszcze raz' });
             }
         } else if (typeCode === 'MATCHING') {
             const items = task.details?.matching_pairs?.items || [];
@@ -259,10 +256,7 @@ export async function POST(req) {
 
             if (!isCorrect) {
                 await connection.rollback();
-                return NextResponse.json({
-                    isCorrect: false,
-                    message: 'Spróbuj jeszcze raz',
-                });
+                return NextResponse.json({ isCorrect: false, message: 'Spróbuj jeszcze raz' });
             }
         } else if (typeCode === 'STEP_BY_STEP') {
             const steps = task.details?.step_by_step?.steps || [];
@@ -282,10 +276,7 @@ export async function POST(req) {
 
             if (!isCorrect) {
                 await connection.rollback();
-                return NextResponse.json({
-                    isCorrect: false,
-                    message: 'Spróbuj jeszcze raz',
-                });
+                return NextResponse.json({ isCorrect: false, message: 'Spróbuj jeszcze raz' });
             }
 
             const isLastStep = currentStepIndex === steps.length - 1;
@@ -307,10 +298,7 @@ export async function POST(req) {
         }
 
         await connection.query(
-            `
-            INSERT INTO daily_challenge_completions (user_id, assignment_date, task_id)
-            VALUES (?, ?, ?)
-            `,
+            `INSERT INTO daily_challenge_completions (user_id, assignment_date, task_id) VALUES (?, ?, ?)`,
             [sessionUserId, today, taskId]
         );
 
@@ -329,7 +317,12 @@ export async function POST(req) {
             'SELECT task_id FROM daily_assignments WHERE assignment_date = ? ORDER BY difficulty ASC, assignment_id ASC',
             [today]
         );
-        const completedTaskIds = await getTaskCompletionIds(connection, sessionUserId, today, allTasksToday.map((row) => row.task_id));
+        const completedTaskIds = await getTaskCompletionIds(
+            connection,
+            sessionUserId,
+            today,
+            allTasksToday.map((row) => row.task_id)
+        );
 
         await connection.commit();
 
@@ -351,7 +344,7 @@ export async function POST(req) {
         console.error('BŁĄD SYSTEMU:', error);
         return NextResponse.json({
             isCorrect: false,
-            message: error.message ? `Błąd serwera: ${error.message}` : 'Błąd serwera.',
+            message: 'Błąd serwera.',
         }, { status: 500 });
     } finally {
         if (connection) connection.release();

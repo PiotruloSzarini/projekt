@@ -28,7 +28,7 @@ export default function MyProgressPage() {
     useEffect(() => {
         const loadDailyStatus = async () => {
             try {
-                const res = await fetch('/api/admin/mathdle/today');
+                const res = await fetch('/api/mathdle/status');
                 const data = await res.json();
                 const dailyCompleted = (data?.completedCount || 0) > 0;
 
@@ -48,12 +48,12 @@ export default function MyProgressPage() {
     useEffect(() => {
         const loadRanking = async () => {
             try {
-                const res = await fetch(`/api/ranking${userId ? `?userId=${userId}` : ''}`);
+                const res = await fetch('/api/ranking');
                 const data = await res.json();
                 const rows = Array.isArray(data.rows) ? data.rows : [];
 
                 setRankingData(rows.slice(0, 5).map((row) => ({
-                    id: row.user_id,
+                    id: row.rank,
                     rank: row.rank,
                     name: row.name,
                     points: row.total_points,

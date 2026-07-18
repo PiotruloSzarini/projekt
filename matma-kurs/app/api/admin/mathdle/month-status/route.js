@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
 import pool from "@/app/lib/db";
+import { requireAdmin } from "@/app/lib/session";
+import { getWarsawDateString } from "@/app/lib/services/mathdle";
 
 export async function GET(request) {
+    const { response } = await requireAdmin(request);
+    if (response) return response;
+
     const { searchParams } = new URL(request.url);
     const start = searchParams.get('start');
     const end = searchParams.get('end');
@@ -17,9 +22,7 @@ export async function GET(request) {
 
         const statusMap = {};
         rows.forEach(row => {
-            const date = new Date(row.assignment_date.getTime() - (row.assignment_date.getTimezoneOffset() * 60000))
-                .toISOString()
-                .split('T')[0];
+            const date = getWarsawDateString(row.assignment_date);
 
             if (!statusMap[date]) {
                 // [easy, medium, hard, isSpecial]
@@ -36,6 +39,7 @@ export async function GET(request) {
 
         return NextResponse.json(statusMap);
     } catch (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        console.error(error);
+        return NextResponse.json({ error: 'Błąd serwera' }, { status: 500 });
     }
 }

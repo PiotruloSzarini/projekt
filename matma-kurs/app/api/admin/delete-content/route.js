@@ -1,7 +1,21 @@
 import { NextResponse } from "next/server";
 import pool from "@/app/lib/db";
+import { requireAdmin } from "@/app/lib/session";
+import { logAdminAction } from "@/app/lib/audit";
 
 export async function POST(request) {
+    const { session, response } = await requireAdmin(request);
+    if (response) return response;
+
+    const config = {
+        'chapter': { table: 'chapters', pk: 'chapter_id', parentField: 'course_id' },
+        'topic': { table: 'topics', pk: 'topic_id', parentField: 'chapter_id' },
+        'lesson': { table: 'lessons', pk: 'lesson_id', parentField: 'topic_id' },
+        'task_group': { table: 'task_groups', pk: 'task_group_id', parentField: 'lesson_id' },
+        'video': { table: 'videos', pk: 'video_id', parentField: 'lesson_id' }
+    };
+
+    let connection;
     try {
         const { type, id } = await request.json();
 
@@ -9,63 +23,67 @@ export async function POST(request) {
             return NextResponse.json({ error: "Brak ID lub typu" }, { status: 400 });
         }
 
-        const config = {
-            'chapter': { table: 'chapters', pk: 'chapter_id', parentField: 'course_id' },
-            'topic': { table: 'topics', pk: 'topic_id', parentField: 'chapter_id' },
-            'lesson': { table: 'lessons', pk: 'lesson_id', parentField: 'topic_id' }, 
-            'task_group': { table: 'task_groups', pk: 'task_group_id', parentField: 'lesson_id' },
-            'video': { table: 'videos', pk: 'video_id', parentField: 'lesson_id' }
-        };
-
         const target = config[type];
-
         if (!target) {
             return NextResponse.json({ error: `Nieobsługiwany typ: ${type}` }, { status: 400 });
         }
 
-        // 1. POBIERZ DANE ELEMENTU PRZED USUNIĘCIEM (potrzebne do przesunięcia reszty)
-        // Zakładam, że kolumna w bazie to sort_order
-        const [rows] = await pool.query(
-            `SELECT ${target.parentField}, sort_order FROM ${target.table} WHERE ${target.pk} = ?`, 
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+
+        // 1. SELECT ... FOR UPDATE — blokada wiersza do końca transakcji,
+        //    żeby inny admin nie usunął go równolegle.
+        const [rows] = await connection.query(
+            `SELECT ${target.parentField}, sort_order FROM ${target.table} WHERE ${target.pk} = ? FOR UPDATE`,
             [id]
         );
 
         if (rows.length === 0) {
+            await connection.rollback();
             return NextResponse.json({ error: "Nie znaleziono elementu w bazie" }, { status: 404 });
         }
 
-        const itemToDelete = rows[0];
-        const parentIdValue = itemToDelete[target.parentField];
-        const sortValue = itemToDelete.sort_order;
+        const { [target.parentField]: parentIdValue, sort_order: sortValue } = rows[0];
 
-        // 2. USUNIĘCIE ELEMENTU
-        const deleteQuery = `DELETE FROM ${target.table} WHERE ${target.pk} = ?`;
-        const [result] = await pool.query(deleteQuery, [id]);
+        // 2. DELETE + 3. UPDATE sort_order — atomowo w transakcji
+        const [result] = await connection.query(
+            `DELETE FROM ${target.table} WHERE ${target.pk} = ?`,
+            [id]
+        );
 
-        // 3. AUTOMATYCZNA POPRAWA SORTOWANIA DLA RODZEŃSTWA
-        // Zmniejszamy sort_order o 1 dla wszystkich, którzy byli "dalej" w kolejce
         if (result.affectedRows > 0) {
-            const updateSortQuery = `
-                UPDATE ${target.table} 
-                SET sort_order = sort_order - 1 
-                WHERE ${target.parentField} <=> ? 
-                AND sort_order > ?
-            `;
-            // Używamy <=> zamiast =, na wypadek gdyby parentIdValue był nullem (np. dla chapters)
-            await pool.query(updateSortQuery, [parentIdValue, sortValue]);
+            // <=> zamiast = obsługuje NULL w parentIdValue (chapters mają course_id, ale np. gdyby był NULL)
+            await connection.query(
+                `UPDATE ${target.table}
+                 SET sort_order = sort_order - 1
+                 WHERE ${target.parentField} <=> ? AND sort_order > ?`,
+                [parentIdValue, sortValue]
+            );
         }
+
+        await connection.commit();
+
+        logAdminAction(request, session.userId, `${type}.delete`, {
+            entityType: type,
+            entityId: Number(id),
+        });
 
         return NextResponse.json({ success: true });
 
     } catch (error) {
+        if (connection) {
+            try { await connection.rollback(); } catch {}
+        }
         console.error("DELETE ERROR:", error);
 
         if (error.code === 'ER_ROW_IS_REFERENCED_2' || error.errno === 1451) {
-            return NextResponse.json({ 
-                error: "Element zawiera dane (podelementy). Usuń je najpierw, aby móc usunąć ten poziom." 
+            return NextResponse.json({
+                error: "Element zawiera dane (podelementy). Usuń je najpierw, aby móc usunąć ten poziom."
             }, { status: 409 });
         }
 
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: 'Błąd serwera' }, { status: 500 });
+    } finally {
+        if (connection) connection.release();
     }
 }

@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import pool from "@/app/lib/db";
+import { requireAdmin } from "@/app/lib/session";
 
 export async function POST(request) {
+    const { response } = await requireAdmin(request);
+    if (response) return response;
+
     try {
         const { type, id, newData } = await request.json();
 
@@ -61,6 +65,7 @@ export async function POST(request) {
         
     } catch (error) {
         console.error("Update Error:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        console.error(error);
+        return NextResponse.json({ error: 'Błąd serwera' }, { status: 500 });
     }
 }

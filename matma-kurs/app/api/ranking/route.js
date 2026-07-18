@@ -1,116 +1,94 @@
 import { NextResponse } from 'next/server';
 import pool from '../../lib/db';
-
-function getSessionUserId(request) {
-    return request.cookies.get('session_user_id')?.value || null;
-}
-
-function getFallbackAvatar(userId) {
-    const avatarIndex = Math.abs(Number(userId) || 0) % 5 + 1;
-    return `/assets/img/avatars/avatar-${avatarIndex}.svg`;
-}
-
-function isTrustedRemoteAvatar(url) {
-    try {
-        const parsed = new URL(url);
-        return parsed.hostname === 'res.cloudinary.com';
-    } catch {
-        return false;
-    }
-}
-
-function normalizeAvatarUrl(avatarUrl, name, userId) {
-    const raw = typeof avatarUrl === 'string' ? avatarUrl.trim() : '';
-
-    if (raw) {
-        const markdownMatch = raw.match(/\((https?:\/\/[^)\s]+)\)/i);
-        if (markdownMatch?.[1]) {
-            return isTrustedRemoteAvatar(markdownMatch[1]) ? markdownMatch[1] : getFallbackAvatar(userId);
-        }
-
-        const urlMatch = raw.match(/https?:\/\/[^\s)]+/i);
-        if (urlMatch?.[0]) {
-            const cleanedUrl = urlMatch[0].replace(/[\])]+$/g, '');
-            return isTrustedRemoteAvatar(cleanedUrl) ? cleanedUrl : getFallbackAvatar(userId);
-        }
-
-        if (raw.startsWith('/')) {
-            return raw;
-        }
-
-        try {
-            const parsed = new URL(raw);
-            if ((parsed.protocol === 'http:' || parsed.protocol === 'https:') && isTrustedRemoteAvatar(raw)) {
-                return raw;
-            }
-        } catch {
-            // fall back below
-        }
-    }
-
-    return getFallbackAvatar(userId);
-}
+import { getSessionUserId } from '@/app/lib/session';
+import { normalizeAvatarUrl } from '@/app/lib/avatar';
 
 export async function GET(request) {
-    const { searchParams } = new URL(request.url);
-    const requestedUserId = searchParams.get('userId');
-    const sessionUserId = getSessionUserId(request);
-    const userId = requestedUserId || sessionUserId;
+    const userId = await getSessionUserId(request);
 
     try {
-        const [rows] = await pool.execute(
+        // LIMIT 8 w SQL — ranking pokazuje tylko top 8 + 'me'.
+        // Sortowanie po points i tasks_completed jest wewnętrzne — do klienta idą tylko wybrane pola.
+        const [topRows] = await pool.execute(
             `
             SELECT
                 u.user_id,
                 u.name,
                 u.avatar_url,
-                COALESCE(s.total_points, 0) AS total_points,
-                COALESCE(s.tasks_completed, 0) AS tasks_completed,
-                COALESCE(s.videos_watched, 0) AS videos_watched,
-                COALESCE(s.daily_completed, 0) AS daily_completed,
-                COALESCE(s.weak_points_completed, 0) AS weak_points_completed,
-                COALESCE(s.level, 1) AS level
+                COALESCE(s.total_points, 0) AS total_points
             FROM users u
             LEFT JOIN user_stats s ON u.user_id = s.user_id
-            ORDER BY total_points DESC, tasks_completed DESC, u.name ASC
+            ORDER BY total_points DESC, u.name ASC
+            LIMIT 8
             `,
             []
         );
 
-        const rankedRows = rows.map((row, index) => ({
-            ...row,
-            avatar_url: normalizeAvatarUrl(row.avatar_url, row.name, row.user_id),
+        const rankedRows = topRows.map((row, index) => ({
+            name: row.name,
+            avatar_url: normalizeAvatarUrl(row.avatar_url, row.user_id),
+            total_points: row.total_points,
             rank: index + 1,
-            nick: `@${String(row.name || 'user').toLowerCase().replace(/\s+/g, '')}`,
-            active: userId ? String(row.user_id) === String(userId) : false,
+            active: userId ? Number(row.user_id) === Number(userId) : false,
         }));
 
+        // Top 3 do "podium" — te same okrojone pola
         const topUsers = rankedRows.slice(0, 3).map((row, index) => ({
             icon: row.avatar_url,
             name: row.name,
-            nick: row.nick,
             points: row.total_points,
-            tasks: row.tasks_completed,
-            daily_challange: row.daily_completed,
             isFirst: index === 0,
         }));
 
-        const currentUser = rankedRows.find((row) => String(row.user_id) === String(userId)) || rankedRows[0] || null;
-        const totalPoints = currentUser?.total_points || 0;
-        const completedLessons = currentUser?.tasks_completed || 0;
-        const currentDaily = currentUser?.daily_completed || 0;
+        // 'me' tylko dla zalogowanych. Osobne query, bo user może być poza top 8.
+        // rank liczymy jako: ile osób ma więcej punktów + 1.
+        let me = null;
+        if (userId) {
+            const [meRows] = await pool.execute(
+                `
+                SELECT
+                    u.name,
+                    u.avatar_url,
+                    COALESCE(s.total_points, 0) AS total_points,
+                    COALESCE(s.tasks_completed, 0) AS tasks_completed,
+                    COALESCE(s.daily_completed, 0) AS daily_completed,
+                    (
+                        SELECT COUNT(*) + 1
+                        FROM user_stats s2
+                        WHERE COALESCE(s2.total_points, 0) > COALESCE(s.total_points, 0)
+                    ) AS rank_position
+                FROM users u
+                LEFT JOIN user_stats s ON u.user_id = s.user_id
+                WHERE u.user_id = ?
+                LIMIT 1
+                `,
+                [userId]
+            );
+
+            if (meRows.length) {
+                me = {
+                    name: meRows[0].name,
+                    avatar_url: normalizeAvatarUrl(meRows[0].avatar_url, userId),
+                    total_points: meRows[0].total_points,
+                    tasks_completed: meRows[0].tasks_completed,
+                    daily_completed: meRows[0].daily_completed,
+                    rank: Number(meRows[0].rank_position),
+                };
+            }
+        }
 
         return NextResponse.json({
             topUsers,
-            rows: rankedRows.slice(0, 8),
-            me: currentUser,
+            rows: rankedRows,
+            me,
             summary: {
-                totalPoints,
-                completedLessons,
-                dailyCompleted: currentDaily,
+                totalPoints: me?.total_points || 0,
+                completedLessons: me?.tasks_completed || 0,
+                dailyCompleted: me?.daily_completed || 0,
             },
         });
     } catch (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        console.error(error);
+        return NextResponse.json({ error: 'Błąd serwera' }, { status: 500 });
     }
 }

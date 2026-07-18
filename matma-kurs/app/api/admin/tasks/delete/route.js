@@ -1,8 +1,13 @@
 import { NextResponse } from 'next/server';
 import pool from '@/app/lib/db';
 import cloudinary from '@/app/lib/cloudinary';
+import { requireAdmin } from '@/app/lib/session';
+import { logAdminAction } from '@/app/lib/audit';
 
 export async function DELETE(request) {
+    const { session, response } = await requireAdmin(request);
+    if (response) return response;
+
     let connection;
 
     try {
@@ -44,17 +49,6 @@ export async function DELETE(request) {
         });
 
         await connection.execute(
-            `
-            DELETE FROM task_step_hints
-            WHERE hint_id IN (SELECT hint_id FROM task_hints WHERE task_id = ?)
-               OR step_id IN (SELECT step_id FROM task_step_by_step_steps WHERE task_step_by_step_id IN (
-                    SELECT task_step_by_step_id FROM task_step_by_step WHERE task_id = ?
-               ))
-            `,
-            [task_id, task_id]
-        );
-
-        await connection.execute(
             'DELETE FROM task_explanation_steps WHERE explanation_id IN (SELECT explanation_id FROM task_explanation WHERE task_id = ?)',
             [task_id]
         );
@@ -89,9 +83,15 @@ export async function DELETE(request) {
 
         const deleteFromCloudinary = async (url) => {
             try {
-                const parts = url.split('/');
-                const fileName = parts[parts.length - 1].split('.')[0];
-                await cloudinary.uploader.destroy(fileName);
+                // Extract public_id from Cloudinary URL, preserving folder path.
+                // URL format: .../upload/v1234567/folder/filename.ext
+                // public_id = everything after /upload/(vNNNN/)  without the extension
+                const uploadIdx = url.indexOf('/upload/');
+                if (uploadIdx === -1) return;
+                let publicId = url.slice(uploadIdx + '/upload/'.length);
+                publicId = publicId.replace(/^v\d+\//, '');
+                publicId = publicId.replace(/\.[^/.]+$/, '');
+                await cloudinary.uploader.destroy(publicId);
             } catch (err) {
                 console.error('Błąd podczas usuwania pliku z Cloudinary:', url, err);
             }
@@ -100,6 +100,12 @@ export async function DELETE(request) {
         if (imagesToDelete.length > 0) {
             Promise.all(imagesToDelete.map((url) => deleteFromCloudinary(url)));
         }
+
+        logAdminAction(request, session.userId, 'task.delete', {
+            entityType: 'task',
+            entityId: Number(task_id),
+            metadata: { deletedImages: imagesToDelete.length },
+        });
 
         return NextResponse.json({
             success: true,
@@ -124,6 +130,7 @@ export async function DELETE(request) {
             );
         }
 
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        console.error(error);
+        return NextResponse.json({ error: 'Błąd serwera' }, { status: 500 });
     }
 }

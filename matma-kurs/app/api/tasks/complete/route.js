@@ -1,48 +1,58 @@
 import { NextResponse } from 'next/server';
 import pool from '@/app/lib/db';
-
-function getSessionUserId(request) {
-    return request.cookies.get('session_user_id')?.value || null;
-}
-
-async function ensureTaskCompletionTable(connection) {
-    await connection.query(`
-        CREATE TABLE IF NOT EXISTS task_completions (
-            completion_id INT NOT NULL AUTO_INCREMENT,
-            user_id INT NOT NULL,
-            task_id INT NOT NULL,
-            points_awarded INT NOT NULL DEFAULT 0,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (completion_id),
-            UNIQUE KEY uniq_task_completion (user_id, task_id),
-            KEY idx_task_completion_user (user_id),
-            CONSTRAINT fk_task_completion_user FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-            CONSTRAINT fk_task_completion_task FOREIGN KEY (task_id) REFERENCES tasks(task_id) ON DELETE CASCADE
-        )
-    `);
-}
+import { getSession } from '@/app/lib/session';
+import { validateInt, ValidationError } from '@/app/lib/validation';
+import { checkRateLimit } from '@/app/lib/rateLimiter';
 
 export async function POST(request) {
+    const { userId: sessionUserId, isAdmin } = await getSession(request);
+
+    if (!sessionUserId) {
+        return NextResponse.json({ error: 'Brak aktywnej sesji' }, { status: 401 });
+    }
+
+    const { limited, retryAfterSec } = checkRateLimit(`task-complete:${sessionUserId}`, {
+        maxAttempts: 60,
+        windowMs: 60 * 1000,
+    });
+    if (limited) {
+        return NextResponse.json(
+            { error: `Zbyt wiele prób. Poczekaj ${retryAfterSec}s.` },
+            { status: 429 }
+        );
+    }
+
     const connection = await pool.getConnection();
 
     try {
-        const sessionUserId = getSessionUserId(request);
-        const { taskId } = await request.json();
-
-        if (!sessionUserId) {
-            return NextResponse.json({ error: 'Brak aktywnej sesji' }, { status: 401 });
+        const body = await request.json();
+        let taskId;
+        try {
+            taskId = validateInt(body.taskId, { field: 'ID zadania', min: 1 });
+        } catch (err) {
+            if (err instanceof ValidationError) {
+                return NextResponse.json({ error: err.message }, { status: 400 });
+            }
+            throw err;
         }
 
-        if (!taskId) {
-            return NextResponse.json({ error: 'Brak ID zadania' }, { status: 400 });
-        }
-
-        await ensureTaskCompletionTable(connection);
         await connection.beginTransaction();
 
+        // Jednym zapytaniem: dane zadania + sprawdzenie własności kursu
         const [taskRows] = await connection.query(
-            'SELECT task_id, points FROM tasks WHERE task_id = ? LIMIT 1',
-            [taskId]
+            `SELECT
+                 t.task_id,
+                 t.points,
+                 CASE WHEN uc.user_id IS NOT NULL THEN 1 ELSE 0 END AS owned
+             FROM tasks t
+             JOIN task_groups tg ON t.task_group_id = tg.task_group_id
+             JOIN lessons l ON tg.lesson_id = l.lesson_id
+             JOIN topics tp ON l.topic_id = tp.topic_id
+             JOIN chapters ch ON tp.chapter_id = ch.chapter_id
+             LEFT JOIN user_courses uc ON ch.course_id = uc.course_id AND uc.user_id = ?
+             WHERE t.task_id = ?
+             LIMIT 1`,
+            [sessionUserId, taskId]
         );
 
         if (taskRows.length === 0) {
@@ -51,6 +61,11 @@ export async function POST(request) {
         }
 
         const task = taskRows[0];
+
+        if (!isAdmin && !Number(task.owned)) {
+            await connection.rollback();
+            return NextResponse.json({ error: 'Brak dostępu do tego zadania' }, { status: 403 });
+        }
 
         const [existingRows] = await connection.query(
             'SELECT completion_id FROM task_completions WHERE user_id = ? AND task_id = ? LIMIT 1',
@@ -95,7 +110,8 @@ export async function POST(request) {
         });
     } catch (error) {
         await connection.rollback();
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        console.error(error);
+        return NextResponse.json({ error: 'Błąd serwera' }, { status: 500 });
     } finally {
         connection.release();
     }

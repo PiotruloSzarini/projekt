@@ -16,7 +16,7 @@ export function UserProvider({ children, userId }) {
 
         setLoading(true);
         try {
-            const profileRes = await fetch(`/api/user/profile?userId=${userId}`, {
+            const profileRes = await fetch('/api/user/profile', {
                 cache: 'no-store',
             });
 

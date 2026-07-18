@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import pool from "@/app/lib/db";
+import { requireAdmin } from "@/app/lib/session";
 
 export async function GET(request, { params }) {
+    const { response } = await requireAdmin(request);
+    if (response) return response;
+
     const { courseId } = await params;
     const id = parseInt(courseId);
 
@@ -76,6 +80,6 @@ export async function GET(request, { params }) {
 
     } catch (error) {
         console.error("BŁĄD W API STRUCTURE:", error);
-        return NextResponse.json({ error: 'Failed to fetch structure', detail: error.message }, { status: 500 });
+        return NextResponse.json({ error: 'Błąd serwera' }, { status: 500 });
     }
 }

@@ -59,7 +59,7 @@ export default function MathdleUserPage() {
     useEffect(() => {
         const loadDaily = async () => {
             try {
-                const res = await fetch('/api/admin/mathdle/today');
+                const res = await fetch('/api/mathdle/today');
                 const data = await res.json();
                 setTasks(Array.isArray(data.tasks) ? data.tasks : []);
                 setCompletedTaskIds(Array.isArray(data.completedTaskIds) ? data.completedTaskIds : []);
@@ -115,7 +115,7 @@ export default function MathdleUserPage() {
         setChoiceFeedback(null);
 
         try {
-            const response = await fetch('/api/admin/mathdle/submit', {
+            const response = await fetch('/api/mathdle/submit', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

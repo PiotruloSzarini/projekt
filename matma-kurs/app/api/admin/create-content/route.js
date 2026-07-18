@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import pool from "@/app/lib/db";
+import { requireAdmin } from "@/app/lib/session";
 
 const slugify = (text) => {
     if (!text) return `item-${Date.now()}`;
@@ -11,6 +12,9 @@ const slugify = (text) => {
 };
 
 export async function POST(request) {
+    const { response } = await requireAdmin(request);
+    if (response) return response;
+
     let connection;
     try {
         const { courseId, type, newData } = await request.json();
@@ -68,7 +72,8 @@ export async function POST(request) {
     } catch (error) {
         if (connection) await connection.rollback();
         console.error("Database Error:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        console.error(error);
+        return NextResponse.json({ error: 'Błąd serwera' }, { status: 500 });
     } finally {
         if (connection) connection.release();
     }

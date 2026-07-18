@@ -1,74 +1,13 @@
 import { NextResponse } from "next/server";
 import pool from "@/app/lib/db";
-
-async function ensureTaskSortOrderColumn(connection) {
-    const [columns] = await connection.query(`
-        SELECT COLUMN_NAME
-        FROM INFORMATION_SCHEMA.COLUMNS
-        WHERE TABLE_SCHEMA = DATABASE()
-          AND TABLE_NAME = 'tasks'
-          AND COLUMN_NAME = 'sort_order'
-        LIMIT 1
-    `);
-
-    if (columns.length === 0) {
-        await connection.query(`ALTER TABLE tasks ADD COLUMN sort_order INT NULL`);
-    }
-}
-
-async function normalizeTaskGroup(connection, groupId) {
-    if (!groupId) return;
-
-    const [rows] = await connection.query(
-        `SELECT task_id
-         FROM tasks
-         WHERE task_group_id = ?
-         ORDER BY COALESCE(sort_order, 999999), task_id ASC`,
-        [groupId]
-    );
-
-    for (let index = 0; index < rows.length; index += 1) {
-        await connection.query(
-            `UPDATE tasks SET sort_order = ? WHERE task_id = ?`,
-            [index + 1, rows[index].task_id]
-        );
-    }
-}
-
-async function placeTaskInGroup(connection, taskId, groupId, sortOrder) {
-    if (!groupId) {
-        await connection.query(
-            `UPDATE tasks SET task_group_id = NULL, sort_order = NULL WHERE task_id = ?`,
-            [taskId]
-        );
-        return;
-    }
-
-    const [groupTasks] = await connection.query(
-        `SELECT task_id
-         FROM tasks
-         WHERE task_group_id = ? AND task_id <> ?
-         ORDER BY COALESCE(sort_order, 999999), task_id ASC`,
-        [groupId, taskId]
-    );
-
-    const maxPosition = groupTasks.length + 1;
-    const desiredPosition = Math.min(
-        Math.max(parseInt(sortOrder, 10) || maxPosition, 1),
-        maxPosition
-    );
-    const orderedIds = groupTasks.map((task) => task.task_id);
-    orderedIds.splice(desiredPosition - 1, 0, taskId);
-
-    for (let index = 0; index < orderedIds.length; index += 1) {
-        await connection.query(
-            `UPDATE tasks SET task_group_id = ?, sort_order = ? WHERE task_id = ?`,
-            [groupId, index + 1, orderedIds[index]]
-        );
-    }
-}
+import { requireAdmin } from "@/app/lib/session";
+import { normalizeTaskGroup, placeTaskInGroup } from "@/app/lib/taskOrdering";
+import { logAdminAction } from "@/app/lib/audit";
 
 export async function PUT(request) {
+    const { session, response } = await requireAdmin(request);
+    if (response) return response;
+
     const connection = await pool.getConnection();
     try {
         const body = await request.json();
@@ -90,7 +29,6 @@ export async function PUT(request) {
         if (!task_id) return NextResponse.json({ error: "Brak ID zadania" }, { status: 400 });
 
         await connection.beginTransaction();
-        await ensureTaskSortOrderColumn(connection);
 
         const [currentTaskRows] = await connection.query(
             `SELECT task_group_id FROM tasks WHERE task_id = ? FOR UPDATE`,
@@ -116,7 +54,6 @@ export async function PUT(request) {
             }
         }
 
-        await normalizeTaskGroup(connection, oldGroupId);
         await placeTaskInGroup(connection, task_id, nextGroupId, sort_order);
         if (oldGroupId && Number(oldGroupId) !== Number(nextGroupId)) {
             await normalizeTaskGroup(connection, oldGroupId);
@@ -314,12 +251,20 @@ export async function PUT(request) {
         }
 
         await connection.commit();
+
+        logAdminAction(request, session.userId, 'task.update', {
+            entityType: 'task',
+            entityId: Number(task_id),
+            metadata: { task_type_id, task_group_id: nextGroupId || null },
+        });
+
         return NextResponse.json({ success: true, message: "Zadanie zaktualizowane pomyślnie" });
 
     } catch (error) {
         await connection.rollback();
         console.error("UPDATE TASK ERROR:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        console.error(error);
+        return NextResponse.json({ error: 'Błąd serwera' }, { status: 500 });
     } finally {
         connection.release();
     }

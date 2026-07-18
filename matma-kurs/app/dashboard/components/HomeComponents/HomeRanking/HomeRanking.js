@@ -14,8 +14,8 @@ export default function HomeRanking({ users }) {
 
             <div className={styles.list}>
                 {users.map((user) => (
-                    <RankingRow 
-                        key={user.id} 
+                    <RankingRow
+                        key={user.rank}
                         {...user}
                     />
                 ))}
