@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import db from '@/app/lib/db';
 import { getSessionUserId } from '@/app/lib/session';
-import { ensureDailyCompletionTable, getWarsawDateString } from '@/app/lib/services/mathdle';
+import { getWarsawDateString } from '@/app/lib/services/mathdle';
 
 export async function GET(request) {
     let connection;
@@ -11,7 +11,6 @@ export async function GET(request) {
         const userId = getSessionUserId(request);
 
         connection = await db.getConnection();
-        await ensureDailyCompletionTable(connection);
 
         const [taskRows] = await connection.query(
             `

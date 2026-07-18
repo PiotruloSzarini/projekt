@@ -15,4 +15,15 @@
 
 ---
 
+## Dodano
+### 2026-07-12 - 2026-07-18
+### 
+- usunięto funkcje "ensureTaskSortOrderColumn","ensureDailyCompletionTable" z kazdego API, przy kazdym zapytaniu dodatkowo i niepotrzebnie wywolywane byly ciezkie zapytania do bazy(tabela w bazie danych nie ma prawa sie zmienic w zaden sposob wiec po co to sprawdzac ciagle)
+- zabezpieczenie wszystkich tras admina + przeniesienie api mathdle do prawidloewj lokalizacji (submit i today byly pod adminem)
+- wspolne helpery dla taskow - ciag dalszy optymalizacji
 
+---
+
+## Dodano
+### 2026-07-18 - 2026-07-...
+### 

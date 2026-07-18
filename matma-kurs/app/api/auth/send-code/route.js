@@ -15,140 +15,21 @@ function hashPassword(password, salt) {
     return crypto.scryptSync(String(password), salt, 64).toString('hex');
 }
 
-async function ensureAuthTables(connection) {
-    await connection.execute(`
-        CREATE TABLE IF NOT EXISTS auth_credentials (
-            credential_id INT NOT NULL AUTO_INCREMENT,
-            user_id INT NOT NULL,
-            login_name VARCHAR(191) NOT NULL,
-            password_salt VARCHAR(191) NOT NULL,
-            password_hash VARCHAR(255) NOT NULL,
-            is_admin TINYINT(1) NOT NULL DEFAULT 0,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (credential_id),
-            UNIQUE KEY uniq_login_name (login_name),
-            UNIQUE KEY uniq_credential_user (user_id),
-            CONSTRAINT fk_auth_credentials_user FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
-        )
-    `);
-
-    await connection.execute(`
-        CREATE TABLE IF NOT EXISTS auth_tokens (
-            token_id INT NOT NULL AUTO_INCREMENT,
-            user_id INT NOT NULL,
-            token VARCHAR(20) NOT NULL,
-            expires_at DATETIME NOT NULL,
-            is_used TINYINT(1) NOT NULL DEFAULT 0,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (token_id),
-            KEY idx_auth_tokens_user (user_id),
-            CONSTRAINT fk_auth_tokens_user FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
-        )
-    `);
-}
-
-async function ensureUserStatsRow(connection, userId) {
-    await connection.execute(
+async function findCredentialByLoginName(connection, loginName) {
+    const [rows] = await connection.execute(
         `
-        INSERT INTO user_stats (user_id, total_points, tasks_completed, videos_watched, daily_completed, weak_points_completed, level)
-        VALUES (?, 0, 0, 0, 0, 0, 1)
-        ON DUPLICATE KEY UPDATE user_id = user_id
-        `,
-        [userId]
-    );
-}
-
-async function seedUserStats(connection, userId, stats) {
-    const {
-        total_points = 0,
-        tasks_completed = 0,
-        videos_watched = 0,
-        daily_completed = 0,
-        weak_points_completed = 0,
-        level = 1,
-    } = stats || {};
-
-    await connection.execute(
-        `
-        INSERT INTO user_stats (
-            user_id,
-            total_points,
-            tasks_completed,
-            videos_watched,
-            daily_completed,
-            weak_points_completed,
-            level
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE
-            total_points = VALUES(total_points),
-            tasks_completed = VALUES(tasks_completed),
-            videos_watched = VALUES(videos_watched),
-            daily_completed = VALUES(daily_completed),
-            weak_points_completed = VALUES(weak_points_completed),
-            level = VALUES(level)
-        `,
-        [userId, total_points, tasks_completed, videos_watched, daily_completed, weak_points_completed, level]
-    );
-}
-
-async function ensureOwnedCourse(connection, userId, courseSearches) {
-    const searchTerms = Array.isArray(courseSearches) ? courseSearches : [courseSearches];
-    const whereParts = [];
-    const params = [];
-
-    for (const term of searchTerms) {
-        const normalized = String(term ?? '').trim().toLowerCase();
-        if (!normalized) continue;
-
-        whereParts.push('LOWER(slug) = ?');
-        params.push(normalized);
-
-        whereParts.push('LOWER(title) = ?');
-        params.push(normalized);
-
-        whereParts.push('LOWER(title) LIKE ?');
-        params.push(`%${normalized}%`);
-    }
-
-    whereParts.push('(LOWER(title) LIKE ? AND LOWER(title) LIKE ?)');
-    params.push('%matura%', '%podstawowa%');
-
-    whereParts.push('(LOWER(title) LIKE ? AND LOWER(title) LIKE ?)');
-    params.push('%matematyka%', '%podstawowa%');
-
-    const [courseRows] = await connection.execute(
-        `
-        SELECT course_id
-        FROM courses
-        WHERE ${whereParts.join(' OR ')}
-        ORDER BY course_id ASC
+        SELECT ac.*, u.user_id, u.name
+        FROM auth_credentials ac
+        JOIN users u ON u.user_id = ac.user_id
+        WHERE LOWER(ac.login_name) = LOWER(?)
         LIMIT 1
         `,
-        params
+        [loginName]
     );
-
-    const courseId = courseRows[0]?.course_id;
-    if (!courseId) {
-        return null;
-    }
-
-    const [ownedRows] = await connection.execute(
-        'SELECT 1 FROM user_courses WHERE user_id = ? AND course_id = ? LIMIT 1',
-        [userId, courseId]
-    );
-
-    if (ownedRows.length === 0) {
-        await connection.execute(
-            'INSERT INTO user_courses (user_id, course_id, owned_at) VALUES (?, ?, NOW())',
-            [userId, courseId]
-        );
-    }
-
-    return courseId;
+    return rows[0] || null;
 }
 
-async function createCredentials(connection, { loginName, password, isAdmin = false }) {
+async function createAccount(connection, { loginName, password }) {
     const salt = crypto.randomBytes(16).toString('hex');
     const passwordHash = hashPassword(password, salt);
     const email = makePlaceholderEmail(loginName);
@@ -157,18 +38,20 @@ async function createCredentials(connection, { loginName, password, isAdmin = fa
         'INSERT INTO users (name, email, avatar_url) VALUES (?, ?, ?)',
         [loginName, email, null]
     );
-
     const userId = userResult.insertId;
 
     await connection.execute(
-        `
-        INSERT INTO auth_credentials (user_id, login_name, password_salt, password_hash, is_admin)
-        VALUES (?, ?, ?, ?, ?)
-        `,
-        [userId, loginName, salt, passwordHash, isAdmin ? 1 : 0]
+        `INSERT INTO auth_credentials (user_id, login_name, password_salt, password_hash, is_admin)
+         VALUES (?, ?, ?, ?, 0)`,
+        [userId, loginName, salt, passwordHash]
     );
 
-    await ensureUserStatsRow(connection, userId);
+    await connection.execute(
+        `INSERT INTO user_stats (user_id, total_points, tasks_completed, videos_watched, daily_completed, weak_points_completed, level)
+         VALUES (?, 0, 0, 0, 0, 0, 1)
+         ON DUPLICATE KEY UPDATE user_id = user_id`,
+        [userId]
+    );
 
     return userId;
 }
@@ -185,155 +68,38 @@ export async function POST(request) {
         if (!loginName) {
             return NextResponse.json({ error: 'Podaj nazwę użytkownika' }, { status: 400 });
         }
-
         if (!password) {
             return NextResponse.json({ error: 'Podaj hasło' }, { status: 400 });
         }
 
-        await ensureAuthTables(connection);
+        await connection.beginTransaction();
 
-        let [credentialRows] = await connection.execute(
-            `
-            SELECT ac.*, u.user_id, u.name
-            FROM auth_credentials ac
-            JOIN users u ON u.user_id = ac.user_id
-            WHERE ac.login_name = ?
-            LIMIT 1
-            `,
-            [loginName]
-        );
+        let credential = await findCredentialByLoginName(connection, loginName);
 
-        let credential = credentialRows[0] || null;
-
-        if (!credential && loginName.toLowerCase() === 'admin' && password === 'admin123') {
-            const adminUserId = await createCredentials(connection, {
-                loginName: 'admin',
-                password: 'admin123',
-                isAdmin: true,
-            });
-
-            [credentialRows] = await connection.execute(
-                `
-                SELECT ac.*, u.user_id, u.name
-                FROM auth_credentials ac
-                JOIN users u ON u.user_id = ac.user_id
-                WHERE ac.user_id = ?
-                LIMIT 1
-                `,
-                [adminUserId]
-            );
-
-            credential = credentialRows[0] || null;
-        }
-
-        if (!credential && loginName.toLowerCase() === 'test' && password === 'test123') {
-            const testUserId = await createCredentials(connection, {
-                loginName: 'test',
-                password: 'test123',
-                isAdmin: false,
-            });
-
-            [credentialRows] = await connection.execute(
-                `
-                SELECT ac.*, u.user_id, u.name
-                FROM auth_credentials ac
-                JOIN users u ON u.user_id = ac.user_id
-                WHERE ac.user_id = ?
-                LIMIT 1
-                `,
-                [testUserId]
-            );
-
-            credential = credentialRows[0] || null;
-        }
-
-        if (!credential && loginName.toLowerCase() === 'test2' && password === 'test123') {
-            const test2UserId = await createCredentials(connection, {
-                loginName: 'test2',
-                password: 'test123',
-                isAdmin: false,
-            });
-
-            await seedUserStats(connection, test2UserId, {
-                total_points: 4820,
-                tasks_completed: 136,
-                videos_watched: 92,
-                daily_completed: 34,
-                weak_points_completed: 18,
-                level: 9,
-            });
-
-            await ensureOwnedCourse(connection, test2UserId, [
-                'matura-podstawowa',
-                'matematyka-podstawowa',
-                'matura podstawowa',
-                'matematyka podstawowa',
-            ]);
-
-            [credentialRows] = await connection.execute(
-                `
-                SELECT ac.*, u.user_id, u.name
-                FROM auth_credentials ac
-                JOIN users u ON u.user_id = ac.user_id
-                WHERE ac.user_id = ?
-                LIMIT 1
-                `,
-                [test2UserId]
-            );
-
-            credential = credentialRows[0] || null;
-        }
-
-        if (!credential && mode === 'register') {
-            const [existingUsers] = await connection.execute(
-                'SELECT user_id FROM users WHERE name = ? LIMIT 1',
-                [loginName]
-            );
-
-            if (existingUsers.length > 0) {
+        if (mode === 'register') {
+            if (credential) {
+                await connection.rollback();
                 return NextResponse.json({ error: 'Taka nazwa jest już zajęta' }, { status: 409 });
             }
 
-            const newUserId = await createCredentials(connection, {
-                loginName,
-                password,
-                isAdmin: false,
-            });
+            await createAccount(connection, { loginName, password });
+            credential = await findCredentialByLoginName(connection, loginName);
+        } else {
+            if (!credential) {
+                await connection.rollback();
+                return NextResponse.json(
+                    { error: 'Nie znaleziono konta. Możesz utworzyć nowe.' },
+                    { status: 404 }
+                );
+            }
 
-            [credentialRows] = await connection.execute(
-                `
-                SELECT ac.*, u.user_id, u.name
-                FROM auth_credentials ac
-                JOIN users u ON u.user_id = ac.user_id
-                WHERE ac.user_id = ?
-                LIMIT 1
-                `,
-                [newUserId]
-            );
-
-            credential = credentialRows[0] || null;
+            const expectedHash = hashPassword(password, credential.password_salt);
+            if (expectedHash !== credential.password_hash) {
+                await connection.rollback();
+                return NextResponse.json({ error: 'Nieprawidłowe hasło' }, { status: 401 });
+            }
         }
-
-        if (!credential) {
-            return NextResponse.json({ error: 'Nie znaleziono konta. Możesz utworzyć nowe.' }, { status: 404 });
-        }
-
-        const expectedHash = hashPassword(password, credential.password_salt);
-        const isPasswordValid = expectedHash === credential.password_hash;
-
-        if (!isPasswordValid) {
-            return NextResponse.json({ error: 'Nieprawidłowe hasło' }, { status: 401 });
-        }
-
-        if (credential.login_name?.toLowerCase() === 'test2') {
-            await ensureOwnedCourse(connection, credential.user_id, [
-                'matura-podstawowa',
-                'matematyka-podstawowa',
-                'matura podstawowa',
-                'matematyka podstawowa',
-            ]);
-        }
-
+        // mock code generation
         const mockCode = crypto.randomInt(100000, 1000000).toString();
         const expiresAt = new Date();
         expiresAt.setMinutes(expiresAt.getMinutes() + 10);
@@ -343,14 +109,27 @@ export async function POST(request) {
             [credential.user_id, mockCode, expiresAt, false]
         );
 
+        await connection.commit();
+
+        // TODO: docelowo wysyłać mockCode mailem zamiast zwracać go w froncie
+        if (process.env.NODE_ENV !== 'production') {
+            console.log(`[DEV] Kod logowania dla "${loginName}": ${mockCode}`);
+        }
+
         return NextResponse.json({
             success: true,
-            code: mockCode,
             userId: credential.user_id,
             isAdmin: Number(credential.is_admin) === 1,
             message: 'Kod wygenerowany pomyślnie',
+            ...(process.env.NODE_ENV !== 'production' ? { code: mockCode } : {}),
         });
     } catch (error) {
+        try {
+            await connection.rollback();
+        } catch (rollbackError) {
+            console.error('Błąd rollback:', rollbackError);
+        }
+        console.error('SEND CODE ERROR:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     } finally {
         connection.release();

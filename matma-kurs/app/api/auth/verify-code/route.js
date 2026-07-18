@@ -1,21 +1,6 @@
 import { NextResponse } from 'next/server';
 import pool from '../../../lib/db';
 
-async function ensureAuthTables(connection) {
-    await connection.execute(`
-        CREATE TABLE IF NOT EXISTS auth_tokens (
-            token_id INT NOT NULL AUTO_INCREMENT,
-            user_id INT NOT NULL,
-            token VARCHAR(20) NOT NULL,
-            expires_at DATETIME NOT NULL,
-            is_used TINYINT(1) NOT NULL DEFAULT 0,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (token_id),
-            KEY idx_auth_tokens_user (user_id),
-            CONSTRAINT fk_auth_tokens_user FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
-        )
-    `);
-}
 
 export async function POST(request) {
     const connection = await pool.getConnection();
@@ -26,8 +11,6 @@ export async function POST(request) {
         if (!userId) {
             return NextResponse.json({ error: 'Brak ID użytkownika' }, { status: 400 });
         }
-
-        await ensureAuthTables(connection);
 
         const [tokens] = await connection.execute(
             `SELECT * FROM auth_tokens

@@ -1,12 +1,7 @@
 import { NextResponse } from 'next/server';
 import db from '@/app/lib/db';
 import { getSessionUserId } from '@/app/lib/session';
-
-function getWarsawDateString(date = new Date()) {
-    return new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'Europe/Warsaw',
-    }).format(date);
-}
+import { getWarsawDateString } from '@/app/lib/services/mathdle';
 
 function normalizeAnswer(value) {
     return String(value ?? '')
@@ -14,29 +9,12 @@ function normalizeAnswer(value) {
         .toLowerCase()
         .replace(/\s+/g, '')
         .replace(/,/g, '.')
-        .replace(/[â’â€“â€”]/g, '-')
+        .replace(/[â'â€"â€"]/g, '-')
         .normalize('NFKC');
 }
 
 function isSameAnswer(expected, actual) {
     return normalizeAnswer(expected) === normalizeAnswer(actual);
-}
-
-async function ensureDailyCompletionTable(connection) {
-    await connection.query(`
-        CREATE TABLE IF NOT EXISTS daily_challenge_completions (
-            completion_id INT NOT NULL AUTO_INCREMENT,
-            user_id INT NOT NULL,
-            assignment_date DATE NOT NULL,
-            task_id INT NOT NULL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (completion_id),
-            UNIQUE KEY uniq_daily_completion (user_id, assignment_date, task_id),
-            KEY idx_daily_completion_user_date (user_id, assignment_date),
-            CONSTRAINT fk_daily_completion_user FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-            CONSTRAINT fk_daily_completion_task FOREIGN KEY (task_id) REFERENCES tasks(task_id) ON DELETE CASCADE
-        )
-    `);
 }
 
 async function loadTaskBundle(connection, taskId) {
@@ -77,15 +55,7 @@ async function loadTaskBundle(connection, taskId) {
             [mcRows[0].task_multiple_id]
         );
 
-        return {
-            ...task,
-            details: {
-                multiple_choice: {
-                    ...mcRows[0],
-                    answers,
-                },
-            },
-        };
+        return { ...task, details: { multiple_choice: { ...mcRows[0], answers } } };
     }
 
     if (typeCode === 'MATCHING') {
@@ -101,15 +71,7 @@ async function loadTaskBundle(connection, taskId) {
             [pairRows[0].task_pair_id]
         );
 
-        return {
-            ...task,
-            details: {
-                matching_pairs: {
-                    ...pairRows[0],
-                    items,
-                },
-            },
-        };
+        return { ...task, details: { matching_pairs: { ...pairRows[0], items } } };
     }
 
     if (typeCode === 'STEP_BY_STEP') {
@@ -125,15 +87,7 @@ async function loadTaskBundle(connection, taskId) {
             [stepRows[0].task_step_by_step_id]
         );
 
-        return {
-            ...task,
-            details: {
-                step_by_step: {
-                    ...stepRows[0],
-                    steps,
-                },
-            },
-        };
+        return { ...task, details: { step_by_step: { ...stepRows[0], steps } } };
     }
 
     return { ...task, details: {} };
@@ -156,18 +110,18 @@ async function getTaskCompletionIds(connection, userId, date, taskIds) {
 }
 
 export async function POST(req) {
+    const sessionUserId = getSessionUserId(req);
+
+    if (!sessionUserId) {
+        return NextResponse.json({ error: 'Brak aktywnej sesji' }, { status: 401 });
+    }
+
     let connection;
 
     try {
-        const sessionUserId = getSessionUserId(req);
         const { taskId, difficulty, userAnswer, stepId } = await req.json();
 
-        if (!sessionUserId) {
-            return NextResponse.json({ error: 'Brak aktywnej sesji' }, { status: 401 });
-        }
-
         connection = await db.getConnection();
-        await ensureDailyCompletionTable(connection);
         await connection.beginTransaction();
 
         const today = getWarsawDateString();
@@ -216,10 +170,7 @@ export async function POST(req) {
 
             if (!isSameAnswer(correctValue, userAnswer)) {
                 await connection.rollback();
-                return NextResponse.json({
-                    isCorrect: false,
-                    message: 'Spróbuj jeszcze raz',
-                });
+                return NextResponse.json({ isCorrect: false, message: 'Spróbuj jeszcze raz' });
             }
         } else if (typeCode === 'MULTIPLE_CHOICE') {
             const answers = task.details?.multiple_choice?.answers || [];
@@ -238,10 +189,7 @@ export async function POST(req) {
 
             if (!isCorrect) {
                 await connection.rollback();
-                return NextResponse.json({
-                    isCorrect: false,
-                    message: 'Spróbuj jeszcze raz',
-                });
+                return NextResponse.json({ isCorrect: false, message: 'Spróbuj jeszcze raz' });
             }
         } else if (typeCode === 'MATCHING') {
             const items = task.details?.matching_pairs?.items || [];
@@ -256,10 +204,7 @@ export async function POST(req) {
 
             if (!isCorrect) {
                 await connection.rollback();
-                return NextResponse.json({
-                    isCorrect: false,
-                    message: 'Spróbuj jeszcze raz',
-                });
+                return NextResponse.json({ isCorrect: false, message: 'Spróbuj jeszcze raz' });
             }
         } else if (typeCode === 'STEP_BY_STEP') {
             const steps = task.details?.step_by_step?.steps || [];
@@ -279,10 +224,7 @@ export async function POST(req) {
 
             if (!isCorrect) {
                 await connection.rollback();
-                return NextResponse.json({
-                    isCorrect: false,
-                    message: 'Spróbuj jeszcze raz',
-                });
+                return NextResponse.json({ isCorrect: false, message: 'Spróbuj jeszcze raz' });
             }
 
             const isLastStep = currentStepIndex === steps.length - 1;
@@ -304,10 +246,7 @@ export async function POST(req) {
         }
 
         await connection.query(
-            `
-            INSERT INTO daily_challenge_completions (user_id, assignment_date, task_id)
-            VALUES (?, ?, ?)
-            `,
+            `INSERT INTO daily_challenge_completions (user_id, assignment_date, task_id) VALUES (?, ?, ?)`,
             [sessionUserId, today, taskId]
         );
 
@@ -326,7 +265,12 @@ export async function POST(req) {
             'SELECT task_id FROM daily_assignments WHERE assignment_date = ? ORDER BY difficulty ASC, assignment_id ASC',
             [today]
         );
-        const completedTaskIds = await getTaskCompletionIds(connection, sessionUserId, today, allTasksToday.map((row) => row.task_id));
+        const completedTaskIds = await getTaskCompletionIds(
+            connection,
+            sessionUserId,
+            today,
+            allTasksToday.map((row) => row.task_id)
+        );
 
         await connection.commit();
 

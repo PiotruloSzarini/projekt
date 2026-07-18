@@ -2,23 +2,6 @@ import { NextResponse } from 'next/server';
 import pool from '@/app/lib/db';
 import { getSessionUserId } from '@/app/lib/session';
 
-async function ensureTaskCompletionTable(connection) {
-    await connection.query(`
-        CREATE TABLE IF NOT EXISTS task_completions (
-            completion_id INT NOT NULL AUTO_INCREMENT,
-            user_id INT NOT NULL,
-            task_id INT NOT NULL,
-            points_awarded INT NOT NULL DEFAULT 0,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (completion_id),
-            UNIQUE KEY uniq_task_completion (user_id, task_id),
-            KEY idx_task_completion_user (user_id),
-            CONSTRAINT fk_task_completion_user FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-            CONSTRAINT fk_task_completion_task FOREIGN KEY (task_id) REFERENCES tasks(task_id) ON DELETE CASCADE
-        )
-    `);
-}
-
 export async function POST(request) {
     const connection = await pool.getConnection();
 
@@ -34,7 +17,6 @@ export async function POST(request) {
             return NextResponse.json({ error: 'Brak ID zadania' }, { status: 400 });
         }
 
-        await ensureTaskCompletionTable(connection);
         await connection.beginTransaction();
 
         const [taskRows] = await connection.query(

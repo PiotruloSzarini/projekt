@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import pool from "@/app/lib/db";
+import { requireAdmin } from "@/app/lib/session";
 
 export async function POST(request) {
+    const { response } = requireAdmin(request);
+    if (response) return response;
+
     try {
         const { type, id } = await request.json();
 

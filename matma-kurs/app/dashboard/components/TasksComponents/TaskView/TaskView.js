@@ -66,7 +66,7 @@ export default function TaskView({ tasks, courseColor }) {
   const hasCorrectResult = currentResult === 'correct';
   const isCheckDisabled = hasCorrectResult || (isStepByStep && !currentResult && !isStepTaskReadyToCheck);
 
-  const normalizeAnswer = (value) => String(value || '').trim().toLowerCase();
+  const normalizeAnswer = (value) => String(value ?? '').trim().toLowerCase().replace(/\s+/g, '').replace(/,/g, '.').normalize('NFKC');
 
   const confirmStep = () => {
     if (!isStepByStep) return;

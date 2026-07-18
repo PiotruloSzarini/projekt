@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server';
 import pool from '@/app/lib/db';
 import cloudinary from '@/app/lib/cloudinary';
+import { requireAdmin } from '@/app/lib/session';
 
 export async function DELETE(request) {
+    const { response } = requireAdmin(request);
+    if (response) return response;
+
     let connection;
 
     try {
@@ -42,17 +46,6 @@ export async function DELETE(request) {
         imagesToDeleteRows.forEach((row) => {
             if (row.url) imagesToDelete.push(row.url);
         });
-
-        await connection.execute(
-            `
-            DELETE FROM task_step_hints
-            WHERE hint_id IN (SELECT hint_id FROM task_hints WHERE task_id = ?)
-               OR step_id IN (SELECT step_id FROM task_step_by_step_steps WHERE task_step_by_step_id IN (
-                    SELECT task_step_by_step_id FROM task_step_by_step WHERE task_id = ?
-               ))
-            `,
-            [task_id, task_id]
-        );
 
         await connection.execute(
             'DELETE FROM task_explanation_steps WHERE explanation_id IN (SELECT explanation_id FROM task_explanation WHERE task_id = ?)',

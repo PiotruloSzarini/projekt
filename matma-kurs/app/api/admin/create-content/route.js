@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import pool from "@/app/lib/db";
+import { requireAdmin } from "@/app/lib/session";
 
 const slugify = (text) => {
     if (!text) return `item-${Date.now()}`;
@@ -11,6 +12,9 @@ const slugify = (text) => {
 };
 
 export async function POST(request) {
+    const { response } = requireAdmin(request);
+    if (response) return response;
+
     let connection;
     try {
         const { courseId, type, newData } = await request.json();

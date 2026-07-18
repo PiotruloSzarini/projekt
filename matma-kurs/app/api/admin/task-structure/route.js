@@ -1,25 +1,12 @@
 import { NextResponse } from "next/server";
 import pool from "@/app/lib/db";
+import { requireAdmin } from "@/app/lib/session";
 
-async function ensureTaskSortOrderColumn() {
-    const [columns] = await pool.query(`
-        SELECT COLUMN_NAME
-        FROM INFORMATION_SCHEMA.COLUMNS
-        WHERE TABLE_SCHEMA = DATABASE()
-          AND TABLE_NAME = 'tasks'
-          AND COLUMN_NAME = 'sort_order'
-        LIMIT 1
-    `);
+export async function GET(request) {
+    const { response } = requireAdmin(request);
+    if (response) return response;
 
-    if (columns.length === 0) {
-        await pool.query(`ALTER TABLE tasks ADD COLUMN sort_order INT NULL`);
-    }
-}
-
-export async function GET() {
     try {
-        await ensureTaskSortOrderColumn();
-
         // 1. Pobieramy podstawowe dane o wszystkich zadaniach
         const [tasks] = await pool.query(`
             SELECT t.*, tt.code as task_type_code 
