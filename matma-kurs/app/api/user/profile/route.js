@@ -4,11 +4,10 @@ import { getSessionUserId } from '@/app/lib/session';
 import { normalizeAvatarUrl } from '@/app/lib/avatar';
 
 export async function GET(request) {
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId') || getSessionUserId(request);
+    const userId = getSessionUserId(request);
 
     if (!userId) {
-        return NextResponse.json({ error: 'Brak ID użytkownika' }, { status: 400 });
+        return NextResponse.json({ error: 'Brak aktywnej sesji' }, { status: 401 });
     }
 
     try {
@@ -46,7 +45,8 @@ export async function GET(request) {
             avatar_url: normalizeAvatarUrl(user.avatar_url, user.user_id),
         });
     } catch (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        console.error('GET /api/user/profile error:', error);
+        return NextResponse.json({ error: 'Błąd serwera' }, { status: 500 });
     }
 }
 
@@ -94,6 +94,7 @@ export async function PATCH(request) {
             },
         });
     } catch (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        console.error('PATCH /api/user/profile error:', error);
+        return NextResponse.json({ error: 'Błąd serwera' }, { status: 500 });
     }
 }

@@ -72,7 +72,8 @@ export async function POST(request) {
     } catch (error) {
         if (connection) await connection.rollback();
         console.error("Database Error:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        console.error(error);
+        return NextResponse.json({ error: 'Błąd serwera' }, { status: 500 });
     } finally {
         if (connection) connection.release();
     }

@@ -66,7 +66,7 @@ export async function POST(req) {
             try { await connection.rollback(); } catch {}
         }
         console.error("BŁĄD API ASSIGN:", error);
-        return NextResponse.json({ error: error.message || "Błąd serwera" }, { status: 500 });
+        return NextResponse.json({ error: 'Błąd serwera' }, { status: 500 });
     } finally {
         if (connection) connection.release();
     }

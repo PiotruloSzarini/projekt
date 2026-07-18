@@ -6,7 +6,8 @@ export async function GET() {
          const [rows] = await pool.execute('SELECT * FROM task_step_by_step');
     return NextResponse.json(rows);
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error(error);
+        return NextResponse.json({ error: 'Błąd serwera' }, { status: 500 });
   }
 }
 

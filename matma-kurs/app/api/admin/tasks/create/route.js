@@ -153,7 +153,8 @@ export async function POST(request) {
     } catch (error) {
         await connection.rollback();
         console.error("CREATE TASK ERROR:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        console.error(error);
+        return NextResponse.json({ error: 'Błąd serwera' }, { status: 500 });
     } finally {
         connection.release();
     }

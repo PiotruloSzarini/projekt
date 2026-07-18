@@ -6,8 +6,8 @@ import Link from 'next/link';
 import styles from './page.module.css';
 import { useUser } from '@/app/context/UserContext';
 
-const CLOUDINARY_UPLOAD_PRESET = 'omm_photos';
-const CLOUDINARY_CLOUD_NAME = 'ds6xrritb';
+const CLOUDINARY_UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+const CLOUDINARY_CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
 
 export default function ProfilePage() {
     const { userId, user, loading, refresh } = useUser();
@@ -36,7 +36,7 @@ export default function ProfilePage() {
 
             setCoursesLoading(true);
             try {
-                const res = await fetch(`/api/courses?userId=${userId}`);
+                const res = await fetch('/api/courses');
                 const data = await res.json();
                 setOwnedCourses(Array.isArray(data) ? data.filter((course) => course.owned) : []);
             } catch (err) {

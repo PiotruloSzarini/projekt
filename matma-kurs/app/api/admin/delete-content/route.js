@@ -70,6 +70,7 @@ export async function POST(request) {
             }, { status: 409 });
         }
 
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        console.error(error);
+        return NextResponse.json({ error: 'Błąd serwera' }, { status: 500 });
     }
 }

@@ -2,8 +2,8 @@
 import { useState, useEffect } from 'react';
 import MathRender from '@/app/components/MathRender/MathRender';
 
-const CLOUDINARY_UPLOAD_PRESET = "omm_photos"; 
-const CLOUDINARY_CLOUD_NAME = "ds6xrritb";
+const CLOUDINARY_UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+const CLOUDINARY_CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
 
 const TYPE_MAP = {
     'MULTIPLE_CHOICE': 1,

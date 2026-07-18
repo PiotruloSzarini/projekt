@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import crypto from 'node:crypto';
 import pool from '../../../lib/db';
+import { checkRateLimit, getClientIp } from '@/app/lib/rateLimiter';
 
 function normalizeLoginName(value) {
     return String(value ?? '').trim();
@@ -57,6 +58,15 @@ async function createAccount(connection, { loginName, password }) {
 }
 
 export async function POST(request) {
+    const ip = getClientIp(request);
+    const { limited, retryAfterSec } = checkRateLimit(`send-code:${ip}`, { maxAttempts: 5, windowMs: 15 * 60 * 1000 });
+    if (limited) {
+        return NextResponse.json(
+            { error: `Zbyt wiele prób. Spróbuj ponownie za ${retryAfterSec} sekund.` },
+            { status: 429 }
+        );
+    }
+
     const connection = await pool.getConnection();
 
     try {
@@ -111,9 +121,11 @@ export async function POST(request) {
 
         await connection.commit();
 
-        // TODO: docelowo wysyłać mockCode mailem zamiast zwracać go w froncie
         if (process.env.NODE_ENV !== 'production') {
             console.log(`[DEV] Kod logowania dla "${loginName}": ${mockCode}`);
+        } else {
+            // TODO: wysłać mockCode mailem — bez tego użytkownicy nie mogą się zalogować w produkcji
+            console.error(`[PRODUKCJA] Brak implementacji wysyłki emaila! Kod dla "${loginName}" nie został dostarczony.`);
         }
 
         return NextResponse.json({
@@ -130,7 +142,7 @@ export async function POST(request) {
             console.error('Błąd rollback:', rollbackError);
         }
         console.error('SEND CODE ERROR:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: 'Błąd serwera' }, { status: 500 });
     } finally {
         connection.release();
     }

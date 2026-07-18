@@ -292,7 +292,7 @@ export async function POST(req) {
         console.error('BŁĄD SYSTEMU:', error);
         return NextResponse.json({
             isCorrect: false,
-            message: error.message ? `Błąd serwera: ${error.message}` : 'Błąd serwera.',
+            message: 'Błąd serwera.',
         }, { status: 500 });
     } finally {
         if (connection) connection.release();

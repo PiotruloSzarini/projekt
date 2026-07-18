@@ -25,5 +25,15 @@
 ---
 
 ## Dodano
+### 2026-07-18 - 2026-07-18
+### 
+
+- teraz kursy sa pobierane tylko po sesji(cookie) a bylo po urlu, tak samo w profile
+- dodany modul ratelimiter dla do send-code(limit po ip) i verify-code(limit po userid)
+- w tych usatwieniach cookies brakowalo secure: true i  sameSite: 'lax', czyli byl brak https w produkcjiter i brak blokowaia cross site requests
+- naprawiono w kazdym api wycieki dokladnych bledow, teraz tylko ogolnie 
+
+
+## Dodano
 ### 2026-07-18 - 2026-07-...
 ### 

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import pool from '../../../lib/db';
-
+import { checkRateLimit } from '@/app/lib/rateLimiter';
 
 export async function POST(request) {
     const connection = await pool.getConnection();
@@ -10,6 +10,14 @@ export async function POST(request) {
 
         if (!userId) {
             return NextResponse.json({ error: 'Brak ID użytkownika' }, { status: 400 });
+        }
+
+        const { limited, retryAfterSec } = checkRateLimit(`verify-code:${userId}`, { maxAttempts: 10, windowMs: 15 * 60 * 1000 });
+        if (limited) {
+            return NextResponse.json(
+                { error: `Zbyt wiele prób. Spróbuj ponownie za ${retryAfterSec} sekund.` },
+                { status: 429 }
+            );
         }
 
         const [tokens] = await connection.execute(
@@ -35,21 +43,21 @@ export async function POST(request) {
 
         const response = NextResponse.json({ success: true, message: 'Zalogowano', isAdmin, redirectTo });
 
-        response.cookies.set('session_user_id', String(userId), {
+        const cookieOptions = {
             path: '/',
             httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
             maxAge: 60 * 60 * 24,
-        });
+        };
 
-        response.cookies.set('session_user_role', isAdmin ? 'admin' : 'user', {
-            path: '/',
-            httpOnly: true,
-            maxAge: 60 * 60 * 24,
-        });
+        response.cookies.set('session_user_id', String(userId), cookieOptions);
+        response.cookies.set('session_user_role', isAdmin ? 'admin' : 'user', cookieOptions);
 
         return response;
     } catch (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        console.error('VERIFY CODE ERROR:', error);
+        return NextResponse.json({ error: 'Błąd serwera' }, { status: 500 });
     } finally {
         connection.release();
     }

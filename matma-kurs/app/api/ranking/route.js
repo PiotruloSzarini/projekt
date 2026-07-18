@@ -4,10 +4,7 @@ import { getSessionUserId } from '@/app/lib/session';
 import { normalizeAvatarUrl } from '@/app/lib/avatar';
 
 export async function GET(request) {
-    const { searchParams } = new URL(request.url);
-    const requestedUserId = searchParams.get('userId');
-    const sessionUserId = getSessionUserId(request);
-    const userId = requestedUserId || sessionUserId;
+    const userId = getSessionUserId(request);
 
     try {
         const [rows] = await pool.execute(
@@ -63,6 +60,7 @@ export async function GET(request) {
             },
         });
     } catch (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        console.error(error);
+        return NextResponse.json({ error: 'Błąd serwera' }, { status: 500 });
     }
 }

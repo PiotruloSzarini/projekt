@@ -82,9 +82,15 @@ export async function DELETE(request) {
 
         const deleteFromCloudinary = async (url) => {
             try {
-                const parts = url.split('/');
-                const fileName = parts[parts.length - 1].split('.')[0];
-                await cloudinary.uploader.destroy(fileName);
+                // Extract public_id from Cloudinary URL, preserving folder path.
+                // URL format: .../upload/v1234567/folder/filename.ext
+                // public_id = everything after /upload/(vNNNN/)  without the extension
+                const uploadIdx = url.indexOf('/upload/');
+                if (uploadIdx === -1) return;
+                let publicId = url.slice(uploadIdx + '/upload/'.length);
+                publicId = publicId.replace(/^v\d+\//, '');
+                publicId = publicId.replace(/\.[^/.]+$/, '');
+                await cloudinary.uploader.destroy(publicId);
             } catch (err) {
                 console.error('Błąd podczas usuwania pliku z Cloudinary:', url, err);
             }
@@ -117,6 +123,7 @@ export async function DELETE(request) {
             );
         }
 
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        console.error(error);
+        return NextResponse.json({ error: 'Błąd serwera' }, { status: 500 });
     }
 }
