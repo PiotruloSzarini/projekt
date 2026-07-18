@@ -4,7 +4,7 @@ import cloudinary from '@/app/lib/cloudinary';
 import { requireAdmin } from '@/app/lib/session';
 
 export async function DELETE(request) {
-    const { response } = requireAdmin(request);
+    const { response } = await requireAdmin(request);
     if (response) return response;
 
     let connection;

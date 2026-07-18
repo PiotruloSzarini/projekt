@@ -37,3 +37,5 @@
 ## Dodano
 ### 2026-07-18 - 2026-07-...
 ### 
+## teraz middleware.js czyli jeden z wazniejszych plikow, teraz jest bardzo ubogi i slabo zabezpieczony 
+- 

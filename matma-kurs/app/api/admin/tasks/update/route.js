@@ -4,7 +4,7 @@ import { requireAdmin } from "@/app/lib/session";
 import { normalizeTaskGroup, placeTaskInGroup } from "@/app/lib/taskOrdering";
 
 export async function PUT(request) {
-    const { response } = requireAdmin(request);
+    const { response } = await requireAdmin(request);
     if (response) return response;
 
     const connection = await pool.getConnection();

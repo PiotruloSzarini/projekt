@@ -4,7 +4,7 @@ import { requireAdmin } from "@/app/lib/session";
 import { getWarsawDateString } from "@/app/lib/services/mathdle";
 
 export async function GET(request) {
-    const { response } = requireAdmin(request);
+    const { response } = await requireAdmin(request);
     if (response) return response;
 
     const { searchParams } = new URL(request.url);

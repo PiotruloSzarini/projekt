@@ -3,7 +3,7 @@ import pool from "@/app/lib/db";
 import { requireAdmin } from "@/app/lib/session";
 
 export async function GET(request, { params }) {
-    const { response } = requireAdmin(request);
+    const { response } = await requireAdmin(request);
     if (response) return response;
 
     const { courseId } = await params;

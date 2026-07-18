@@ -3,7 +3,7 @@ import db from '@/app/lib/db';
 import { requireAdmin } from '@/app/lib/session';
 
 export async function POST(req) {
-    const { response } = requireAdmin(req);
+    const { response } = await requireAdmin(req);
     if (response) return response;
 
     let connection;
