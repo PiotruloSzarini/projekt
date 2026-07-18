@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import pool from "@/app/lib/db";
 import { requireAdmin } from "@/app/lib/session";
 import { placeTaskInGroup } from "@/app/lib/taskOrdering";
+import { logAdminAction } from "@/app/lib/audit";
 
 export async function POST(request) {
-    const { response } = await requireAdmin(request);
+    const { session, response } = await requireAdmin(request);
     if (response) return response;
 
     const connection = await pool.getConnection();
@@ -143,11 +144,17 @@ export async function POST(request) {
         }
 
         await connection.commit();
-        
-        return NextResponse.json({ 
-            success: true, 
-            message: task_group_id ? "Dodano zadanie do lekcji" : "Dodano zadanie do bazy ogólnej", 
-            taskId: taskId 
+
+        logAdminAction(request, session.userId, 'task.create', {
+            entityType: 'task',
+            entityId: taskId,
+            metadata: { task_type_id, task_group_id: task_group_id || null },
+        });
+
+        return NextResponse.json({
+            success: true,
+            message: task_group_id ? "Dodano zadanie do lekcji" : "Dodano zadanie do bazy ogólnej",
+            taskId: taskId
         }, { status: 201 });
 
     } catch (error) {

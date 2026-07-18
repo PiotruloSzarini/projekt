@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import pool from "@/app/lib/db";
 import { requireAdmin } from "@/app/lib/session";
 import { normalizeTaskGroup, placeTaskInGroup } from "@/app/lib/taskOrdering";
+import { logAdminAction } from "@/app/lib/audit";
 
 export async function PUT(request) {
-    const { response } = await requireAdmin(request);
+    const { session, response } = await requireAdmin(request);
     if (response) return response;
 
     const connection = await pool.getConnection();
@@ -250,6 +251,13 @@ export async function PUT(request) {
         }
 
         await connection.commit();
+
+        logAdminAction(request, session.userId, 'task.update', {
+            entityType: 'task',
+            entityId: Number(task_id),
+            metadata: { task_type_id, task_group_id: nextGroupId || null },
+        });
+
         return NextResponse.json({ success: true, message: "Zadanie zaktualizowane pomyślnie" });
 
     } catch (error) {

@@ -1,18 +1,18 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { getSessionFromCookies } from '@/app/lib/session';
 import styles from './page.module.css';
 
 export default async function HomePage() {
     const cookieStore = await cookies();
-    const session = cookieStore.get('session_user_id')?.value;
-    const role = cookieStore.get('session_user_role')?.value || 'user';
+    const { userId, isAdmin } = await getSessionFromCookies(cookieStore);
 
-    if (!session) {
+    if (!userId) {
         redirect('/login');
     }
 
-    if (role !== 'admin') {
+    if (!isAdmin) {
         redirect('/dashboard');
     }
 

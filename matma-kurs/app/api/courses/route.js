@@ -3,7 +3,7 @@ import { getSession } from '@/app/lib/session';
 import { getCoursesForUser } from '@/app/lib/services/courses';
 
 export async function GET(request) {
-    const session = getSession(request);
+    const session = await getSession(request);
 
     try {
         const courses = await getCoursesForUser({ userId: session.userId, isAdmin: session.isAdmin });

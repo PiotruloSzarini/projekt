@@ -38,4 +38,15 @@
 ### 2026-07-18 - 2026-07-...
 ### 
 ## teraz middleware.js czyli jeden z wazniejszych plikow, teraz jest bardzo ubogi i slabo zabezpieczony 
-- 
+- Spójna walidacja session_user_id jako liczby całkowitej (parseInt + sprawdzenie > 0)
+- Usunięto dead code sprawdzający /api/auth (matcher już nie łapie API)
+- Dodano security headers: X-Frame-Options: DENY, X-Content-Type-Options: nosniff, Referrer-Policy: strict-origin-when-cross-origin
+- Dodano CSP: default-src 'self', frame-src z YouTube/Vimeo, img-src z Cloudinary+i.ytimg, media-src z Cloudinary, frame-ancestors 'none'
+
+- w sesjach losowe tokeny zamiast user id(nowa tabela sessions i refactor session.js)
+- w mathdle teraz difficulty teraz jest brane prosto z bazy(mozna bylo manipulowac)
+- poprawki w auth
+- zabezpieczenie publicznych tras ciag dalszy
+- rate limiting w odpowiedziach
+- usunieto zbedne pliki
+- usunieto w wielu miejscach ?userId= zeby zapobiec wyciekom danych

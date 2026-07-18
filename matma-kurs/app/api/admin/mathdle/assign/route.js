@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import db from '@/app/lib/db';
 import { requireAdmin } from '@/app/lib/session';
+import { logAdminAction } from '@/app/lib/audit';
 
 export async function POST(req) {
-    const { response } = await requireAdmin(req);
+    const { session, response } = await requireAdmin(req);
     if (response) return response;
 
     let connection;
@@ -59,6 +60,12 @@ export async function POST(req) {
         }
 
         await connection.commit();
+
+        logAdminAction(req, session.userId, 'mathdle.assign', {
+            entityType: 'daily_assignment',
+            metadata: { date, count: assignments?.length || 0 },
+        });
+
         return NextResponse.json({ success: true });
 
     } catch (error) {

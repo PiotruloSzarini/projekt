@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import db from '@/app/lib/db';
 import { getSessionUserId } from '@/app/lib/session';
 import { getWarsawDateString } from '@/app/lib/services/mathdle';
+import { validateInt, ValidationError } from '@/app/lib/validation';
+import { checkRateLimit } from '@/app/lib/rateLimiter';
 
 function normalizeAnswer(value) {
     return String(value ?? '')
@@ -9,7 +11,9 @@ function normalizeAnswer(value) {
         .toLowerCase()
         .replace(/\s+/g, '')
         .replace(/,/g, '.')
-        .replace(/[â'â€"â€"]/g, '-')
+        // en/em dashes → zwykły minus, curly apostrofy → prosty
+        .replace(/[–—−]/g, '-')
+        .replace(/[‘’“”]/g, "'")
         .normalize('NFKC');
 }
 
@@ -110,21 +114,69 @@ async function getTaskCompletionIds(connection, userId, date, taskIds) {
 }
 
 export async function POST(req) {
-    const sessionUserId = getSessionUserId(req);
+    const sessionUserId = await getSessionUserId(req);
 
     if (!sessionUserId) {
         return NextResponse.json({ error: 'Brak aktywnej sesji' }, { status: 401 });
     }
 
+    const { limited, retryAfterSec } = checkRateLimit(`mathdle-submit:${sessionUserId}`, {
+        maxAttempts: 30,
+        windowMs: 60 * 1000,
+    });
+    if (limited) {
+        return NextResponse.json(
+            { isCorrect: false, message: `Zbyt wiele prób. Poczekaj ${retryAfterSec}s.` },
+            { status: 429 }
+        );
+    }
+
     let connection;
 
     try {
-        const { taskId, difficulty, userAnswer, stepId } = await req.json();
+        const body = await req.json();
+
+        let taskId, stepId;
+        try {
+            taskId = validateInt(body.taskId, { field: 'ID zadania', min: 1 });
+            stepId = validateInt(body.stepId, { field: 'ID kroku', min: 1, required: false });
+        } catch (err) {
+            if (err instanceof ValidationError) {
+                return NextResponse.json({ isCorrect: false, message: err.message }, { status: 400 });
+            }
+            throw err;
+        }
+
+        const userAnswer = body.userAnswer;
+        // Obiekty (MATCHING, STEP_BY_STEP) mają swoje sensowne rozmiary — limit tylko na stringi
+        if (typeof userAnswer === 'string' && userAnswer.length > 1000) {
+            return NextResponse.json(
+                { isCorrect: false, message: 'Odpowiedź jest za długa' },
+                { status: 400 }
+            );
+        }
 
         connection = await db.getConnection();
         await connection.beginTransaction();
 
         const today = getWarsawDateString();
+
+        // Difficulty MUSI pochodzić z DB, nie z body — inaczej klient wybiera sobie punkty.
+        // Ten sam query waliduje że zadanie jest w ogóle przypisane na dziś.
+        const [assignmentRows] = await connection.query(
+            'SELECT difficulty FROM daily_assignments WHERE task_id = ? AND assignment_date = ? LIMIT 1',
+            [taskId, today]
+        );
+
+        if (!assignmentRows.length) {
+            await connection.rollback();
+            return NextResponse.json(
+                { isCorrect: false, message: 'To zadanie nie jest przypisane do dzisiejszego dnia.' },
+                { status: 400 }
+            );
+        }
+
+        const difficulty = assignmentRows[0].difficulty;
 
         const [alreadyDoneRows] = await connection.query(
             `

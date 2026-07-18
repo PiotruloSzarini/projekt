@@ -4,12 +4,15 @@ import { getSessionUserId } from '@/app/lib/session';
 import { getWarsawDateString } from '@/app/lib/services/mathdle';
 
 export async function GET(request) {
+    const userId = await getSessionUserId(request);
+    if (!userId) {
+        return NextResponse.json({ error: 'Brak aktywnej sesji' }, { status: 401 });
+    }
+
     let connection;
 
     try {
         const today = getWarsawDateString();
-        const userId = getSessionUserId(request);
-
         connection = await db.getConnection();
 
         const [taskRows] = await connection.query(
@@ -90,7 +93,7 @@ export async function GET(request) {
         const hintRowsData = hintRows[0] || [];
 
         let completedTaskIds = [];
-        if (userId && taskIds.length > 0) {
+        if (taskIds.length > 0) {
             const [completionRows] = await connection.query(
                 `
                 SELECT task_id

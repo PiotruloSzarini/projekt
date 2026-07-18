@@ -1,27 +1,58 @@
 import { NextResponse } from 'next/server';
 import pool from '@/app/lib/db';
-import { getSessionUserId } from '@/app/lib/session';
+import { getSession } from '@/app/lib/session';
+import { validateInt, ValidationError } from '@/app/lib/validation';
+import { checkRateLimit } from '@/app/lib/rateLimiter';
 
 export async function POST(request) {
+    const { userId: sessionUserId, isAdmin } = await getSession(request);
+
+    if (!sessionUserId) {
+        return NextResponse.json({ error: 'Brak aktywnej sesji' }, { status: 401 });
+    }
+
+    const { limited, retryAfterSec } = checkRateLimit(`task-complete:${sessionUserId}`, {
+        maxAttempts: 60,
+        windowMs: 60 * 1000,
+    });
+    if (limited) {
+        return NextResponse.json(
+            { error: `Zbyt wiele prób. Poczekaj ${retryAfterSec}s.` },
+            { status: 429 }
+        );
+    }
+
     const connection = await pool.getConnection();
 
     try {
-        const sessionUserId = getSessionUserId(request);
-        const { taskId } = await request.json();
-
-        if (!sessionUserId) {
-            return NextResponse.json({ error: 'Brak aktywnej sesji' }, { status: 401 });
-        }
-
-        if (!taskId) {
-            return NextResponse.json({ error: 'Brak ID zadania' }, { status: 400 });
+        const body = await request.json();
+        let taskId;
+        try {
+            taskId = validateInt(body.taskId, { field: 'ID zadania', min: 1 });
+        } catch (err) {
+            if (err instanceof ValidationError) {
+                return NextResponse.json({ error: err.message }, { status: 400 });
+            }
+            throw err;
         }
 
         await connection.beginTransaction();
 
+        // Jednym zapytaniem: dane zadania + sprawdzenie własności kursu
         const [taskRows] = await connection.query(
-            'SELECT task_id, points FROM tasks WHERE task_id = ? LIMIT 1',
-            [taskId]
+            `SELECT
+                 t.task_id,
+                 t.points,
+                 CASE WHEN uc.user_id IS NOT NULL THEN 1 ELSE 0 END AS owned
+             FROM tasks t
+             JOIN task_groups tg ON t.task_group_id = tg.task_group_id
+             JOIN lessons l ON tg.lesson_id = l.lesson_id
+             JOIN topics tp ON l.topic_id = tp.topic_id
+             JOIN chapters ch ON tp.chapter_id = ch.chapter_id
+             LEFT JOIN user_courses uc ON ch.course_id = uc.course_id AND uc.user_id = ?
+             WHERE t.task_id = ?
+             LIMIT 1`,
+            [sessionUserId, taskId]
         );
 
         if (taskRows.length === 0) {
@@ -30,6 +61,11 @@ export async function POST(request) {
         }
 
         const task = taskRows[0];
+
+        if (!isAdmin && !Number(task.owned)) {
+            await connection.rollback();
+            return NextResponse.json({ error: 'Brak dostępu do tego zadania' }, { status: 403 });
+        }
 
         const [existingRows] = await connection.query(
             'SELECT completion_id FROM task_completions WHERE user_id = ? AND task_id = ? LIMIT 1',

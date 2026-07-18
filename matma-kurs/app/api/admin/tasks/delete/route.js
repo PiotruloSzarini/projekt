@@ -2,9 +2,10 @@ import { NextResponse } from 'next/server';
 import pool from '@/app/lib/db';
 import cloudinary from '@/app/lib/cloudinary';
 import { requireAdmin } from '@/app/lib/session';
+import { logAdminAction } from '@/app/lib/audit';
 
 export async function DELETE(request) {
-    const { response } = await requireAdmin(request);
+    const { session, response } = await requireAdmin(request);
     if (response) return response;
 
     let connection;
@@ -99,6 +100,12 @@ export async function DELETE(request) {
         if (imagesToDelete.length > 0) {
             Promise.all(imagesToDelete.map((url) => deleteFromCloudinary(url)));
         }
+
+        logAdminAction(request, session.userId, 'task.delete', {
+            entityType: 'task',
+            entityId: Number(task_id),
+            metadata: { deletedImages: imagesToDelete.length },
+        });
 
         return NextResponse.json({
             success: true,

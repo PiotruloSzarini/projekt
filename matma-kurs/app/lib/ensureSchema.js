@@ -1,6 +1,6 @@
 import pool from './db';
 
-async function runMigrations() {
+export async function runMigrations() {
     const connection = await pool.getConnection();
     try {
         // 1. tasks.sort_order
@@ -79,9 +79,60 @@ async function runMigrations() {
             )
         `);
 
+        // 6. admin_audit_log — ślad akcji administratorów
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS admin_audit_log (
+                log_id INT NOT NULL AUTO_INCREMENT,
+                user_id INT NOT NULL,
+                action VARCHAR(100) NOT NULL,
+                entity_type VARCHAR(50) NULL,
+                entity_id INT NULL,
+                metadata JSON NULL,
+                ip_address VARCHAR(45) NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (log_id),
+                KEY idx_audit_user (user_id),
+                KEY idx_audit_action (action),
+                KEY idx_audit_created (created_at),
+                CONSTRAINT fk_audit_user FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+            )
+        `);
+
+        // 5. sessions — opaque tokens instead of raw user_id in cookies
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS sessions (
+                session_id INT NOT NULL AUTO_INCREMENT,
+                token VARCHAR(128) NOT NULL,
+                user_id INT NOT NULL,
+                expires_at DATETIME NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (session_id),
+                UNIQUE KEY uniq_session_token (token),
+                KEY idx_sessions_user (user_id),
+                KEY idx_sessions_expires (expires_at),
+                CONSTRAINT fk_sessions_user FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+            )
+        `);
+
         // tu dodamy wszystkie schematy zeby ulatwic migracje w przyszlosci
-        
+
     } finally {
         connection.release();
+    }
+}
+
+export async function cleanupExpiredAuth() {
+    try {
+        const [sessionsResult] = await pool.query('DELETE FROM sessions WHERE expires_at < NOW()');
+        const [tokensResult] = await pool.query(
+            'DELETE FROM auth_tokens WHERE expires_at < NOW() OR is_used = TRUE'
+        );
+        if (sessionsResult.affectedRows || tokensResult.affectedRows) {
+            console.log(
+                `[Cleanup] usunięto ${sessionsResult.affectedRows} sesji, ${tokensResult.affectedRows} tokenów OTP`
+            );
+        }
+    } catch (error) {
+        console.error('[Cleanup] błąd:', error);
     }
 }

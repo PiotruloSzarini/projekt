@@ -5,7 +5,7 @@ import { getFullCourseData } from '@/app/lib/services/courses';
 export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const courseId = searchParams.get('courseId');
-    const session = getSession(request);
+    const session = await getSession(request);
 
     if (!courseId) {
         return NextResponse.json({ error: 'Brak ID kursu' }, { status: 400 });

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { UserProvider } from '@/app/context/UserContext';
 import { CourseProvider } from '@/app/context/CourseContext';
+import { getSessionFromCookies } from '@/app/lib/session';
 import AdminDashboardWrapper from './layoutWrapper';
 
 const ADMIN_LINKS = [
@@ -14,8 +15,8 @@ const ADMIN_LINKS = [
 
 export default async function AdminLayout({ children }) {
     const cookieStore = await cookies();
-    const userId = cookieStore.get('session_user_id')?.value;
-    const userRole = cookieStore.get('session_user_role')?.value || 'user';
+    const { userId, isAdmin } = await getSessionFromCookies(cookieStore);
+    const userRole = isAdmin ? 'admin' : 'user';
 
     return (
         <UserProvider userId={userId}>

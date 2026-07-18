@@ -2,9 +2,11 @@ import { NextResponse } from 'next/server';
 import pool from '../../../lib/db';
 import { getSessionUserId } from '@/app/lib/session';
 import { normalizeAvatarUrl } from '@/app/lib/avatar';
+import { validateString, validateUrl, ValidationError } from '@/app/lib/validation';
+import { checkRateLimit } from '@/app/lib/rateLimiter';
 
 export async function GET(request) {
-    const userId = getSessionUserId(request);
+    const userId = await getSessionUserId(request);
 
     if (!userId) {
         return NextResponse.json({ error: 'Brak aktywnej sesji' }, { status: 401 });
@@ -51,19 +53,35 @@ export async function GET(request) {
 }
 
 export async function PATCH(request) {
-    const sessionUserId = getSessionUserId(request);
+    const sessionUserId = await getSessionUserId(request);
 
     if (!sessionUserId) {
         return NextResponse.json({ error: 'Brak aktywnej sesji' }, { status: 401 });
     }
 
+    const { limited, retryAfterSec } = checkRateLimit(`profile-patch:${sessionUserId}`, {
+        maxAttempts: 10,
+        windowMs: 60 * 1000,
+    });
+    if (limited) {
+        return NextResponse.json(
+            { error: `Zbyt wiele prób. Poczekaj ${retryAfterSec}s.` },
+            { status: 429 }
+        );
+    }
+
     try {
         const body = await request.json();
-        const nextName = typeof body.name === 'string' ? body.name.trim() : '';
-        const nextAvatarUrl = typeof body.avatar_url === 'string' ? body.avatar_url.trim() : '';
 
-        if (!nextName) {
-            return NextResponse.json({ error: 'Nazwa użytkownika jest wymagana' }, { status: 400 });
+        let nextName, nextAvatarUrl;
+        try {
+            nextName = validateString(body.name, { field: 'Nazwa użytkownika', min: 1, max: 100 });
+            nextAvatarUrl = validateUrl(body.avatar_url, { field: 'Adres zdjęcia', max: 500, required: false });
+        } catch (err) {
+            if (err instanceof ValidationError) {
+                return NextResponse.json({ error: err.message }, { status: 400 });
+            }
+            throw err;
         }
 
         await pool.execute(

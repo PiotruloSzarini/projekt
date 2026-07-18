@@ -100,7 +100,7 @@ export default function MathdlePage() {
 
     const loadAllTasks = async () => {
         const data = await safeFetch('/api/admin/task-structure');
-        if (data) setAllTasks(data);
+        if (data) setAllTasks(data.tasks || []);
     };
 
     const loadDayAssignments = async (date) => {

@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
+import crypto from 'node:crypto';
 import pool from '../../../lib/db';
 import { checkRateLimit } from '@/app/lib/rateLimiter';
+import { cleanupExpiredAuth } from '@/app/lib/ensureSchema';
+
+const SESSION_MAX_AGE_SEC = 60 * 60 * 24;
 
 export async function POST(request) {
     const connection = await pool.getConnection();
@@ -41,6 +45,20 @@ export async function POST(request) {
         const isAdmin = Number(roleRows[0]?.is_admin) === 1;
         const redirectTo = isAdmin ? '/' : '/dashboard';
 
+        // Generujemy nieprzewidywalny token sesji i zapisujemy w DB
+        const sessionToken = crypto.randomBytes(32).toString('hex');
+        const expiresAt = new Date(Date.now() + SESSION_MAX_AGE_SEC * 1000);
+
+        await connection.execute(
+            'INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)',
+            [sessionToken, userId, expiresAt]
+        );
+
+        // 1% szans na cleanup — amortyzujemy koszt bez cronu
+        if (Math.random() < 0.01) {
+            cleanupExpiredAuth();
+        }
+
         const response = NextResponse.json({ success: true, message: 'Zalogowano', isAdmin, redirectTo });
 
         const cookieOptions = {
@@ -48,10 +66,12 @@ export async function POST(request) {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
-            maxAge: 60 * 60 * 24,
+            maxAge: SESSION_MAX_AGE_SEC,
         };
 
-        response.cookies.set('session_user_id', String(userId), cookieOptions);
+        response.cookies.set('session_token', sessionToken, cookieOptions);
+        // session_user_role zostaje jako UX hint dla middleware — może być sfałszowany,
+        // ale realna autoryzacja jest po stronie API (requireAdmin sprawdza DB).
         response.cookies.set('session_user_role', isAdmin ? 'admin' : 'user', cookieOptions);
 
         return response;

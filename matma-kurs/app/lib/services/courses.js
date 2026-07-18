@@ -202,39 +202,61 @@ export async function getFullCourseData({ courseId, userId, isAdmin = false }) {
     const explanationStepsByParentId = groupBy(explanationSteps, 'explanation_id');
     const hintsByTaskId = groupBy(hints, 'task_id');
 
+    // Widoczność odpowiedzi/wyjaśnień. Anonim + user bez kursu = podgląd bez odpowiedzi.
+    // Admin i właściciel kursu = pełen dostęp.
+    const canSeeAnswers = isOwned || isAdmin;
+
     const fullTasks = tasks.map((task) => {
         const details = {};
 
         switch (task.task_type_id) {
             case 1: {
                 const mc = mcByTaskId.get(task.task_id);
-                if (mc) details.answers = mcAnswersByMultipleId.get(mc.task_multiple_id) || [];
+                if (mc) {
+                    const answers = mcAnswersByMultipleId.get(mc.task_multiple_id) || [];
+                    details.answers = canSeeAnswers
+                        ? answers
+                        : answers.map((a) => ({ ...a, is_correct: 0 }));
+                }
                 break;
             }
             case 2: {
                 const si = singleInputByTaskId.get(task.task_id);
-                if (si) details.correct_value = si.correct_value;
+                if (si) details.correct_value = canSeeAnswers ? si.correct_value : null;
                 break;
             }
             case 3: {
                 const matchingPair = matchingPairsByTaskId.get(task.task_id);
-                if (matchingPair) details.items = matchingItemsByPairId.get(matchingPair.task_pair_id) || [];
+                if (matchingPair) {
+                    // MATCHING: struktura par (pair_item_id) UJAWNIA odpowiedź.
+                    // Bez dostępu wysyłamy pustą tablicę — trzeba kupić żeby to rozwiązać.
+                    details.items = canSeeAnswers
+                        ? matchingItemsByPairId.get(matchingPair.task_pair_id) || []
+                        : [];
+                }
                 break;
             }
             case 4: {
                 const stepByStep = stepByStepByTaskId.get(task.task_id);
-                if (stepByStep) details.steps = stepByStepStepsByParentId.get(stepByStep.task_step_by_step_id) || [];
+                if (stepByStep) {
+                    const steps = stepByStepStepsByParentId.get(stepByStep.task_step_by_step_id) || [];
+                    details.steps = canSeeAnswers
+                        ? steps
+                        : steps.map((s) => ({ ...s, step_answer: null }));
+                }
                 break;
             }
         }
 
         const explanationHeader = explanationByTaskId.get(task.task_id);
-        details.explanation = explanationHeader
+        // Wyjaśnienie krok po kroku = rozwiązanie. Tylko dla właściciela/admina.
+        details.explanation = (explanationHeader && canSeeAnswers)
             ? {
                 ...explanationHeader,
                 steps: explanationStepsByParentId.get(explanationHeader.explanation_id) || [],
             }
             : null;
+        // Podpowiedzi zostają — mają uczyć, nie zdradzać.
         details.hints = hintsByTaskId.get(task.task_id) || [];
 
         return { ...task, details };

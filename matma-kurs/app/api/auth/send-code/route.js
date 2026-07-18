@@ -16,6 +16,19 @@ function hashPassword(password, salt) {
     return crypto.scryptSync(String(password), salt, 64).toString('hex');
 }
 
+function safeEqualHex(a, b) {
+    const bufA = Buffer.from(a, 'hex');
+    const bufB = Buffer.from(b, 'hex');
+    if (bufA.length !== bufB.length) return false;
+    return crypto.timingSafeEqual(bufA, bufB);
+}
+
+const MIN_PASSWORD_LEN = 8;
+// deterministyczny dummy hash — zawsze robimy scrypt, nawet dla nieistniejącego konta,
+// żeby czas odpowiedzi nie zdradzał istnienia użytkownika
+const DUMMY_SALT = 'a'.repeat(32);
+const DUMMY_HASH = 'b'.repeat(128);
+
 async function findCredentialByLoginName(connection, loginName) {
     const [rows] = await connection.execute(
         `
@@ -78,8 +91,20 @@ export async function POST(request) {
         if (!loginName) {
             return NextResponse.json({ error: 'Podaj nazwę użytkownika' }, { status: 400 });
         }
+        if (loginName.length > 100) {
+            return NextResponse.json({ error: 'Nazwa użytkownika jest za długa (max 100)' }, { status: 400 });
+        }
         if (!password) {
             return NextResponse.json({ error: 'Podaj hasło' }, { status: 400 });
+        }
+        if (password.length > 200) {
+            return NextResponse.json({ error: 'Hasło jest za długie (max 200)' }, { status: 400 });
+        }
+        if (mode === 'register' && password.length < MIN_PASSWORD_LEN) {
+            return NextResponse.json(
+                { error: `Hasło musi mieć co najmniej ${MIN_PASSWORD_LEN} znaków` },
+                { status: 400 }
+            );
         }
 
         await connection.beginTransaction();
@@ -95,18 +120,19 @@ export async function POST(request) {
             await createAccount(connection, { loginName, password });
             credential = await findCredentialByLoginName(connection, loginName);
         } else {
-            if (!credential) {
+            // Timing-constant login: zawsze uruchamiamy scrypt (nawet gdy konto nie istnieje)
+            // i porównanie robimy przez timingSafeEqual.
+            const salt = credential?.password_salt || DUMMY_SALT;
+            const storedHash = credential?.password_hash || DUMMY_HASH;
+            const expectedHash = hashPassword(password, salt);
+            const hashesMatch = safeEqualHex(expectedHash, storedHash);
+
+            if (!credential || !hashesMatch) {
                 await connection.rollback();
                 return NextResponse.json(
-                    { error: 'Nie znaleziono konta. Możesz utworzyć nowe.' },
-                    { status: 404 }
+                    { error: 'Nieprawidłowa nazwa lub hasło' },
+                    { status: 401 }
                 );
-            }
-
-            const expectedHash = hashPassword(password, credential.password_salt);
-            if (expectedHash !== credential.password_hash) {
-                await connection.rollback();
-                return NextResponse.json({ error: 'Nieprawidłowe hasło' }, { status: 401 });
             }
         }
         // mock code generation

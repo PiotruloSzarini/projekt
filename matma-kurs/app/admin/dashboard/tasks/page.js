@@ -56,8 +56,9 @@ export default function TaskDatabase() {
         try {
             const res = await fetch('/api/admin/task-structure');
             const data = await res.json();
-            setTasks(data);
-            if (!selectedTask && data.length > 0) setSelectedTask(data[0]);
+            const tasks = data.tasks || [];
+            setTasks(tasks);
+            if (!selectedTask && tasks.length > 0) setSelectedTask(tasks[0]);
         } catch (err) {
             console.error("Błąd ładowania:", err);
         } finally {

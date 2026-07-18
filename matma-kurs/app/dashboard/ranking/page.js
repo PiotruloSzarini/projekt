@@ -67,7 +67,7 @@ export default function RankingPage() {
                     <div className={styles.ranking_rows}>
                         {rankingData.rows.map((row) => (
                             <div
-                                key={row.user_id}
+                                key={row.rank}
                                 className={`${styles.ranking_row} ${row.active ? styles.active_row : ''}`}
                             >
                                 <span className={styles.row_avatar}></span>

@@ -4,7 +4,7 @@ import { getTodayDailyChallengeStatus } from '@/app/lib/services/mathdle';
 
 export async function GET(request) {
     try {
-        const userId = getSessionUserId(request);
+        const userId = await getSessionUserId(request);
         const status = await getTodayDailyChallengeStatus(userId);
 
         return NextResponse.json(status);
